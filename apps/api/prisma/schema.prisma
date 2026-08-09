@@ -1,0 +1,231 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                   String   @id @default(uuid())
+  email                String   @unique
+  userName             String?  @unique
+  userName_lower       String?   @unique  
+  lastUsernameChangedAt DateTime?
+  password             String?
+  bio                  String?
+  imagePublicId        String?
+  
+  plan                 Plan     @default(FREE)
+  planExpiry           DateTime @default(now())
+
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+
+  links                Link[]
+
+  clickEvent ClickEvent[]
+
+  auditLog Auditlog[]
+
+  customDomain CustomDomain[]
+
+  linkSection   LinkSection[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  name          String
+  emailVerified Boolean       @default(false)
+  image         String?
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
+}
+
+enum Plan {
+  FREE
+  PRO
+  BUSINESS
+}
+
+model Link {
+  id     String  @id @default(uuid())
+  title  String
+  url    String
+  
+  position  Int  @default(0)
+  counts  Int   @default(0)
+
+  public Boolean
+  isActive Boolean @default(true)
+
+  deletedAt   DateTime?
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  section   LinkSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  sectionId String?
+
+  clickEvent ClickEvent[]
+
+  scheduledStart DateTime?
+  scheduledEnd   DateTime?
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([userId, deletedAt])
+}
+
+model ClickEvent {
+  id         String @id @default(uuid())
+
+  source     String   @default("Direct")
+  device     String
+  browser    String   @default("unknown")  // Added browser field to store the browser of the click event 
+  country    String   
+  countryCode String @default("unknown")
+  countryName String @default("Unknown")
+  referrer   String
+
+  ipAddress  String
+  userAgent  String
+
+  linkId String
+  link   Link @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([linkId])
+}
+
+model LinkSection {
+  id       String @id @default(uuid())
+  title    String
+  position Int
+  link     Link[]
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Auditlog {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  action   Action @default(LINK_CREATED)
+  metadata Json
+
+  ipAddress String
+
+  createdAt DateTime @default(now())
+}
+
+enum Action {
+  // Link actions
+  LINK_CREATED
+  LINK_UPDATED
+  LINK_DELETED
+  LINK_RESTORED
+  LINK_REORDERED
+  LINK_VISIBILITY_TOGGLED
+
+  // Profile actions
+  PROFILE_UPDATED
+  AVATAR_UPDATED
+  USERNAME_CHANGED
+
+  // Plan actions
+  PLAN_UPGRADED
+  PLAN_DOWNGRADED
+  PLAN_CANCELLED
+
+  // Domain actions
+  DOMAIN_ADDED
+  DOMAIN_VERIFIED
+  DOMAIN_REMOVED
+
+  // Account actions
+  ACCOUNT_CREATED
+  ACCOUNT_DELETED
+  PASSWORD_CHANGED
+  PASSWORD_RESET
+
+  // Section actions
+  SECTION_CREATED
+  SECTION_UPDATED
+  SECTION_DELETED
+}
+
+model CustomDomain {
+  id         String @id @default(uuid())
+  domainName String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  verified       Boolean @default(false)
+  sslProvisioned Boolean @default(false)
+
+  verifiedAt       DateTime?
+  sslProvisionedAt DateTime?
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
