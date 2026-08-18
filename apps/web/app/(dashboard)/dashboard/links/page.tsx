@@ -11,7 +11,7 @@ import { getLinks, type Link } from "@/apis/get-links";
 import { deleteLink } from "@/apis/delete-link";
 import { updateLink } from "@/apis/update-link";
 import type { DragEndEvent } from "@dnd-kit/react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { getPublicProfile } from "@/apis/get-public-profile";
 import { getMe } from "@/apis/get-user-profile";

@@ -6,51 +6,34 @@ import {
   Eye,
   Activity,
   ArrowUpRight,
-  User,
-  Share2,
   Loader2,
   ExternalLink,
-  Trash2,
   Copy,
   Globe,
+  User,
   Lock,
+  Share2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Link as LinkType } from "@vyrex/types";
-import { getLinks } from "@/apis/get-links";
+import { useLinks } from "@/hooks/use-links";
+import { useDashboardAnalytics } from "@/hooks/use-dashboard-analytics";
+import { useUserProfile } from "@/hooks/use-user-profile";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
-import { getPublicProfile } from "@/apis/get-public-profile";
-import { getMe } from "@/apis/get-user-profile";
 
 export default function UserDashboard() {
   const router = useRouter();
-  const [links, setLinks] = useState<LinkType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const { data: session } = authClient.useSession();
-  const [username, setUsername] = useState<string | null>(null);
+  const { data: userProfile } = useUserProfile();
+  const { data: linksData, isLoading: linksLoading } = useLinks();
 
-  useEffect(() => {
-    const fetchLinks = async () => {
-      try {
-        setLoading(true);
-        const linksData = await getLinks();
+  const { data: analytics, isLoading: analyticsLoading } =
+    useDashboardAnalytics();
 
-        setLinks(linksData || []);
-      } catch (err) {
-        console.error("❌ Failed to fetch links:", err);
-        setError("Failed to load links");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLinks();
-  }, []);
+  const links = linksData || [];
+  const loading = linksLoading;
 
   const copyToClipboard = async (link: LinkType) => {
     if (!link.public) {
@@ -58,7 +41,6 @@ export default function UserDashboard() {
       return;
     }
 
-    // You'll need to update this with your actual domain and username
     const shareUrl = `${window.location.origin}/public/${link.userId}`;
 
     try {
@@ -71,67 +53,9 @@ export default function UserDashboard() {
     }
   };
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-
-        const username = await getMe(session?.user?.id || "");
-
-        if (!username) {
-          // User doesn't have a username (likely from social signin)
-          setError("Please set up your username to view your public profile");
-          setLoading(false);
-          // Redirect to settings/profile page to complete username setup
-
-          setTimeout(() => {
-            router.push("/dashboard/settings");
-          }, 2000);
-
-          return;
-        }
-
-        // Fetch public profile using the public API
-        const data = await getPublicProfile(username.data.userName);
-
-        setUsername(data.data);
-      } catch (err) {
-        console.error("Failed to fetch profile:", err);
-        setError(err instanceof Error ? err.message : "Failed to load profile");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (session?.user) {
-      fetchProfile();
-    }
-  }, [session?.user, router]);
-
-  // const togglePublic = async (linkId: string, isPublic: boolean) => {
-  //   try {
-  //     const res = await fetch(`/api/v1/links/${linkId}`, {
-  //       method: "PATCH",
-  //       credentials: "include",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({ public: !isPublic }),
-  //     });
-
-  //     if (!res.ok) throw new Error("Failed to update link");
-
-  //     // Update local state
-  //     setLinks(
-  //       links.map((link) =>
-  //         link.id === linkId ? { ...link, public: !isPublic } : link,
-  //       ),
-  //     );
-  //   } catch (err) {
-  //     console.error("Failed to toggle public:", err);
-  //     toast.error("Failed to update link visibility");
-  //   }
-  // };
+  if (analyticsLoading) {
+    return <div>Loading Analytics</div>;
+  }
 
   return (
     <div className="bg-background text-foreground selection:bg-primary/30 flex min-h-screen font-sans">
@@ -149,7 +73,7 @@ export default function UserDashboard() {
           </header>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="border-border bg-background rounded-xl border p-5">
+            <div className="border-border bg-background rounded-xl border p-5 shadow-sm">
               <p className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs font-medium">
                 <Eye size={12} /> Total Views
               </p>
@@ -159,17 +83,21 @@ export default function UserDashboard() {
                 last week
               </p>
             </div>
-            <div className="border-border bg-background rounded-xl border p-5">
+            <div className="border-border bg-background rounded-xl border p-5 shadow-sm">
               <p className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs font-medium">
                 <MousePointerClick size={12} /> Total Clicks
               </p>
-              <h3 className="text-2xl font-semibold tracking-tight">0</h3>
+              <h3 className="text-2xl font-semibold tracking-tight">
+                {loading
+                  ? "..."
+                  : (analytics?.totalClicks || 0).toLocaleString()}
+              </h3>
               <p className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
-                <ArrowUpRight size={12} className="text-green-500" /> 0% from
-                last week
+                <ArrowUpRight size={12} className="text-green-500" /> Updated
+                now
               </p>
             </div>
-            <div className="border-border bg-background rounded-xl border p-5">
+            <div className="border-border bg-background rounded-xl border p-5 shadow-sm">
               <p className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs font-medium">
                 <Activity size={12} /> CTR
               </p>
@@ -179,12 +107,12 @@ export default function UserDashboard() {
                 last week
               </p>
             </div>
-            <div className="border-border bg-background rounded-xl border p-5">
+            <div className="border-border bg-background rounded-xl border p-5 shadow-sm">
               <p className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs font-medium">
                 <LinkIcon size={12} /> Active Links
               </p>
               <h3 className="text-2xl font-semibold tracking-tight">
-                {links.length}
+                {loading ? "..." : links.length}
               </h3>
               <p className="text-muted-foreground mt-1 text-xs">
                 {links.length === 0 ? "Ready to be added" : "In your profile"}

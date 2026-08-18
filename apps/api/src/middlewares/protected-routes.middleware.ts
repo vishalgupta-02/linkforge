@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../lib/auth.ts";
 import { AppError } from "../utils/api-error.ts";
 
@@ -8,7 +9,7 @@ export const protectedRoute = async (
   next: NextFunction,
 ) => {
   const session = await auth.api.getSession({
-    headers: new Headers(Object.entries(request.headers) as [string, string][]),
+    headers: fromNodeHeaders(request.headers),
   });
 
   if (!session?.user) {
@@ -18,7 +19,9 @@ export const protectedRoute = async (
   request.user = {
     id: session.user.id,
     email: session.user.email,
+    plan: (session.user as any)?.plan || "FREE",
   };
 
   next();
 };
+

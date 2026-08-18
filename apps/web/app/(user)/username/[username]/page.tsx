@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { PublicProfileDisplay } from "@/app/(user)/(components)/profile-display";
+import { PublicProfilePresence } from "@/components/custom/public-page-presence";
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -15,5 +16,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PublicProfilePage({ params }: Props) {
   const resolvedParams = await params;
 
-  return <PublicProfileDisplay username={resolvedParams.username} />;
+  return (
+    <>
+      <PublicProfilePresence username={resolvedParams.username} />
+      <PublicProfileDisplay username={resolvedParams.username} />
+    </>
+  );
 }
+
