@@ -4,50 +4,45 @@ import { CACHE_KEYS } from "../lib/cache-keys.ts";
 import { redis } from "../lib/redis.ts";
 import { AppError } from "../utils/api-error.ts";
 import { normalizeUsername } from "../utils/username.ts";
-
-// export const createLink = async (userId: string, data: any) => {
-//   return prisma.link.create({
-//     data: {
-//       ...data,
-//       userId,
-//     },
-//   });
-// };
+import { isProPlan } from "../utils/plan.ts";
 
 export const createLink = async (userId: string, data: any) => {
-  // 🔍 Count active links
-  const activeCount = await prisma.link.count({
-    where: {
-      userId,
-      deletedAt: null,
-    },
-  });
-
-  if (activeCount >= FREE_LINK_LIMIT) {
-    throw new AppError(
-      "Free plan allows up to 8 links. Upgrade to add more.",
-      403,
-      "LINK_LIMIT_REACHED",
-      {
-        limit: FREE_LINK_LIMIT,
-        upgrade: true,
-      },
-    );
-  }
-
   const user = await prisma.user.findUnique({
     where: {
       id: userId,
     },
-
     select: {
       userName: true,
+      plan: true,
     },
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
+
+  // 🔍 Check active links count only for Free plan users
+  if (!isProPlan(user.plan)) {
+    const activeCount = await prisma.link.count({
+      where: {
+        userId,
+        deletedAt: null,
+      },
+    });
+
+    if (activeCount >= FREE_LINK_LIMIT) {
+      throw new AppError(
+        "Free plan allows up to 8 links. Upgrade to add more.",
+        403,
+        "LINK_LIMIT_REACHED",
+        {
+          limit: FREE_LINK_LIMIT,
+          upgrade: true,
+        },
+      );
+    }
+  }
+
 
   const link = await prisma.link.create({
     data: {

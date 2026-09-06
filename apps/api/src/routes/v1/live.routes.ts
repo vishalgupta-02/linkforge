@@ -8,6 +8,7 @@ import {
 } from "../../controllers/live/live.controller.ts";
 import { validate } from "../../middlewares/validation.middleware.ts";
 import { protectedRoute } from "../../middlewares/protected-routes.middleware.ts";
+import { requirePro } from "../../middlewares/plan-guard.middleware.ts";
 import {
   liveVisitorBodySchema,
   liveVisitorParamsSchema,
@@ -51,14 +52,15 @@ router.post(
   leaveLiveVisitor,
 );
 
-
 router.get(
   "/:username/stream",
   protectedRoute,
+  requirePro,
   validate({
     params: liveVisitorParamsSchema,
   }),
   liveVisitorsStream,
 );
+
 
 export default router;

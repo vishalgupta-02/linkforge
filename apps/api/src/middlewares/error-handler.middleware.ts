@@ -17,6 +17,8 @@ type ApiResponse<T = null> = {
   success: boolean;
   message: string;
   data: T | null;
+  code?: string;
+  meta?: unknown;
   error?: unknown;
 };
 
@@ -30,11 +32,15 @@ export function errorMiddleware(
   let statusCode = 500;
   let message = "Something went wrong";
   let errorDetails: unknown = undefined;
+  let code: string | undefined = undefined;
+  let meta: unknown = undefined;
 
   // 🔹 1. Custom error with statusCode
   if (err && typeof err === "object" && "statusCode" in err) {
     statusCode = (err as { statusCode: number }).statusCode;
     message = (err as { message?: string }).message || message;
+    code = (err as { code?: string }).code;
+    meta = (err as { meta?: unknown }).meta;
   }
 
   // 🔹 2. Zod validation error
@@ -70,6 +76,8 @@ export function errorMiddleware(
     success: false,
     message,
     data: null,
+    ...(code ? { code } : {}),
+    ...(meta ? { meta } : {}),
   };
 
   if (NODE_ENV === "development") {
@@ -82,3 +90,4 @@ export function errorMiddleware(
 
   return res.status(statusCode).json(response);
 }
+

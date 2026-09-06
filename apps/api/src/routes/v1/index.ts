@@ -7,6 +7,7 @@ import redirectRoutes from "./click-event.routes.ts";
 import analyticsRoutes from "./analytics.routes.ts";
 import adminRoutes from "./admin.routes.ts";
 import liveRoutes from "./live.routes.ts";
+import billingRoutes from "./billing.routes.ts";
 
 const router: Router = Router();
 
@@ -17,5 +18,7 @@ router.use("/redirect", redirectRoutes);
 router.use("/analytics", analyticsRoutes);
 router.use("/admin", adminRoutes);
 router.use("/live", liveRoutes);
+router.use("/billing", billingRoutes);
 
 export default router;
+
