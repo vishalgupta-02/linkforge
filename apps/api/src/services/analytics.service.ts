@@ -183,6 +183,7 @@ const getClicksForPeriod = async (userId: string, startDate: Date) => {
 const getClicksByDayForRange = async (
   userId: string,
   startDate: Date,
+  numDays: number,
 ): Promise<Array<{ date: string; clicks: number }>> => {
   const clicks = await prisma.clickEvent.findMany({
     where: {
@@ -211,11 +212,25 @@ const getClicksByDayForRange = async (
     grouped[day] = (grouped[day] || 0) + 1;
   }
 
-  return Object.entries(grouped).map(([date, clicks]) => ({
-    date,
-    clicks,
-  }));
+  // Pre-fill all dates in the requested range so the timeline is continuous
+  const result: Array<{ date: string; clicks: number }> = [];
+  const now = new Date();
+
+  for (let i = numDays - 1; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const [dateStr] = d.toISOString().split("T");
+
+    if (dateStr) {
+      result.push({
+        date: dateStr,
+        clicks: grouped[dateStr] || 0,
+      });
+    }
+  }
+
+  return result;
 };
+
 
 const isIpAddress = (value: string) => {
   const trimmed = value.trim();
@@ -348,15 +363,18 @@ export const getDashboardAnalytics = async (
       },
     }),
 
-    shouldFetch7d ? getClicksByDayForRange(userId, days7) : Promise.resolve([]),
+    shouldFetch7d
+      ? getClicksByDayForRange(userId, days7, 7)
+      : Promise.resolve([]),
 
     shouldFetch30d
-      ? getClicksByDayForRange(userId, days30)
+      ? getClicksByDayForRange(userId, days30, 30)
       : Promise.resolve([]),
 
     shouldFetch90d
-      ? getClicksByDayForRange(userId, days90)
+      ? getClicksByDayForRange(userId, days90, 90)
       : Promise.resolve([]),
+
   ]);
 
   // Transform clicksByLink to include title and url

@@ -23,7 +23,7 @@ export const dashboardAnalyticsController = async (
 ) => {
   const userId = req.user?.id;
 
-  const plan = req.user?.plan;
+  const plan = ((req.user as any)?.plan || "FREE") as "FREE" | "PRO";
 
   const range = (req.query.range as string) || undefined;
 
@@ -42,3 +42,4 @@ export const dashboardAnalyticsController = async (
 
   return res.status(response.statusCode).json(response);
 };
+

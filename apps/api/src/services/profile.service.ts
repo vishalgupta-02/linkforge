@@ -360,7 +360,9 @@ export const getPublicProfileByUserId = async (userId: string) => {
         id: userId,
       },
       select: {
+        id: true,
         userName: true,
+        plan: true,
       },
     });
 
@@ -370,3 +372,4 @@ export const getPublicProfileByUserId = async (userId: string) => {
     throw new AppError("Error fetching profile", 500);
   }
 };
+

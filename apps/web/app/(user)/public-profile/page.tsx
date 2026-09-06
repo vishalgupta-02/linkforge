@@ -39,11 +39,13 @@ export default function CreatorPublicProfile() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log("Inside the Public page");
     const fetchProfile = async () => {
       try {
         setLoading(true);
 
         const username = await getMe(session?.user?.id || "");
+        console.log("Inside the useeffect");
 
         if (!username) {
           // User doesn't have a username (likely from social signin)

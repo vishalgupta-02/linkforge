@@ -9,23 +9,24 @@ export interface ClicksByDay {
 }
 
 export interface CountryData {
-  country: string;
+  country?: string;
   countryCode: string;
   flag: string;
   clicks: number;
   percentage: number | 0;
   countryName: string;
-  _count: {
-    countryCode: number;
+  _count?: {
+    countryCode?: number;
   };
 }
 
 export interface DeviceData {
   device: string;
-  _count: {
-    device: number;
+  _count?: {
+    device?: number;
   };
 }
+
 
 export interface SourceData {
   source: string;
@@ -56,28 +57,22 @@ export interface AnalyticsResponse {
   clicksBySource: SourceData[];
 }
 
+export type AnalyticsRange = "7d" | "30d" | "90d";
+
 export async function getAnalytics(
-  range?: "7d" | "30d" | "90d",
-): Promise<AnalyticsResponse | null> {
-  try {
-    let url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/analytics/dashboard`;
+  range: AnalyticsRange = "7d",
+): Promise<AnalyticsResponse> {
+  const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/analytics/dashboard?range=${range}`;
 
-    if (range) {
-      url += `?range=${range}`;
-    }
+  const res = await axios.get(url, { withCredentials: true });
 
-    const res = await axios.get(url, { withCredentials: true });
-
-    if (!res.data) {
-      throw new Error("Failed to fetch analytics");
-    }
-
-    // API returns { success, message, data: {...}, statusCode }
-    const analyticsData = res.data.data || res.data;
-
-    return analyticsData as AnalyticsResponse;
-  } catch (error) {
-    console.error("❌ Error fetching analytics:", error);
-    return null;
+  if (!res.data) {
+    throw new Error("Failed to fetch analytics");
   }
+
+  // API returns { success, message, data: {...}, statusCode }
+  const analyticsData = res.data.data !== undefined ? res.data.data : res.data;
+
+  return analyticsData as AnalyticsResponse;
 }
+

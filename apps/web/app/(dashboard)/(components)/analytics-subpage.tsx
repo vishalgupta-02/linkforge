@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   BarChart3,
   MousePointerClick,
@@ -12,8 +12,11 @@ import {
   Globe,
   ExternalLink,
 } from "lucide-react";
-import { getAnalytics, type AnalyticsResponse } from "@/apis/get-analytics";
+import type { AnalyticsRange } from "@/apis/get-analytics";
+import { useAnalytics } from "@/hooks/use-analytics";
+import { useUserProfile } from "@/hooks/use-user-profile";
 import { useRouter } from "next/navigation";
+import { LiveVisitors } from "@/components/custom/live-visitors";
 
 const calculateChartHeights = (
   dailyData?: Array<{ date: string; clicks: number }>,
@@ -27,31 +30,32 @@ const calculateChartHeights = (
 };
 
 export default function AnalyticsDashboard() {
-  const [timeRange, setTimeRange] = useState("30d");
+  const [timeRange, setTimeRange] = useState<AnalyticsRange>("7d");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  const { data: userProfile } = useUserProfile();
+  const username = userProfile?.data?.userName || null;
+  const plan = userProfile?.data?.plan || null;
+  const isPro = Boolean(
+    plan &&
+      (plan.toUpperCase() === "PRO" || plan.toUpperCase() === "BUSINESS"),
+  );
+
+  const {
+    data: analytics,
+    isPending,
+    isError,
+  } = useAnalytics(timeRange);
+
+  const loading = isPending && !analytics;
 
   const chartHeights = useMemo(
     () => calculateChartHeights(analytics?.clicksByDayArray),
     [analytics?.clicksByDayArray],
   );
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      setLoading(true);
-      console.log("🔄 Fetching analytics for range:", timeRange);
-      const data = await getAnalytics(
-        timeRange as "7d" | "30d" | "90d" | undefined,
-      );
-      console.log("✅ Analytics data loaded:", data);
-      setAnalytics(data);
-      setLoading(false);
-    };
 
-    fetchAnalytics();
-  }, [timeRange]);
 
   return (
     <>
@@ -99,9 +103,63 @@ export default function AnalyticsDashboard() {
               )}
             </div>
           </header>
+
+          {isError && !analytics && (
+            <div className="border-border bg-background flex flex-col items-center justify-center rounded-2xl border p-12 text-center shadow-sm">
+              <p className="text-muted-foreground text-sm">
+                Failed to load analytics data. Please try again.
+              </p>
+            </div>
+          )}
+
+
+          {loading && !analytics && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <LiveVisitors username={username || ""} isPro={isPro} />
+
+              <div className="border-border bg-background rounded-xl border p-5 shadow-sm">
+                <p className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs font-medium">
+                  <Eye size={12} /> Total Clicks
+                </p>
+                <h3 className="text-2xl font-semibold tracking-tight">...</h3>
+                <p className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
+                  <ArrowUpRight size={12} className="text-green-500" /> Updated now
+                </p>
+              </div>
+
+              <div className="border-border bg-background rounded-xl border p-5 shadow-sm">
+                <p className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs font-medium">
+                  <MousePointerClick size={12} /> Clicks (Current Period)
+                </p>
+                <h3 className="text-2xl font-semibold tracking-tight">...</h3>
+                <p className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
+                  Last {timeRange}
+                </p>
+              </div>
+
+              <div className="border-border bg-background rounded-xl border p-5 shadow-sm">
+                <p className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs font-medium">
+                  <Globe size={12} /> Top Country
+                </p>
+                <h3 className="text-2xl font-semibold tracking-tight">...</h3>
+                <p className="text-muted-foreground mt-1 text-xs">...</p>
+              </div>
+
+              <div className="border-border bg-background rounded-xl border p-5 shadow-sm">
+                <p className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs font-medium">
+                  <Activity size={12} /> Top Device
+                </p>
+                <h3 className="text-2xl font-semibold tracking-tight">...</h3>
+                <p className="text-muted-foreground mt-1 text-xs">...</p>
+              </div>
+            </div>
+          )}
+
           {analytics && analytics.totalClicks > 0 && (
             <>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <LiveVisitors username={username || ""} isPro={isPro} />
+
                 <div className="border-border bg-background rounded-xl border p-5 shadow-sm">
                   <p className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs font-medium">
                     <Eye size={12} /> Total Clicks
@@ -116,6 +174,7 @@ export default function AnalyticsDashboard() {
                     Updated now
                   </p>
                 </div>
+
                 <div className="border-border bg-background rounded-xl border p-5 shadow-sm">
                   <p className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs font-medium">
                     <MousePointerClick size={12} /> Clicks (Current Period)
@@ -140,7 +199,9 @@ export default function AnalyticsDashboard() {
                   <h3 className="text-2xl font-semibold tracking-tight">
                     {loading
                       ? "..."
-                      : analytics?.clicksByCountry?.[0]?.country || "N/A"}
+                      : analytics?.clicksByCountry?.[0]?.countryName ||
+                        analytics?.clicksByCountry?.[0]?.country ||
+                        "N/A"}
                   </h3>
                   <p className="text-muted-foreground mt-1 text-xs">
                     {loading
@@ -160,10 +221,11 @@ export default function AnalyticsDashboard() {
                   <p className="text-muted-foreground mt-1 text-xs">
                     {loading
                       ? "..."
-                      : `${analytics?.clicksByDevice?.[0]?._count.device || 0} clicks`}
+                      : `${analytics?.clicksByDevice?.[0]?._count?.device || 0} clicks`}
                   </p>
                 </div>
               </div>
+
               <div className="border-border bg-background rounded-xl border p-6 shadow-sm">
                 <div className="mb-8 flex items-center justify-between">
                   <h3 className="text-foreground text-sm font-medium">
@@ -192,18 +254,25 @@ export default function AnalyticsDashboard() {
                       Loading chart...
                     </div>
                   ) : chartHeights.length > 0 ? (
-                    chartHeights.map((height, i) => (
-                      <div
-                        key={i}
-                        className="group relative z-10 flex h-full flex-1 flex-col justify-end gap-1"
-                        title={`${analytics?.clicksByDayArray?.[i]?.date || `Day ${i + 1}`}: ${analytics?.clicksByDayArray?.[i]?.clicks || 0} clicks`}
-                      >
+                    chartHeights.map((height, i) => {
+                      const item = analytics?.clicksByDayArray?.[i];
+                      const clicksCount = item?.clicks || 0;
+                      return (
                         <div
-                          className="bg-foreground group-hover:bg-foreground/80 w-full rounded-t-sm transition-all duration-300"
-                          style={{ height: `${Math.max(height, 5)}%` }}
-                        />
-                      </div>
-                    ))
+                          key={i}
+                          className="group relative z-10 flex h-full flex-1 flex-col justify-end gap-1"
+                          title={`${item?.date || `Day ${i + 1}`}: ${clicksCount} clicks`}
+                        >
+                          <div
+                            className="bg-foreground group-hover:bg-foreground/80 w-full rounded-t-sm transition-all duration-300"
+                            style={{
+                              height: clicksCount > 0 ? `${Math.max(height, 5)}%` : "2px",
+                              opacity: clicksCount > 0 ? 1 : 0.25,
+                            }}
+                          />
+                        </div>
+                      );
+                    })
                   ) : (
                     <div className="text-muted-foreground z-10 flex w-full items-center justify-center">
                       No daily data available yet
@@ -211,6 +280,7 @@ export default function AnalyticsDashboard() {
                   )}
                 </div>
               </div>
+
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-4">
                   <h3 className="text-foreground px-1 text-sm font-medium">
@@ -225,18 +295,7 @@ export default function AnalyticsDashboard() {
                       analytics.clicksByCountry.length > 0 ? (
                       analytics.clicksByCountry
                         .slice(0, 5)
-                        .map((country, i) => (
-                          // <div
-                          //   key={i}
-                          //   className="flex min-h-10 items-center justify-between p-3"
-                          // >
-                          //   <span className="text-foreground truncate text-sm">
-                          //     {country.country || "Unknown"}
-                          //   </span>
-                          //   <span className="text-muted-foreground ml-2 shrink-0 text-xs">
-                          //     {country._count.country}
-                          //   </span>
-                          // </div>
+                        .map((country) => (
                           <div
                             key={country.countryCode}
                             className="flex min-h-10 flex-col items-center justify-between space-y-2 p-3"
@@ -339,14 +398,6 @@ export default function AnalyticsDashboard() {
                           key={i}
                           className="group hover:bg-muted/30 flex min-h-16 items-center justify-between p-4 transition-colors"
                         >
-                          {/* <div className="min-w-0 flex-1 pr-4">
-                            <p className="text-foreground truncate text-sm font-medium">
-                              {link.title}
-                            </p>
-                            <p className="text-muted-foreground mt-0.5 truncate text-xs">
-                              {link.url}
-                            </p>
-                          </div> */}
                           <div className="space-y-2">
                             <div className="flex items-center justify-between">
                               <div>
@@ -368,9 +419,6 @@ export default function AnalyticsDashboard() {
                             </div>
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
-                            {/* <span className="text-foreground text-sm font-semibold">
-                              {link.clicks.toLocaleString()}
-                            </span> */}
                             <div className="space-y-3 text-right">
                               <p className="font-semibold">{link.clicks}</p>
 
@@ -421,7 +469,7 @@ export default function AnalyticsDashboard() {
                             {device.device || "Unknown"}
                           </span>
                           <span className="text-muted-foreground ml-2 shrink-0 text-xs">
-                            {device._count.device}
+                            {device._count?.device ?? 0}
                           </span>
                         </div>
                       ))
@@ -435,28 +483,39 @@ export default function AnalyticsDashboard() {
               </div>
             </>
           )}
-          {!loading && (!analytics || analytics.totalClicks === 0) && (
-            <div className="border-border bg-background flex flex-col items-center justify-center rounded-2xl border p-12 text-center shadow-sm">
-              <div className="bg-muted mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <BarChart3 size={20} className="text-muted-foreground" />
+
+          {!loading && !isError && (!analytics || analytics.totalClicks === 0) && (
+            <>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <LiveVisitors username={username || ""} isPro={isPro} />
               </div>
-              <h3 className="text-foreground mb-1.5 text-base font-medium">
-                No analytics data yet
-              </h3>
-              <p className="text-muted-foreground mb-6 max-w-sm text-sm">
-                Share your page with your audience to start tracking views and
-                clicks.
-              </p>
-              <button
-                className="bg-primary text-primary-foreground inline-flex h-9 cursor-pointer items-center justify-center rounded-lg px-4 text-sm font-medium shadow-sm transition-opacity duration-200 hover:opacity-90 active:scale-[0.98]"
-                onClick={() => router.push("/public-profile")}
-              >
-                View public page
-              </button>
-            </div>
+
+
+
+              <div className="border-border bg-background flex flex-col items-center justify-center rounded-2xl border p-12 text-center shadow-sm">
+                <div className="bg-muted mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+                  <BarChart3 size={20} className="text-muted-foreground" />
+                </div>
+                <h3 className="text-foreground mb-1.5 text-base font-medium">
+                  No analytics data yet
+                </h3>
+                <p className="text-muted-foreground mb-6 max-w-sm text-sm">
+                  Share your page with your audience to start tracking views and
+                  clicks.
+                </p>
+                <button
+                  className="bg-primary text-primary-foreground inline-flex h-9 cursor-pointer items-center justify-center rounded-lg px-4 text-sm font-medium shadow-sm transition-opacity duration-200 hover:opacity-90 active:scale-[0.98]"
+                  onClick={() => router.push("/public-profile")}
+                >
+                  View public page
+                </button>
+              </div>
+            </>
           )}
+
         </div>
       </main>
     </>
   );
 }
+
