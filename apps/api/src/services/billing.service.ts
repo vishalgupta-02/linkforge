@@ -3,6 +3,7 @@ import { prisma } from "../db/client.ts";
 import { stripe } from "../lib/stripe.ts";
 import { AppError } from "../utils/api-error.ts";
 import { isProPlan } from "../utils/plan.ts";
+import { enqueueProUpgradeEmail } from "../queues/email.queue.ts";
 
 export const createProCheckoutSession = async (userId: string) => {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -205,8 +206,6 @@ export const getBillingStatus = async (userId: string) => {
   };
 };
 
-
-
 const handleCheckoutSessionCompleted = async (
   eventId: string,
   session: Stripe.Checkout.Session,
@@ -246,6 +245,8 @@ const handleCheckoutSessionCompleted = async (
       where: { id: userId },
       select: {
         id: true,
+        email: true,
+        name: true,
         userName: true,
         plan: true,
         stripeCustomerId: true,
@@ -259,6 +260,8 @@ const handleCheckoutSessionCompleted = async (
       where: { stripeCustomerId: customerId },
       select: {
         id: true,
+        email: true,
+        name: true,
         userName: true,
         plan: true,
         stripeCustomerId: true,
@@ -321,6 +324,29 @@ const handleCheckoutSessionCompleted = async (
   console.log(
     `✅ Successfully upgraded user ${user.id} (${user.userName || "unknown"}) to PRO (eventId=${eventId})`,
   );
+
+  // 4. Asynchronously enqueue Pro upgrade congratulations email job in BullMQ
+  try {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const dashboardUrl = `${frontendUrl.replace(/\/$/, "")}/dashboard`;
+    await enqueueProUpgradeEmail(
+      {
+        userId: user.id,
+        userName: user.userName || user.name || "Creator",
+        email: user.email,
+        dashboardUrl,
+      },
+      eventId,
+    );
+    console.log(
+      `📬 Enqueued Pro upgrade congratulations email for user ${user.id} (${user.email})`,
+    );
+  } catch (emailQueueError) {
+    console.error(
+      `❌ Failed to enqueue Pro upgrade email for user ${user.id}:`,
+      emailQueueError,
+    );
+  }
 };
 
 const handleSubscriptionDeleted = async (

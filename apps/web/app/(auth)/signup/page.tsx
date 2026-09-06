@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Sparkles,
   Loader2,
@@ -12,6 +13,8 @@ import {
   Globe,
 } from "lucide-react";
 import { toast } from "sonner";
+import { userSignup } from "@/apis/user-signup";
+import { googleSignIn } from "@/apis/google-signin";
 
 export default function PremiumCreatorSignup() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -21,6 +24,8 @@ export default function PremiumCreatorSignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -34,18 +39,46 @@ export default function PremiumCreatorSignup() {
   if (hasMinLength || hasSymbol) strength = 2;
   if (hasMinLength && hasSymbol) strength = 3;
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (strength < 3 || !username) return;
+    if (!username.trim()) {
+      toast.error("Please enter a username.");
+      return;
+    }
+    if (!email.trim()) {
+      toast.error("Please enter your email.");
+      return;
+    }
+    if (strength < 2) {
+      toast.error("Please enter a password with at least 8 characters.");
+      return;
+    }
 
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      await userSignup(username.trim(), email.trim(), password);
+      toast.success("Account created successfully! Welcome to LinkFlow.");
+      router.push("/dashboard");
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      toast.error(err.message || "Failed to create account. Please try again.");
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
-  const handleGoogleSignup = () => {
-    toast.error("Google Sign-Up will be available soon.");
+  const handleGoogleSignup = async () => {
+    try {
+      const result = await googleSignIn();
+      if (!result) {
+        toast.error("Google sign-up failed. Please try again.");
+        return;
+      }
+      toast.success("Google sign-up successful");
+    } catch (error) {
+      toast.error("Google sign-up failed. Please try again.");
+      console.error("Google sign-up error:", error);
+    }
   };
 
   if (!mounted) return null;
@@ -205,7 +238,7 @@ export default function PremiumCreatorSignup() {
                     placeholder="yourname"
                     autoFocus
                     disabled={isLoading}
-                    className="flex h-11 w-full rounded-xl border border-white/10 bg-white/2 py-2 pr-4 pl-26.5 text-sm text-white shadow-sm transition-all placeholder:text-zinc-600 focus:bg-white/5 focus-visible:border-violet-500 focus-visible:ring-1 focus-visible:ring-violet-500 focus-visible:outline-none disabled:opacity-50"
+                    className="flex h-11 w-full rounded-xl border border-white/10 bg-white/2 py-2 pr-4 pl-34 text-sm text-white shadow-sm transition-all placeholder:text-zinc-600 focus:bg-white/5 focus-visible:border-violet-500 focus-visible:ring-1 focus-visible:ring-violet-500 focus-visible:outline-none disabled:opacity-50"
                   />
                 </div>
                 <p className="text-[11px] font-medium text-zinc-500">

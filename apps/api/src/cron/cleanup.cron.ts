@@ -6,6 +6,7 @@ export const startCleanupJob = () => {
     console.log("🧹 Running cleanup job...");
 
     const THIRTY_DAYS_AGO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const SEVEN_DAYS_AGO = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     await prisma.link.deleteMany({
       where: {
@@ -16,6 +17,14 @@ export const startCleanupJob = () => {
       },
     });
 
-    console.log("✅ Old deleted links removed");
+    await prisma.passwordResetToken.deleteMany({
+      where: {
+        expiresAt: {
+          lt: SEVEN_DAYS_AGO,
+        },
+      },
+    });
+
+    console.log("✅ Old deleted links and expired reset tokens removed");
   });
 };

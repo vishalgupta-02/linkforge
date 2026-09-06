@@ -275,7 +275,7 @@ export default function FloatingIdentityLogin() {
                     Password
                   </label>
                   <a
-                    href="#"
+                    href="/forgot-password"
                     className="text-[13px] font-medium text-zinc-400 transition-colors hover:text-white"
                   >
                     Forgot password?
