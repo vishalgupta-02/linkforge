@@ -123,7 +123,7 @@ export function PublicProfileDisplay({ username }: PublicProfilePageProps) {
 
           <div className="animate-fade-in-up w-full space-y-3.5 delay-100">
             {profile.data?.links && profile.data.links.length > 0 ? (
-              profile.data.links.map((link) => (
+              profile.data.links.map((link: { id: string; url: string; title: string }) => (
                 <a
                   key={link.id}
                   href={link.url}

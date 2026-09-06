@@ -38,15 +38,10 @@ export default function AnalyticsDashboard() {
   const username = userProfile?.data?.userName || null;
   const plan = userProfile?.data?.plan || null;
   const isPro = Boolean(
-    plan &&
-      (plan.toUpperCase() === "PRO" || plan.toUpperCase() === "BUSINESS"),
+    plan && (plan.toUpperCase() === "PRO" || plan.toUpperCase() === "BUSINESS"),
   );
 
-  const {
-    data: analytics,
-    isPending,
-    isError,
-  } = useAnalytics(timeRange);
+  const { data: analytics, isPending, isError } = useAnalytics(timeRange);
 
   const loading = isPending && !analytics;
 
@@ -55,7 +50,13 @@ export default function AnalyticsDashboard() {
     [analytics?.clicksByDayArray],
   );
 
+  // const ranges: AnalyticsRange[] = ["7d", "30d", "90d"];
 
+  const ranges = [
+    { value: "7d", label: "Last 7 days" },
+    { value: "30d", label: "Last 30 days" },
+    { value: "90d", label: "Last 90 days" },
+  ] satisfies { value: AnalyticsRange; label: string }[];
 
   return (
     <>
@@ -85,18 +86,16 @@ export default function AnalyticsDashboard() {
 
               {isDropdownOpen && (
                 <div className="border-border bg-background animate-in fade-in slide-in-from-top-2 absolute top-full right-0 z-10 mt-1 w-full overflow-hidden rounded-lg border shadow-md duration-200">
-                  {["7d", "30d", "90d"].map((range) => (
+                  {ranges.map((range) => (
                     <button
-                      key={range}
+                      key={range.value}
                       onClick={() => {
-                        setTimeRange(range);
+                        setTimeRange(range.value);
                         setIsDropdownOpen(false);
                       }}
                       className="text-foreground hover:bg-muted flex w-full items-center px-3 py-2 text-sm transition-colors"
                     >
-                      {range === "7d" && "Last 7 Days"}
-                      {range === "30d" && "Last 30 Days"}
-                      {range === "90d" && "Last 90 Days"}
+                      {range.label}
                     </button>
                   ))}
                 </div>
@@ -112,7 +111,6 @@ export default function AnalyticsDashboard() {
             </div>
           )}
 
-
           {loading && !analytics && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <LiveVisitors username={username || ""} isPro={isPro} />
@@ -123,7 +121,8 @@ export default function AnalyticsDashboard() {
                 </p>
                 <h3 className="text-2xl font-semibold tracking-tight">...</h3>
                 <p className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
-                  <ArrowUpRight size={12} className="text-green-500" /> Updated now
+                  <ArrowUpRight size={12} className="text-green-500" /> Updated
+                  now
                 </p>
               </div>
 
@@ -266,7 +265,10 @@ export default function AnalyticsDashboard() {
                           <div
                             className="bg-foreground group-hover:bg-foreground/80 w-full rounded-t-sm transition-all duration-300"
                             style={{
-                              height: clicksCount > 0 ? `${Math.max(height, 5)}%` : "2px",
+                              height:
+                                clicksCount > 0
+                                  ? `${Math.max(height, 5)}%`
+                                  : "2px",
                               opacity: clicksCount > 0 ? 1 : 0.25,
                             }}
                           />
@@ -293,43 +295,39 @@ export default function AnalyticsDashboard() {
                       </div>
                     ) : analytics?.clicksByCountry &&
                       analytics.clicksByCountry.length > 0 ? (
-                      analytics.clicksByCountry
-                        .slice(0, 5)
-                        .map((country) => (
-                          <div
-                            key={country.countryCode}
-                            className="flex min-h-10 flex-col items-center justify-between space-y-2 p-3"
-                          >
-                            <div className="flex w-full items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-lg">{country.flag}</span>
+                      analytics.clicksByCountry.slice(0, 5).map((country) => (
+                        <div
+                          key={country.countryCode}
+                          className="flex min-h-10 flex-col items-center justify-between space-y-2 p-3"
+                        >
+                          <div className="flex w-full items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{country.flag}</span>
 
-                                <span className="font-medium">
-                                  {country.countryName}
-                                </span>
-                              </div>
-
-                              <div className="text-right">
-                                <p className="font-semibold">
-                                  {country.clicks}
-                                </p>
-
-                                <p className="text-muted-foreground text-xs">
-                                  {country.percentage}%
-                                </p>
-                              </div>
+                              <span className="font-medium">
+                                {country.countryName}
+                              </span>
                             </div>
 
-                            <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
-                              <div
-                                className="bg-foreground h-full rounded-full"
-                                style={{
-                                  width: `${country.percentage}%`,
-                                }}
-                              />
+                            <div className="text-right">
+                              <p className="font-semibold">{country.clicks}</p>
+
+                              <p className="text-muted-foreground text-xs">
+                                {country.percentage}%
+                              </p>
                             </div>
                           </div>
-                        ))
+
+                          <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+                            <div
+                              className="bg-foreground h-full rounded-full"
+                              style={{
+                                width: `${country.percentage}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))
                     ) : (
                       <div className="text-muted-foreground p-4 text-center text-sm">
                         No country data yet
@@ -484,38 +482,36 @@ export default function AnalyticsDashboard() {
             </>
           )}
 
-          {!loading && !isError && (!analytics || analytics.totalClicks === 0) && (
-            <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <LiveVisitors username={username || ""} isPro={isPro} />
-              </div>
-
-
-
-              <div className="border-border bg-background flex flex-col items-center justify-center rounded-2xl border p-12 text-center shadow-sm">
-                <div className="bg-muted mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <BarChart3 size={20} className="text-muted-foreground" />
+          {!loading &&
+            !isError &&
+            (!analytics || analytics.totalClicks === 0) && (
+              <>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <LiveVisitors username={username || ""} isPro={isPro} />
                 </div>
-                <h3 className="text-foreground mb-1.5 text-base font-medium">
-                  No analytics data yet
-                </h3>
-                <p className="text-muted-foreground mb-6 max-w-sm text-sm">
-                  Share your page with your audience to start tracking views and
-                  clicks.
-                </p>
-                <button
-                  className="bg-primary text-primary-foreground inline-flex h-9 cursor-pointer items-center justify-center rounded-lg px-4 text-sm font-medium shadow-sm transition-opacity duration-200 hover:opacity-90 active:scale-[0.98]"
-                  onClick={() => router.push("/public-profile")}
-                >
-                  View public page
-                </button>
-              </div>
-            </>
-          )}
 
+                <div className="border-border bg-background flex flex-col items-center justify-center rounded-2xl border p-12 text-center shadow-sm">
+                  <div className="bg-muted mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+                    <BarChart3 size={20} className="text-muted-foreground" />
+                  </div>
+                  <h3 className="text-foreground mb-1.5 text-base font-medium">
+                    No analytics data yet
+                  </h3>
+                  <p className="text-muted-foreground mb-6 max-w-sm text-sm">
+                    Share your page with your audience to start tracking views
+                    and clicks.
+                  </p>
+                  <button
+                    className="bg-primary text-primary-foreground inline-flex h-9 cursor-pointer items-center justify-center rounded-lg px-4 text-sm font-medium shadow-sm transition-opacity duration-200 hover:opacity-90 active:scale-[0.98]"
+                    onClick={() => router.push("/public-profile")}
+                  >
+                    View public page
+                  </button>
+                </div>
+              </>
+            )}
         </div>
       </main>
     </>
   );
 }
-
