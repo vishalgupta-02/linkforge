@@ -54,6 +54,8 @@ import { redis } from "../lib/redis.ts";
 
 import { parseUserAgent } from "../utils/device-parser.ts";
 import { parseReferrerSource } from "../utils/referrer.ts";
+import { CLICK_MILESTONES } from "../utils/milestone.ts";
+import { enqueueClickMilestoneEmail } from "../queues/email.queue.ts";
 
 // export const clickWorker = new Worker(
 //   "click-tracking",
@@ -135,7 +137,90 @@ export const clickWorker = new Worker(
       },
     });
 
-    console.log(`✅ Job ${job.id} completed`);
+    console.log(`✅ Job ${job.id} completed (click tracked for link ${linkId})`);
+
+    // 🎯 Check click milestones for the user
+    try {
+      const totalClicks = await prisma.clickEvent.count({
+        where: { userId },
+      });
+
+      // Find all milestones that the user has reached (handles skips like 99 -> 501)
+      const reachedMilestones = CLICK_MILESTONES.filter((m) => totalClicks >= m);
+
+      for (const milestone of reachedMilestones) {
+        let milestoneClaimed = false;
+
+        try {
+          // Atomic insert relying on unique constraint (userId, milestone)
+          await prisma.clickMilestone.create({
+            data: {
+              userId,
+              milestone,
+            },
+          });
+          milestoneClaimed = true;
+          console.log(
+            `🏆 [ClickWorker] Milestone ${milestone} atomically claimed for user ${userId} (total clicks: ${totalClicks})`,
+          );
+        } catch (claimError: any) {
+          // P2002 is Prisma unique constraint violation code
+          if (
+            claimError?.code === "P2002" ||
+            claimError?.message?.includes("Unique constraint") ||
+            claimError?.message?.includes("unique constraint")
+          ) {
+            // Already claimed by another click / worker
+            milestoneClaimed = false;
+          } else {
+            console.error(
+              `❌ [ClickWorker] Error while claiming milestone ${milestone} for user ${userId}:`,
+              claimError,
+            );
+          }
+        }
+
+        if (milestoneClaimed) {
+          // Fetch user details for sending the email
+          const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              userName: true,
+            },
+          });
+
+          if (user?.email) {
+            const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+            const dashboardUrl = `${frontendUrl.replace(/\/$/, "")}/dashboard`;
+
+            await enqueueClickMilestoneEmail({
+              userId: user.id,
+              userName: user.userName || user.name || "Creator",
+              email: user.email,
+              milestone,
+              totalClicks,
+              dashboardUrl,
+            });
+
+            console.log(
+              `📬 [ClickWorker] Enqueued click milestone (${milestone}) email for user ${user.id} (${user.email})`,
+            );
+          } else {
+            console.warn(
+              `⚠️ [ClickWorker] User ${userId} not found or has no email for milestone ${milestone}`,
+            );
+          }
+        }
+      }
+    } catch (milestoneError) {
+      console.error(
+        `❌ [ClickWorker] Failed to process milestones for user ${userId}:`,
+        milestoneError,
+      );
+    }
   },
 
   {

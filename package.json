@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm -r dev",
+    "email:dev": "pnpm --filter api email:dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "dev:infra": "docker compose -f infra/docker-compose.yml up -d",

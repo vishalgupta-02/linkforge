@@ -1,8 +1,23 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "../db/client.ts";
-import { generateUsername, normalizeUsername } from "../utils/username.ts";
+import {
+  generateUsername,
+  normalizeUsername,
+  isValidUsername,
+  isReservedUsername,
+} from "../utils/username.ts";
 import { isUsernameAvailable } from "../services/username.service.ts";
+import { enqueueWelcomeEmail } from "../queues/email.queue.ts";
+
+const appBaseUrl =
+  process.env.FRONTEND_URL ||
+  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.APP_URL ||
+  process.env.BETTER_AUTH_URL?.replace(/\/api\/auth.*/, "") ||
+  "http://localhost:3000";
+
+const dashboardUrl = `${appBaseUrl.replace(/\/$/, "")}/dashboard`;
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -56,34 +71,47 @@ export const auth = betterAuth({
               provider: data.emailVerified ? "email" : "unknown",
             });
 
-            // Generate username from user's name (works for both email/password and social signin)
-            let generatedOne = generateUsername(
-              data.name || data.email || "user",
-            );
+            const candidateName = data.name ? normalizeUsername(data.name) : "";
+            let generatedOne = "";
 
-            console.log(`📝 Generated initial username: ${generatedOne}`);
-
-            let attempts = 0;
-            const maxAttempts = 5;
-
-            while (
-              !(await isUsernameAvailable(generatedOne)) &&
-              attempts < maxAttempts
+            if (
+              candidateName &&
+              isValidUsername(candidateName) &&
+              !isReservedUsername(candidateName) &&
+              (await isUsernameAvailable(candidateName))
             ) {
-              console.log(
-                `⚠️ Username ${generatedOne} taken, attempt ${attempts + 1}/${maxAttempts}`,
-              );
+              generatedOne = candidateName;
+              console.log(`✅ [BEFORE CREATE] Requested username is valid and available: ${generatedOne}`);
+            } else {
+              // Generate username from user's name (works for both email/password and social signin)
               generatedOne = generateUsername(
                 data.name || data.email || "user",
               );
-              attempts++;
-            }
 
-            if (attempts === maxAttempts) {
-              generatedOne = `user_${Date.now()}`;
-              console.log(
-                `⚠️ Max attempts reached, using fallback: ${generatedOne}`,
-              );
+              console.log(`📝 Generated initial username: ${generatedOne}`);
+
+              let attempts = 0;
+              const maxAttempts = 5;
+
+              while (
+                !(await isUsernameAvailable(generatedOne)) &&
+                attempts < maxAttempts
+              ) {
+                console.log(
+                  `⚠️ Username ${generatedOne} taken, attempt ${attempts + 1}/${maxAttempts}`,
+                );
+                generatedOne = generateUsername(
+                  data.name || data.email || "user",
+                );
+                attempts++;
+              }
+
+              if (attempts === maxAttempts) {
+                generatedOne = `user_${Date.now()}`;
+                console.log(
+                  `⚠️ Max attempts reached, using fallback: ${generatedOne}`,
+                );
+              }
             }
 
             console.log(
@@ -115,8 +143,10 @@ export const auth = betterAuth({
           }
         },
         after: async (user) => {
+          let resolvedUsername = user.userName;
+
           // Backup: if username is still NULL after creation, generate it
-          if (!user.userName) {
+          if (!resolvedUsername) {
             console.warn(
               `⚠️ [AFTER CREATE] User ${user.id} has NULL username, generating now...`,
             );
@@ -141,6 +171,8 @@ export const auth = betterAuth({
               `✅ [AFTER CREATE] Generated username for ${user.email}: ${generatedOne}`,
             );
 
+            resolvedUsername = generatedOne;
+
             await prisma.user.update({
               where: { id: user.id },
               data: {
@@ -148,6 +180,25 @@ export const auth = betterAuth({
                 userName_lower: normalizeUsername(generatedOne),
               },
             });
+          }
+
+          // 📬 Asynchronously enqueue welcome email job into BullMQ
+          try {
+            const finalUserName = resolvedUsername || user.name || "Creator";
+            await enqueueWelcomeEmail({
+              userId: user.id,
+              userName: finalUserName,
+              email: user.email,
+              dashboardUrl,
+            });
+            console.log(
+              `📬 [AFTER CREATE] Enqueued welcome email job for user ${user.id} (${user.email})`,
+            );
+          } catch (queueError) {
+            console.error(
+              `❌ [AFTER CREATE] Failed to enqueue welcome email job for user ${user.id}:`,
+              queueError,
+            );
           }
         },
       },
