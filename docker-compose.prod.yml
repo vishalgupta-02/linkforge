@@ -1,0 +1,160 @@
+services:
+  # ============================================================================
+  # 1. PostgreSQL Database Service
+  # ============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: linkflow_postgres_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-codemonkey}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexdbcode}
+      POSTGRES_DB: ${POSTGRES_DB:-nexlinkflow}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-codemonkey} -d ${POSTGRES_DB:-nexlinkflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - linkflow-internal
+
+  # ============================================================================
+  # 2. Redis Cache & BullMQ Queue Service
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: linkflow_redis_prod
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-codemonkey}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-codemonkey}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - linkflow-internal
+
+  # ============================================================================
+  # 3. Express API Backend Service
+  # ============================================================================
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: linkflow_api_prod
+    restart: unless-stopped
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-codemonkey}:${POSTGRES_PASSWORD:-nexdbcode}@postgres:5432/${POSTGRES_DB:-nexlinkflow}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-codemonkey}@redis:6379
+      JWT_SECRET: ${JWT_SECRET:-default-production-jwt-secret-key-32chars}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-default-better-auth-secret-key-32chars}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost/api/auth}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRO_MONTHLY_PRICE_ID: ${STRIPE_PRO_MONTHLY_PRICE_ID:-}
+      STRIPE_PRO_YEARLY_PRICE_ID: ${STRIPE_PRO_YEARLY_PRICE_ID:-}
+      STRIPE_BUSINESS_MONTHLY_PRICE_ID: ${STRIPE_BUSINESS_MONTHLY_PRICE_ID:-}
+      STRIPE_BUSINESS_YEARLY_PRICE_ID: ${STRIPE_BUSINESS_YEARLY_PRICE_ID:-}
+      LINKFLOW_CLOUDINARY_CLOUD_NAME: ${LINKFLOW_CLOUDINARY_CLOUD_NAME:-}
+      LINKFLOW_CLOUDINARY_API_KEY: ${LINKFLOW_CLOUDINARY_API_KEY:-}
+      LINKFLOW_CLOUDINARY_API_SECRET: ${LINKFLOW_CLOUDINARY_API_SECRET:-}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      GITHUB_OAUTH_CLIENT_ID: ${GITHUB_OAUTH_CLIENT_ID:-}
+      GITHUB_OAUTH_CLIENT_SECRET: ${GITHUB_OAUTH_CLIENT_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:5000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    networks:
+      - linkflow-internal
+      - linkflow-public
+
+  # ============================================================================
+  # 4. Next.js Standalone Frontend Service
+  # ============================================================================
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: linkflow_web_prod
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      HOSTNAME: "0.0.0.0"
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+      BACKEND_INTERNAL_URL: http://api:5000
+      NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://localhost}
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/').then(r => process.exit(r.ok || r.status === 307 || r.status === 308 ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    networks:
+      - linkflow-public
+
+  # ============================================================================
+  # 5. Nginx Reverse Proxy Public Gateway
+  # ============================================================================
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: linkflow_nginx_prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certs:/etc/nginx/ssl:ro
+    depends_on:
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/nginx-health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
+    networks:
+      - linkflow-public
+
+# ==============================================================================
+# Persistent Named Volumes
+# ==============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# ==============================================================================
+# Isolated Internal and Public Application Networks
+# ==============================================================================
+networks:
+  linkflow-internal:
+    driver: bridge
+  linkflow-public:
+    driver: bridge

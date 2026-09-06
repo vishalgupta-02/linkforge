@@ -1,0 +1,55 @@
+# Git & version control
+.git
+.gitignore
+.gitlab-ci.yml
+.husky
+
+# Dependencies & caches
+node_modules
+**/node_modules
+.pnpm-store
+.npm
+.turbo
+
+# Build outputs & artifacts
+dist
+**/dist
+.next
+**/out
+build
+**/build
+generated
+**/generated
+
+# Tests & coverage
+coverage
+test-results.txt
+tests
+**/tests
+**/*.test.ts
+**/*.test.js
+**/*.spec.ts
+**/*.spec.js
+
+# Environment variables & secrets
+.env
+.env.*
+.env.local
+!.env.example
+
+# Logs & temp files
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+logs-images
+
+# Editor & OS files
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Documentation & markdown
+*.md
+docs
