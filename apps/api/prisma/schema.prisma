@@ -229,3 +229,14 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
+
+model StripeWebhookEvent {
+  id          String   @id @default(uuid())
+  eventId     String   @unique
+  eventType   String
+  processedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@map("stripe_webhook_event")
+}
+

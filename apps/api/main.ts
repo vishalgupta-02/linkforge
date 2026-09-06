@@ -18,9 +18,23 @@ startCleanupJob();
 
 // Parse JSON and URL-encoded bodies BEFORE auth handler
 app.use(corsMiddleware);
-app.use(express.json());
+
+// ⚡ Stripe Webhook requires raw Buffer body for signature verification
+app.use(
+  "/api/v1/billing/webhook",
+  express.raw({ type: "application/json" }),
+);
+
+app.use(
+  express.json({
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf;
+    },
+  }),
+);
 app.use(express.urlencoded({ extended: true }));
 app.use(rateLimitMiddleware);
+
 
 app.disable("x-powered-by");
 

@@ -1,27 +1,65 @@
 "use client";
 
-import React, { useState } from "react";
-import { Moon, Sun, Laptop, AlertTriangle } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import {
+  Moon,
+  Sun,
+  Laptop,
+  AlertTriangle,
+  Loader2,
+  Sparkles,
+  CreditCard,
+  Calendar,
+  ShieldCheck,
+} from "lucide-react";
+import { useUserProfile } from "@/hooks/use-user-profile";
+import { useBillingStatus } from "@/hooks/use-billing-status";
+import { useBillingPortal } from "@/hooks/use-billing-portal";
+import { useCreateCheckout } from "@/hooks/use-create-checkout";
+import { authClient } from "@/lib/auth-client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 
 export default function SettingsSubpage() {
   const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
   const [isEditingEmail, setIsEditingEmail] = useState(false);
 
+  const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+
+  const { data: session } = authClient.useSession();
+  const { data: userProfile } = useUserProfile();
+  const { data: billingStatus, isLoading: isBillingLoading } =
+    useBillingStatus();
+  const { mutate: openPortal, isPending: isPortalPending } = useBillingPortal();
+  const { mutate: openCheckout, isPending: isCheckoutPending } =
+    useCreateCheckout();
+
+  // Invalidate queries when returning from Stripe checkout or portal
+  useEffect(() => {
+    if (searchParams.get("checkout") === "success") {
+      queryClient.invalidateQueries({ queryKey: ["billingStatus"] });
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+    }
+  }, [searchParams, queryClient]);
+
+  const plan = billingStatus?.data?.plan || userProfile?.data?.plan || "FREE";
+  const isPro =
+    plan.toUpperCase() === "PRO" || plan.toUpperCase() === "BUSINESS";
+  const subscriptionStatus = billingStatus?.data?.subscriptionStatus || "INACTIVE";
+  const nextBillingDate = billingStatus?.data?.nextBillingDate
+    ? new Date(billingStatus.data.nextBillingDate).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
+  const isCanceling = billingStatus?.data?.cancelAtPeriodEnd;
+
   return (
     <div className="bg-background text-foreground selection:bg-primary/30 flex min-h-screen font-sans">
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-7xl space-y-8 px-6 py-10 md:py-2">
-          {/* <header className="mb-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
-              <h1 className="text-foreground text-xl font-semibold tracking-tight">
-                Settings
-              </h1>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Manage your account, security, and preferences.
-              </p>
-            </div>
-          </header> */}
-
           <section>
             <h2 className="text-foreground mb-3 px-1 text-sm font-bold tracking-wider uppercase">
               Account
@@ -29,7 +67,7 @@ export default function SettingsSubpage() {
             <div className="border-border bg-background divide-border divide-y rounded-xl border px-5 shadow-sm">
               <SettingRow
                 title="Email Address"
-                description="sarah@example.com"
+                description={session?.user?.email || "sarah@example.com"}
                 isEditing={isEditingEmail}
                 setIsEditingEmail={setIsEditingEmail}
                 action={
@@ -41,7 +79,11 @@ export default function SettingsSubpage() {
 
               <SettingRow
                 title="Account Username"
-                description="@sarahdesign"
+                description={
+                  userProfile?.data?.userName
+                    ? `@${userProfile.data.userName}`
+                    : "@sarahdesign"
+                }
                 action={
                   <button className="bg-muted text-muted-foreground inline-flex items-center rounded-md px-2 py-1 text-xs font-medium">
                     Change Username
@@ -53,8 +95,111 @@ export default function SettingsSubpage() {
 
           <section>
             <h2 className="text-foreground mb-3 px-1 text-sm font-bold tracking-wider uppercase">
+              Subscription & Billing
+            </h2>
+            <div className="border-border bg-background divide-border divide-y rounded-xl border px-5 shadow-sm">
+              <SettingRow
+                title="Current Plan"
+                description={
+                  isPro
+                    ? "You are on the Pro plan with unlimited links, custom themes, and advanced analytics."
+                    : "You are on the Free plan. Upgrade to Pro for unlimited links, live visitors, and advanced analytics."
+                }
+                action={
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                        isPro
+                          ? "bg-primary/10 text-primary border-primary/20 border"
+                          : "bg-muted text-muted-foreground border-border border"
+                      }`}
+                    >
+                      {isPro && <Sparkles size={12} className="shrink-0" />}
+                      {isPro ? "PRO" : "FREE"}
+                    </span>
+                    {isPro ? (
+                      <button
+                        onClick={() => openPortal()}
+                        disabled={isPortalPending || isBillingLoading}
+                        className="border-border bg-background text-foreground hover:bg-muted inline-flex h-9 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {isPortalPending ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <CreditCard size={15} />
+                        )}
+                        {isPortalPending
+                          ? "Opening Portal..."
+                          : "Manage Subscription"}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => openCheckout()}
+                        disabled={isCheckoutPending || isBillingLoading}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {isCheckoutPending ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={15} />
+                        )}
+                        {isCheckoutPending ? "Redirecting..." : "Upgrade to Pro"}
+                      </button>
+                    )}
+                  </div>
+                }
+              />
+
+              {isPro && (
+                <>
+                  <SettingRow
+                    title="Subscription Status"
+                    description={
+                      isCanceling
+                        ? "Canceling — access remains active until the end of your billing period."
+                        : `Status: ${subscriptionStatus.toLowerCase()}`
+                    }
+                    action={
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          isCanceling
+                            ? "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                            : "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        }`}
+                      >
+                        <ShieldCheck size={12} />
+                        {isCanceling ? "Canceling" : subscriptionStatus}
+                      </span>
+                    }
+                  />
+
+                  {nextBillingDate && (
+                    <SettingRow
+                      title={isCanceling ? "Access Expires" : "Next Billing Date"}
+                      description={
+                        isCanceling
+                          ? `Your Pro subscription access ends on ${nextBillingDate}.`
+                          : `Your next renewal payment will process on ${nextBillingDate}.`
+                      }
+                      action={
+                        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-medium">
+                          <Calendar size={13} />
+                          {nextBillingDate}
+                        </span>
+                      }
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          </section>
+
+
+          <section>
+            <h2 className="text-foreground mb-3 px-1 text-sm font-bold tracking-wider uppercase">
               Security
             </h2>
+
             <div className="border-border bg-background divide-border divide-y rounded-xl border px-5 shadow-sm">
               <SettingRow
                 title="Password"
