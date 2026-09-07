@@ -26,15 +26,20 @@ export const auth = betterAuth({
   }),
   trustedOrigins: [
     "http://localhost:3000",
-    "https://*.yourdomain.com", // All subdomains
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL.replace(/\/$/, "")] : []),
+    ...(process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim().replace(/\/$/, ""))
+      : []),
+    "https://*.vercel.app",
+    "https://*.yourdomain.com",
   ],
   account: {
     storeAccountCookie: true,
     storeStateStrategy: "database",
     cookieOptions: {
-      secure: false, // Set to false for localhost development
-      sameSite: "lax", // Use "lax" for better security while allowing cross-origin requests
-      httpOnly: true, // Prevent JavaScript access to the cookie
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      httpOnly: true,
       maxAge: 60 * 60 * 24 * 7, // 7 days
     },
   },
@@ -45,19 +50,23 @@ export const auth = betterAuth({
     disableSessionRefresh: true,
     updateAge: 24 * 60 * 60,
   },
-  baseURL: process.env.BETTER_AUTH_URL!,
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000/api/auth",
   socialProviders: {
     google: {
       prompt: "select_account consent",
       accessType: "offline",
-      clientId: process.env.GOOGLE_OAUTH_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET as string,
-      redirectURI: "http://localhost:5000/api/auth/callback/google",
+      clientId: (process.env.GOOGLE_OAUTH_CLIENT_ID || "") as string,
+      clientSecret: (process.env.GOOGLE_OAUTH_CLIENT_SECRET || "") as string,
+      redirectURI:
+        process.env.GOOGLE_OAUTH_REDIRECT_URI ||
+        `${(process.env.BETTER_AUTH_URL || "http://localhost:5000/api/auth").replace(/\/$/, "")}/callback/google`,
     },
     github: {
-      clientId: process.env.GITHUB_OAUTH_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET as string,
-      redirectURI: "http://localhost:5000/api/auth/callback/github",
+      clientId: (process.env.GITHUB_OAUTH_CLIENT_ID || "") as string,
+      clientSecret: (process.env.GITHUB_OAUTH_CLIENT_SECRET || "") as string,
+      redirectURI:
+        process.env.GITHUB_OAUTH_REDIRECT_URI ||
+        `${(process.env.BETTER_AUTH_URL || "http://localhost:5000/api/auth").replace(/\/$/, "")}/callback/github`,
     },
   },
   databaseHooks: {
