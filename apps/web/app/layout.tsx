@@ -8,6 +8,7 @@ import Footer from "@/components/custom/footer";
 import Navbar from "@/components/custom/navbar";
 import { Providers } from "./providers";
 import { Toaster } from "@/components/ui/sonner";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -54,8 +55,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Providers>
+            <Analytics />
             <Navbar />
-            <main className="min-h-screen">{children}</main>
+            <main className="min-h-screen pt-16">{children}</main>
             <Toaster position="top-center" />
             <Footer />
             <EmptyStateStyles />
