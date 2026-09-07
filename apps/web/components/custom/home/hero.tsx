@@ -4,17 +4,17 @@ import { BadgeCheck, Camera, Globe, Palette, PlayCircle } from "lucide-react";
 
 const Hero = () => {
   return (
-    <section className="relative overflow-hidden border-b border-zinc-200 pt-32 pb-16 md:pt-20 md:pb-20 dark:border-white/5">
+    <section className="relative overflow-hidden border-b border-zinc-200 pt-16 pb-16 md:pt-12 md:pb-12 dark:border-white/5">
       <div className="relative z-10 mx-auto flex w-full max-w-[1200px] flex-col items-center gap-32 px-6 md:gap-12 lg:flex-row">
         <div className="animate-fade-in-up flex-1 text-center lg:text-left">
-          <h1 className="mb-6 text-5xl leading-[1.05] font-extrabold tracking-tight text-zinc-950 md:text-7xl dark:text-white">
+          <h1 className="mb-6 text-4xl leading-[1.05] font-extrabold tracking-tight text-zinc-950 md:text-6xl dark:text-white">
             One link.
             <br />
             <span className="text-zinc-400 dark:text-zinc-500">
               All of you.
             </span>
           </h1>
-          <p className="mx-auto mb-8 max-w-xl text-lg leading-relaxed text-zinc-600 lg:mx-0 dark:text-zinc-400">
+          <p className="mx-auto mb-8 max-w-xl text-sm leading-relaxed text-zinc-600 lg:mx-0 dark:text-zinc-400">
             Share your links, content, and identity — all in one beautifully
             designed page. Turn your audience into a destination.
           </p>

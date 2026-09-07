@@ -10,6 +10,8 @@ import { AnimatedThemeToggler } from "../ui/animated-theme-toggler";
 const HIDDEN_NAVBAR_ROUTES = [
   "/signin",
   "/signup",
+  "/forgot-password",
+  "/reset-password",
   "/dashboard",
   "/onboarding",
   "/user",
