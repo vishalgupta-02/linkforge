@@ -1,0 +1,255 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 20
+  PNPM_VERSION: 11.21.0
+
+jobs:
+  # ============================================================
+  # 1. QUALITY GATE
+  # ============================================================
+  test:
+    name: Test & Build Validation
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/linkforge_test?schema=public"
+      NEXT_PUBLIC_BACKEND_URL: "http://localhost:5000"
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter api exec prisma generate
+
+      - name: Run ESLint
+        run: pnpm lint
+
+      - name: Run API tests
+        run: pnpm --filter api exec vitest run
+
+      - name: Type check API
+        run: pnpm --filter api exec tsc --noEmit
+
+      - name: Type check Web
+        run: pnpm --filter web exec tsc --noEmit
+
+      - name: Build API
+        run: pnpm --filter api build
+
+      - name: Build Web
+        run: pnpm --filter web build
+
+  # ============================================================
+  # 2. DEPLOY API TO RAILWAY
+  # ============================================================
+  deploy-api:
+    name: Deploy API to Railway
+    runs-on: ubuntu-latest
+    needs: test
+
+    environment:
+      name: production-api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Railway CLI
+        run: pnpm add --global @railway/cli
+
+      - name: Deploy API to Railway
+        working-directory: apps/api
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up --ci \
+            --service "${{ secrets.RAILWAY_SERVICE }}" \
+            --environment production \
+            --project "${{ secrets.RAILWAY_PROJECT }}" \
+            --message "Deploy ${GITHUB_SHA}"
+
+  # ============================================================
+  # 3. DEPLOY WEB TO VERCEL
+  # ============================================================
+  deploy-web:
+    name: Deploy Web to Vercel
+    runs-on: ubuntu-latest
+    needs: test
+
+    environment:
+      name: production-web
+
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Vercel CLI
+        run: pnpm add --global vercel@latest
+
+      - name: Pull Vercel production environment
+        working-directory: apps/web
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          vercel pull \
+            --yes \
+            --environment=production \
+            --token="$VERCEL_TOKEN"
+
+      - name: Build Vercel production artifact
+        working-directory: apps/web
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          vercel build \
+            --prod \
+            --token="$VERCEL_TOKEN"
+
+      - name: Deploy Vercel production artifact
+        working-directory: apps/web
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          vercel deploy \
+            --prebuilt \
+            --prod \
+            --token="$VERCEL_TOKEN"
+
+  # ============================================================
+  # 4. PRODUCTION HEALTH CHECK
+  # ============================================================
+  health-check:
+    name: Production Health Check
+    runs-on: ubuntu-latest
+    needs:
+      - deploy-api
+      - deploy-web
+
+    environment:
+      name: production
+
+    steps:
+      - name: Check API health
+        env:
+          API_HEALTH_URL: ${{ secrets.API_HEALTH_URL }}
+        run: |
+          echo "Checking API health..."
+
+          MAX_RETRIES=12
+          DELAY_SECONDS=5
+
+          for ATTEMPT in $(seq 1 $MAX_RETRIES); do
+            echo "Attempt $ATTEMPT/$MAX_RETRIES"
+
+            if curl \
+              --fail \
+              --silent \
+              --show-error \
+              --max-time 10 \
+              "$API_HEALTH_URL/health"; then
+
+              echo "API is healthy."
+              exit 0
+            fi
+
+            if [ "$ATTEMPT" -lt "$MAX_RETRIES" ]; then
+              echo "API not ready. Retrying in ${DELAY_SECONDS}s..."
+              sleep "$DELAY_SECONDS"
+            fi
+          done
+
+          echo "API health check failed."
+          exit 1
+
+      - name: Check Web
+        env:
+          WEB_URL: ${{ secrets.WEB_URL }}
+        run: |
+          echo "Checking web..."
+
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --max-time 10 \
+            "$WEB_URL"
+
+          echo "Web is healthy."
+
+  # ============================================================
+  # 5. DEPLOYMENT SUMMARY
+  # ============================================================
+  deployment-success:
+    name: Deployment Successful
+    runs-on: ubuntu-latest
+    needs:
+      - health-check
+
+    steps:
+      - name: Deployment complete
+        run: |
+          echo "=========================================="
+          echo " LinkFlow production deployment succeeded"
+          echo " Commit: ${GITHUB_SHA}"
+          echo "=========================================="

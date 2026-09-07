@@ -1,0 +1,56 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test and Quality Checks
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/linkforge_test?schema=public"
+      NEXT_PUBLIC_BACKEND_URL: "http://localhost:5000"
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+
+      - name: Setup Node.js runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter api exec prisma generate
+
+      - name: Run ESLint
+        run: pnpm lint
+
+      - name: Run Vitest tests
+        run: pnpm --filter api exec vitest run
+
+      - name: Run TypeScript type check
+        run: |
+          pnpm --filter api exec tsc --noEmit
+          pnpm --filter web exec tsc --noEmit
+
+      - name: Build TypeScript backend
+        run: pnpm --filter api build
+
+      - name: Build Next.js application
+        run: pnpm --filter web build
