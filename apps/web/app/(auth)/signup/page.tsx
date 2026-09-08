@@ -59,9 +59,12 @@ export default function PremiumCreatorSignup() {
       await userSignup(username.trim(), email.trim(), password);
       toast.success("Account created successfully! Welcome to LinkFlow.");
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err) {
       console.error("Signup error:", err);
-      toast.error(err.message || "Failed to create account. Please try again.");
+      toast.error(
+        (err as { message?: string })?.message ||
+          "Failed to create account. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }

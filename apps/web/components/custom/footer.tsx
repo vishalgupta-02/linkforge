@@ -16,6 +16,8 @@ import {
 const HIDDEN_FOOTER_ROUTES = [
   "/signin",
   "/signup",
+  "/forgot-password",
+  "/reset-password",
   "/dashboard",
   "/onboarding",
   "/user",
