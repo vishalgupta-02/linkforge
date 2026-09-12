@@ -10,6 +10,8 @@
 import type { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 import { Prisma } from "apps/api/generated/prisma/client.ts";
+import { captureSentryWithRichContext } from "../utils/sentry-context.ts";
+import { logger } from "../lib/logger.ts";
 
 const NODE_ENV = process.env.NODE_ENV || "development";
 
@@ -69,6 +71,22 @@ export function errorMiddleware(
   // 🔹 4. Fallback generic error
   else if (err instanceof Error) {
     message = err.message || message;
+  }
+
+  // 📝 Structured error log
+  logger.error("api.request.error", {
+    event: "api.request.error",
+    requestId: req.id || req.requestId,
+    method: req.method,
+    path: req.path,
+    statusCode,
+  }, err);
+
+  // 🛡️ Report unexpected server errors (5xx) to Sentry with rich, isolated context
+  if (statusCode >= 500 && process.env.SENTRY_DSN) {
+    captureSentryWithRichContext(err, req).catch(() => {
+      // Sentry enrichment failure must never impact the API error response
+    });
   }
 
   // 🧪 Dev vs Prod behavior

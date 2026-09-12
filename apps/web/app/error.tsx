@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { useThemeStore } from "@/store";
 
@@ -12,8 +13,8 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Optionally log the error to an error reporting service
     console.error(error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (

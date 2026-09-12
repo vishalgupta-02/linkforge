@@ -2,7 +2,9 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useEffect } from "react";
+
 import { useThemeStore } from "@/store";
+import { SentryAuthSync } from "@/components/providers/sentry-auth-sync";
 
 function ThemeInitializer() {
   const setTheme = useThemeStore((state) => state.setTheme);
@@ -29,6 +31,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeInitializer />
+      <SentryAuthSync />
       {children}
     </QueryClientProvider>
   );

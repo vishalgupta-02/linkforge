@@ -74,7 +74,12 @@ jobs:
     needs: test
 
     environment:
-      name: production-api
+      name: production
+
+    env:
+      SENTRY_ENVIRONMENT: production
+      SENTRY_RELEASE: linkforge-api@${{ github.sha }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
     steps:
       - name: Checkout repository
@@ -93,7 +98,20 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Railway CLI
-        run: pnpm add --global @railway/cli
+        run: pnpm add --global @railway/cli@5.47.1
+
+      - name: Configure Sentry on Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway variable set \
+            "SENTRY_DSN=${SENTRY_DSN}" \
+            "SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT}" \
+            "SENTRY_RELEASE=${SENTRY_RELEASE}" \
+            --service "${{ secrets.RAILWAY_SERVICE }}" \
+            --environment production \
+            --project "${{ secrets.RAILWAY_PROJECT }}" \
+            --skip-deploys
 
       - name: Deploy API to Railway
         working-directory: apps/api
@@ -115,7 +133,7 @@ jobs:
     needs: test
 
     environment:
-      name: production-web
+      name: production
 
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -138,7 +156,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Vercel CLI
-        run: pnpm add --global vercel@latest
+        run: pnpm add --global vercel@59.9.1
 
       - name: Pull Vercel production environment
         working-directory: apps/web
@@ -154,6 +172,9 @@ jobs:
         working-directory: apps/web
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+          SENTRY_ENVIRONMENT: production
+          SENTRY_RELEASE: linkforge-web@${{ github.sha }}
         run: |
           vercel build \
             --prod \
@@ -245,4 +266,6 @@ jobs:
           echo "=========================================="
           echo " LinkFlow production deployment succeeded"
           echo " Commit: ${GITHUB_SHA}"
+          echo " API Release: linkforge-api@${GITHUB_SHA}"
+          echo " Web Release: linkforge-web@${GITHUB_SHA}"
           echo "=========================================="

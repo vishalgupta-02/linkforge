@@ -1,15 +1,7 @@
 import Redis from "ioredis";
+import * as Sentry from "@sentry/node";
+import { logger } from "./logger.ts";
 
-// export const redis = new Redis({
-//   host: "localhost",
-//   port: 6379,
-// });
-
-// const redis = new Redis({
-//   host: process.env.REDIS_HOST,
-//   port: Number(process.env.REDIS_PORT),
-//   password: process.env.REDIS_PASSWORD,
-// });
 
 export const redis = process.env.REDIS_URL
   ? new Redis(process.env.REDIS_URL, {
@@ -23,9 +15,13 @@ export const redis = process.env.REDIS_URL
     });
 
 redis.on("connect", () => {
-  console.log("✅ Redis connected");
+  logger.info("Redis connected successfully", { event: "redis.connect.success" });
 });
 
 redis.on("error", (error) => {
-  console.error("❌ Redis connection error:", error);
+  logger.error("Redis connection error", { event: "redis.connection.error" }, error);
+  if (process.env.NODE_ENV === "production") {
+    Sentry.captureException(error);
+  }
 });
+
