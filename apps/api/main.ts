@@ -10,20 +10,22 @@ import { startCleanupJob } from "./src/cron/cleanup.cron.ts";
 import { rateLimitMiddleware } from "./src/middlewares/rateLimit.middleware.ts";
 import helmet from "helmet";
 import { corsMiddleware } from "./src/middlewares/cors.ts";
+import { requestIdMiddleware } from "./src/middlewares/request-id.middleware.ts";
 import { serverAdapter } from "./src/lib/bull-board.ts";
+import * as Sentry from "@sentry/node";
 
 const app: Express = express();
 
 startCleanupJob();
 
+// 🆔 Attach and propagate unique Request IDs
+app.use(requestIdMiddleware);
+
 // Parse JSON and URL-encoded bodies BEFORE auth handler
 app.use(corsMiddleware);
 
 // ⚡ Stripe Webhook requires raw Buffer body for signature verification
-app.use(
-  "/api/v1/billing/webhook",
-  express.raw({ type: "application/json" }),
-);
+app.use("/api/v1/billing/webhook", express.raw({ type: "application/json" }));
 
 app.use(
   express.json({
@@ -34,7 +36,6 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true }));
 app.use(rateLimitMiddleware);
-
 
 app.disable("x-powered-by");
 
@@ -92,18 +93,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// error handler
-// app.use((err, req, res, next) => {
-//   if (err.message === "Not allowed by CORS") {
-//     return res.status(403).json({
-//       success: false,
-//       message: "CORS policy: origin not allowed",
-//     });
-//   }
-
-//   next(err);
-// });
-
 // Mount Better Auth handler
 app.use("/api/auth", toNodeHandler(auth));
 
@@ -133,6 +122,8 @@ app.use("/api", apiRoutes);
 app.use("/{*path}", (req, res, next) => {
   next(new AppError(`Route ${req.originalUrl} not found`, 404));
 });
+
+Sentry.setupExpressErrorHandler(app);
 
 app.use(errorMiddleware);
 

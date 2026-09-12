@@ -3,6 +3,8 @@ packages:
   - 'packages/*'
 allowBuilds:
   '@prisma/engines': true
+  '@sentry/cli': true
+  '@sentry/node-cpu-profiler': false
   bcrypt: true
   esbuild: true
   msgpackr-extract: true
