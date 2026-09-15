@@ -2,4 +2,6 @@ import "dotenv/config";
 import "./workers/click.worker.ts";
 import "./workers/email.worker.ts";
 
-console.log("🚀 Workers (Click & Email) started successfully");
+import { logger } from "./lib/logger.ts";
+
+logger.info("Workers (Click & Email) started successfully", { event: "worker.startup.success" });

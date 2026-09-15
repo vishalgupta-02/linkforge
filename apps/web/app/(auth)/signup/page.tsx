@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   Sparkles,
   Loader2,
@@ -16,10 +17,11 @@ import { toast } from "sonner";
 import { userSignup } from "@/apis/user-signup";
 import { googleSignIn } from "@/apis/google-signin";
 
-export default function PremiumCreatorSignup() {
+function SignupForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
 
+  const searchParams = useSearchParams();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,7 +31,11 @@ export default function PremiumCreatorSignup() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    const initialUsername = searchParams.get("username");
+    if (initialUsername) {
+      setUsername(initialUsername);
+    }
+  }, [searchParams]);
 
   const hasMinLength = password.length >= 8;
   const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
@@ -369,17 +375,31 @@ export default function PremiumCreatorSignup() {
               </div>
               <p className="text-center text-sm font-medium text-zinc-400">
                 Already have an account?{" "}
-                <a
+                <Link
                   href="/signin"
                   className="font-semibold text-white transition-colors hover:text-violet-400"
                 >
                   Sign in
-                </a>
+                </Link>
               </p>
             </div>
           </div>
         </div>
       </div>
     </>
+  );
+}
+
+export default function PremiumCreatorSignup() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a]">
+          <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+        </div>
+      }
+    >
+      <SignupForm />
+    </Suspense>
   );
 }

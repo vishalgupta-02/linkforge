@@ -103,18 +103,17 @@ export function AppSidebar() {
           <div className="bg-foreground text-background flex h-8 w-8 items-center justify-center rounded-lg shadow-sm">
             <Pentagon size={24} strokeWidth={2.5} className="text-background" />
           </div>
-          <span className="text-foreground font-serif text-2xl font-bold tracking-tight group-data-[state=collapsed]:hidden">
+          <span className="text-foreground font-custom-sans text-2xl font-bold tracking-tight group-data-[state=collapsed]:hidden">
             linkforge
           </span>
         </Link>
-        <div></div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          {/* <SidebarGroupLabel className="group-data-[state=collapsed]:hidden">
+          <SidebarGroupLabel className="group-data-[state=collapsed]:hidden">
             Main Menu
-          </SidebarGroupLabel> */}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
@@ -177,39 +176,39 @@ export function AppSidebar() {
                 >
                   <Button
                     variant="outline"
-                    onClick={() => router.push("/dashboard/profile")}
                     className="flex items-center justify-start gap-3 text-sm font-medium focus:border-none focus:ring-0 focus:outline-none"
                   >
                     <User className="h-4 w-4" />
                     <span className="group-data-[state=collapsed]:hidden">
-                      Profile
+                      Account
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                <DropdownMenuContent className="w-56" align="start">
                   <DropdownMenuGroup>
-                    <DropdownMenuLabel className="text-sm">
-                      Linkforge&apos;s Future Roadmap
-                    </DropdownMenuLabel>
-                    <DropdownMenuItem className="cursor-pointer">
-                      Docs
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => router.push("/dashboard/profile")}
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                      Version 2(Better & More)
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => router.push("/dashboard/settings")}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings & Billing</span>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem asChild>
-                      <Button
-                        className="w-full cursor-pointer bg-white text-left hover:bg-red-50 focus:border-none focus:ring-0 focus:outline-none dark:bg-zinc-200 dark:hover:bg-red-500"
-                        onClick={logoutHandler}
-                      >
-                        <LogOut className="h-4 w-4" />
-                        <span>Logout</span>
-                      </Button>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
+                  <DropdownMenuItem
+                    className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/50"
+                    onClick={logoutHandler}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </SidebarMenuButton>

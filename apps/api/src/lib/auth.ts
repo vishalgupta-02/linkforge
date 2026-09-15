@@ -9,6 +9,7 @@ import {
 } from "../utils/username.ts";
 import { isUsernameAvailable } from "../services/username.service.ts";
 import { enqueueWelcomeEmail } from "../queues/email.queue.ts";
+import { recordUserSignup } from "./metrics.ts";
 
 const appBaseUrl =
   process.env.FRONTEND_URL ||
@@ -26,12 +27,17 @@ export const auth = betterAuth({
   }),
   trustedOrigins: [
     "http://localhost:3000",
-    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL.replace(/\/$/, "")] : []),
+    ...(process.env.FRONTEND_URL
+      ? [process.env.FRONTEND_URL.replace(/\/$/, "")]
+      : []),
     ...(process.env.CORS_ORIGIN
-      ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim().replace(/\/$/, ""))
+      ? process.env.CORS_ORIGIN.split(",").map((o) =>
+          o.trim().replace(/\/$/, ""),
+        )
       : []),
     "https://*.vercel.app",
-    "https://*.yourdomain.com",
+    appBaseUrl,
+    // "https://*.yourdomain.com",
   ],
   account: {
     storeAccountCookie: true,
@@ -55,18 +61,30 @@ export const auth = betterAuth({
     google: {
       prompt: "select_account consent",
       accessType: "offline",
-      clientId: (process.env.GOOGLE_OAUTH_CLIENT_ID || "") as string,
-      clientSecret: (process.env.GOOGLE_OAUTH_CLIENT_SECRET || "") as string,
+      clientId: (process.env.GOOGLE_OAUTH_CLIENT_ID ||
+        process.env.GOOGLE_CLIENT_ID ||
+        "") as string,
+      clientSecret: (process.env.GOOGLE_OAUTH_CLIENT_SECRET ||
+        process.env.GOOGLE_CLIENT_SECRET ||
+        "") as string,
       redirectURI:
+        process.env.GOOGLE_CALLBACK_URL ||
         process.env.GOOGLE_OAUTH_REDIRECT_URI ||
-        `${(process.env.BETTER_AUTH_URL || "http://localhost:5000/api/auth").replace(/\/$/, "")}/callback/google`,
+        process.env.GOOGLE_REDIRECT_URI ||
+        "http://localhost:5000/callback/google",
     },
     github: {
-      clientId: (process.env.GITHUB_OAUTH_CLIENT_ID || "") as string,
-      clientSecret: (process.env.GITHUB_OAUTH_CLIENT_SECRET || "") as string,
+      clientId: (process.env.GITHUB_OAUTH_CLIENT_ID ||
+        process.env.GITHUB_CLIENT_ID ||
+        "") as string,
+      clientSecret: (process.env.GITHUB_OAUTH_CLIENT_SECRET ||
+        process.env.GITHUB_CLIENT_SECRET ||
+        "") as string,
       redirectURI:
+        process.env.GITHUB_CALLBACK_URL ||
         process.env.GITHUB_OAUTH_REDIRECT_URI ||
-        `${(process.env.BETTER_AUTH_URL || "http://localhost:5000/api/auth").replace(/\/$/, "")}/callback/github`,
+        process.env.GITHUB_REDIRECT_URI ||
+        "http://localhost:5000/callback/github",
     },
   },
   databaseHooks: {
@@ -90,7 +108,9 @@ export const auth = betterAuth({
               (await isUsernameAvailable(candidateName))
             ) {
               generatedOne = candidateName;
-              console.log(`✅ [BEFORE CREATE] Requested username is valid and available: ${generatedOne}`);
+              console.log(
+                `✅ [BEFORE CREATE] Requested username is valid and available: ${generatedOne}`,
+              );
             } else {
               // Generate username from user's name (works for both email/password and social signin)
               generatedOne = generateUsername(
@@ -190,6 +210,9 @@ export const auth = betterAuth({
               },
             });
           }
+
+          // 📊 Record business metric for successfully created user
+          recordUserSignup();
 
           // 📬 Asynchronously enqueue welcome email job into BullMQ
           try {

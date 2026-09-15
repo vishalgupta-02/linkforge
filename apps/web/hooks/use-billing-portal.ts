@@ -16,8 +16,8 @@ export function useBillingPortal() {
   return useMutation<BillingPortalResponse, Error, void>({
     mutationFn: async () => {
       if (!session?.user) {
-        router.push("/sign-in");
-        throw new Error("Please sign in to manage your subscription.");
+        router.push("/signin");
+        throw new Error("Please sign in to access the billing portal.");
       }
       return getBillingPortalSession();
     },

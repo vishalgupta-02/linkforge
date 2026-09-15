@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/node";
 import { auth } from "../lib/auth.ts";
 import { AppError } from "../utils/api-error.ts";
 import { formatPlan } from "../utils/sentry-context.ts";
+import { updateUserContext } from "../lib/request-context.ts";
 
 export const protectedRoute = async (
   request: Request,
@@ -27,7 +28,7 @@ export const protectedRoute = async (
     userName: (session.user as any)?.userName || (session.user as any)?.username || null,
   };
 
-  // 🛡️ Attach request-isolated user context to Sentry
+  // 🛡️ Attach request-isolated user context to Sentry & AsyncLocalStorage
   try {
     Sentry.setUser({
       id: session.user.id,
@@ -36,6 +37,8 @@ export const protectedRoute = async (
   } catch {
     // Sentry context enrichment must never fail request processing
   }
+
+  updateUserContext(session.user.id);
 
   next();
 };

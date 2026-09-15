@@ -54,6 +54,7 @@ enum Plan {
 
 model Link {
   id     String  @id @default(uuid())
+  publicId String? @unique
   title  String
   url    String
   

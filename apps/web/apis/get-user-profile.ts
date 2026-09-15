@@ -4,7 +4,11 @@ import axios from "axios";
 
 export interface UserProfileData {
   id: string;
+  name?: string;
   userName: string;
+  bio?: string | null;
+  image?: string | null;
+  email?: string | null;
   plan: "FREE" | "PRO" | "BUSINESS";
 }
 

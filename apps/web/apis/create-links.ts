@@ -5,8 +5,9 @@ import axios from "axios";
 type CreateLinkParams = {
   url: string;
   title: string;
-  position: number;
+  position?: number;
   public: boolean;
+  isActive?: boolean;
 };
 
 export async function createLinks({
@@ -45,14 +46,10 @@ export async function createLinks({
       console.error("API Error Response:", error.response?.data);
       console.error("API Error Status:", error.response?.status);
 
-      if (error.response?.status === 404) {
-        throw new Error("Link not found");
-      }
-
-      if (error.response?.status === 400) {
-        const errorMessage = error.response?.data?.message || "Invalid request";
-        throw new Error(`Bad Request: ${errorMessage}`);
-      }
+      const errorMessage =
+        error.response?.data?.message ||
+        (error.response?.status === 404 ? "Link not found" : "Failed to create link");
+      throw new Error(errorMessage);
     }
     console.error("Failed to create link:", error);
     throw error;

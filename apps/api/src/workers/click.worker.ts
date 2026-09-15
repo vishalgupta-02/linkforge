@@ -56,6 +56,9 @@ import { parseUserAgent } from "../utils/device-parser.ts";
 import { parseReferrerSource } from "../utils/referrer.ts";
 import { CLICK_MILESTONES } from "../utils/milestone.ts";
 import { enqueueClickMilestoneEmail } from "../queues/email.queue.ts";
+import { recordClickProcessed } from "../lib/metrics.ts";
+import * as Sentry from "@sentry/node";
+import { logger } from "../lib/logger.ts";
 
 // export const clickWorker = new Worker(
 //   "click-tracking",
@@ -143,7 +146,15 @@ export const clickWorker = new Worker(
             },
           });
 
-          console.log(`✅ Job ${job.id} completed (click tracked for link ${linkId})`);
+          // 📊 Record business metric for successfully processed click
+          recordClickProcessed();
+
+          logger.info("Click tracking job completed", {
+            event: "worker.click.completed",
+            queue: "click-tracking",
+            jobId: String(job.id),
+            linkId,
+          });
 
           // -----------------------------------------------------------------
           // 🏆 CLICK MILESTONES DETECTION & NOTIFICATION LOGIC
@@ -168,9 +179,12 @@ export const clickWorker = new Worker(
                 milestoneClaimed = true;
               } catch (err: any) {
                 if (err.code === "P2002") {
-                  console.log(
-                    `ℹ️ [ClickWorker] Milestone ${milestone} already claimed by user ${userId}. Skipping email.`,
-                  );
+                  logger.info("Milestone already claimed by user, skipping email", {
+                    event: "worker.milestone.already_claimed",
+                    queue: "click-tracking",
+                    userId,
+                    milestone,
+                  });
                 } else {
                   throw err;
                 }
@@ -200,21 +214,28 @@ export const clickWorker = new Worker(
                     dashboardUrl,
                   });
 
-                  console.log(
-                    `📬 [ClickWorker] Enqueued click milestone (${milestone}) email for user ${user.id} (${user.email})`,
-                  );
+                  logger.info("Enqueued click milestone email", {
+                    event: "worker.milestone.enqueued",
+                    queue: "click-tracking",
+                    userId: user.id,
+                    milestone,
+                  });
                 } else {
-                  console.warn(
-                    `⚠️ [ClickWorker] User ${userId} not found or has no email for milestone ${milestone}`,
-                  );
+                  logger.warn("User not found or missing email for milestone", {
+                    event: "worker.milestone.missing_user",
+                    queue: "click-tracking",
+                    userId,
+                    milestone,
+                  });
                 }
               }
             }
           } catch (milestoneError) {
-            console.error(
-              `❌ [ClickWorker] Failed to process milestones for user ${userId}:`,
-              milestoneError,
-            );
+            logger.error("Failed to process milestones for user", {
+              event: "worker.milestone.error",
+              queue: "click-tracking",
+              userId,
+            }, milestoneError);
           }
         } catch (err) {
           Sentry.withScope((scope) => {
@@ -241,27 +262,35 @@ export const clickWorker = new Worker(
 
 // 🔥 Worker events
 clickWorker.on("completed", (job) => {
-  console.log(`🎉 Job ${job.id} completed`);
+  logger.info("BullMQ click job completed", {
+    event: "queue.job.completed",
+    queue: "click-tracking",
+    jobId: String(job.id),
+  });
 });
 
 clickWorker.on("failed", (job, error) => {
-  console.error(`❌ Job ${job?.id} failed`, error);
+  logger.error("BullMQ click job failed", {
+    event: "queue.job.failed",
+    queue: "click-tracking",
+    jobId: job ? String(job.id) : undefined,
+  }, error);
 });
 
 // 🔥 Graceful shutdown
 const shutdown = async () => {
-  console.log("🛑 SIGTERM received. Closing worker...");
+  logger.info("Closing click worker gracefully", { event: "worker.shutdown.started", queue: "click-tracking" });
 
   try {
     // stop taking new jobs
     // wait for active jobs
     await clickWorker.close();
 
-    console.log("✅ Worker closed gracefully");
+    logger.info("Click worker closed gracefully", { event: "worker.shutdown.completed", queue: "click-tracking" });
 
     process.exit(0);
   } catch (error) {
-    console.error("❌ Error during shutdown", error);
+    logger.error("Error during click worker shutdown", { event: "worker.shutdown.error", queue: "click-tracking" }, error);
 
     process.exit(1);
   }

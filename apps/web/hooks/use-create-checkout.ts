@@ -16,7 +16,7 @@ export function useCreateCheckout() {
   return useMutation<CheckoutResponse, Error, void>({
     mutationFn: async () => {
       if (!session?.user) {
-        router.push("/sign-in");
+        router.push("/signin");
         throw new Error("Please sign in to upgrade to Pro.");
       }
       return createCheckoutSession();

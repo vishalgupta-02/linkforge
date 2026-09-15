@@ -7,6 +7,7 @@ import { LinkIcon } from "lucide-react";
 import { THEMES, THEME_BUTTONS, ThemeKey } from "@/lib/themes";
 import { Instagram, Twitter, Linkedin, Youtube } from "lucide-react";
 import UserNotFound from "@/app/(user)/(components)/public-profile-not-found";
+import Link from "next/link";
 
 const SOCIAL_ICONS = {
   instagram: Instagram,
@@ -65,6 +66,17 @@ export function PublicProfileDisplay({ username }: PublicProfilePageProps) {
   const buttonClass =
     THEME_BUTTONS[profile.theme as ThemeKey] || THEME_BUTTONS.default;
 
+  const avatar = profile.data?.image || profile.image || profile.avatarUrl;
+  const displayName =
+    profile.data?.name ||
+    profile.name ||
+    profile.data?.userName ||
+    profile.username ||
+    "User Profile";
+  const displayBio = profile.data?.bio || profile.bio;
+  const displayUsername =
+    profile.data?.userName || profile.username || profile.data?.name;
+
   return (
     <>
       <div
@@ -74,10 +86,10 @@ export function PublicProfileDisplay({ username }: PublicProfilePageProps) {
           <header className="animate-fade-in-up mb-8 flex w-full flex-col items-center text-center">
             <div className="relative mb-5">
               <div className="h-24 w-24 rounded-full bg-current/10 p-1 shadow-sm sm:h-28 sm:w-28">
-                {profile.avatarUrl ? (
+                {avatar ? (
                   <img
-                    src={profile.avatarUrl}
-                    alt={profile.name}
+                    src={avatar}
+                    alt={displayName}
                     className="h-full w-full rounded-full border-2 border-transparent object-cover"
                   />
                 ) : (
@@ -87,16 +99,16 @@ export function PublicProfileDisplay({ username }: PublicProfilePageProps) {
             </div>
 
             <h1 className="mb-1 text-2xl font-extrabold tracking-tight">
-              {profile.name}
+              {displayName}
             </h1>
 
             <p className="mb-4 text-[13px] font-semibold opacity-60">
-              @{profile.data?.userName || profile.username}
+              {!displayUsername ? "@" + displayUsername : "LinkForge User"}
             </p>
 
-            {profile.bio && (
+            {displayBio && (
               <p className="max-w-sm px-4 text-[15px] leading-relaxed font-medium opacity-80">
-                {profile.bio}
+                {displayBio}
               </p>
             )}
 
@@ -112,9 +124,9 @@ export function PublicProfileDisplay({ username }: PublicProfilePageProps) {
                     href={url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`bg-background hover:bg-primary-foreground flex h-8 w-8 items-center justify-center rounded-full border px-2 py-2 transition hover:scale-110 hover:shadow-md ${colorClass}`}
+                    className={`flex size-8 items-center justify-center rounded-full border bg-zinc-100 px-2 py-2 transition hover:scale-110 hover:shadow-md ${colorClass}`}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="size-5" />
                   </a>
                 );
               })}
@@ -123,19 +135,25 @@ export function PublicProfileDisplay({ username }: PublicProfilePageProps) {
 
           <div className="animate-fade-in-up w-full space-y-3.5 delay-100">
             {profile.data?.links && profile.data.links.length > 0 ? (
-              profile.data.links.map((link: { id: string; url: string; title: string }) => (
-                <a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`group flex w-full items-center justify-center rounded-2xl p-4 transition-all duration-200 active:scale-[0.98] ${buttonClass}`}
-                >
-                  <span className="truncate px-2 text-[15px] font-bold">
-                    {link.title}
-                  </span>
-                </a>
-              ))
+              profile.data.links.map(
+                (link: { publicId?: string; id?: string; url: string; title: string }) => {
+                  const redirectIdentifier = link.publicId || link.id;
+                  const redirectUrl = `/r/${redirectIdentifier}`;
+                  return (
+                    <Link
+                      key={redirectIdentifier}
+                      href={redirectUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`group flex w-full items-center justify-center rounded-2xl p-4 transition-all duration-200 active:scale-[0.98] ${buttonClass}`}
+                    >
+                      <span className="truncate px-2 text-[15px] font-bold">
+                        {link.title}
+                      </span>
+                    </Link>
+                  );
+                },
+              )
             ) : (
               <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-current/20 py-12 text-center opacity-60">
                 <p className="text-sm font-semibold">No links yet.</p>

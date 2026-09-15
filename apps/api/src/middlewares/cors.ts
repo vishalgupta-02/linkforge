@@ -23,10 +23,9 @@ export const corsMiddleware = cors({
     if (!origin) return callback(null, true);
 
     const allowed = getAllowedOrigins();
-    if (
-      allowed.includes(origin) ||
-      /^https:\/\/.*\.vercel\.app$/.test(origin)
-    ) {
+    const isLinkforgeVercel = /^https:\/\/linkforge(-[a-zA-Z0-9_-]+)?\.vercel\.app$/.test(origin);
+
+    if (allowed.includes(origin) || isLinkforgeVercel) {
       return callback(null, true);
     }
     return callback(new Error(`Origin ${origin} not allowed by CORS`));

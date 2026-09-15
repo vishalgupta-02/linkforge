@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { Link as LinkIcon, Plus, Search, Bell } from "lucide-react";
 import { DragDropProvider } from "@dnd-kit/react";
+import { move } from "@dnd-kit/helpers";
 import DraggableLinks from "@/app/(dashboard)/(components)/draggable-links";
 import DashboardLayout from "../../(components)/dashboard-layout";
 import { toast } from "sonner";
 import { createLinks } from "@/apis/create-links";
 import { getLinks, type Link } from "@/apis/get-links";
 import { deleteLink } from "@/apis/delete-link";
-import { updateLink } from "@/apis/update-link";
+import { updateLink, reorderLinksApi } from "@/apis/update-link";
 import type { DragEndEvent } from "@dnd-kit/react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -44,9 +45,12 @@ export default function CreatorLinkManagement() {
         setLoading(true);
         const fetchedLinks = await getLinks();
 
-        // Ensure fetchedLinks is an array
+        // Ensure fetchedLinks is an array and sorted by position
         if (Array.isArray(fetchedLinks)) {
-          setLinks(fetchedLinks);
+          const sorted = [...fetchedLinks].sort(
+            (a, b) => (a.position ?? 0) - (b.position ?? 0),
+          );
+          setLinks(sorted);
         } else {
           console.warn("Fetched links is not an array:", fetchedLinks);
           setLinks([]);
@@ -118,10 +122,9 @@ export default function CreatorLinkManagement() {
 
     try {
       await updateLink({
-        id: link.id,
+        id: linkId,
         title: link.title,
         url: link.url,
-        position: link.position,
         public: link.public,
         isActive: link.isActive,
       });
@@ -135,39 +138,40 @@ export default function CreatorLinkManagement() {
     const link = safeLinks.find((l) => l.id === linkId);
     if (!link) return;
 
-    if (!link.title || !link.url) {
-      toast.error("Please fill in title and URL");
+    if (!link.title.trim()) {
+      toast.error("Please enter a title");
+      return;
+    }
+
+    if (!link.url.trim()) {
+      toast.error("Please enter a URL");
       return;
     }
 
     try {
       setSavingId(linkId);
 
-      // Check if it's a new link (temp-id)
-      if (link.isNew && linkId.startsWith("temp-")) {
-        // Create new link via API
-        const response = await createLinks({
-          url: link.url,
+      if (link.isNew || link.id.startsWith("temp-")) {
+        const created = await createLinks({
           title: link.title,
-          position: link.position,
+          url: link.url,
           public: link.public,
+          isActive: link.isActive,
         });
 
-        // Replace temp link with created link
-        if (response) {
-          setLinks((prevLinks) => {
-            const safeLinks = Array.isArray(prevLinks) ? prevLinks : [];
-            return safeLinks.map((l) => (l.id === linkId ? response : l));
-          });
-          toast.success("Link created successfully");
+        if (created?.data?.id) {
+          setLinks(
+            safeLinks.map((l) =>
+              l.id === linkId ? { ...created.data, isNew: false } : l,
+            ),
+          );
         }
+        toast.success("Link created successfully");
       } else {
-        // Update existing link
         await updateLink({
           id: link.id,
           title: link.title,
           url: link.url,
-          position: link.position,
           public: link.public,
           isActive: link.isActive,
         });
@@ -186,26 +190,41 @@ export default function CreatorLinkManagement() {
     const linkToDuplicate = safeLinks.find((l) => l.id === linkId);
     if (!linkToDuplicate) return;
 
-    const duplicate: LinkItem = {
+    const newLink: LinkItem = {
       ...linkToDuplicate,
       id: `temp-${Date.now()}`,
       title: `${linkToDuplicate.title} (Copy)`,
-      isActive: true,
+      position: safeLinks.length,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       isNew: true,
     };
 
-    const targetIndex = safeLinks.findIndex((l) => l.id === linkId);
-    const newLinks = [...safeLinks];
-    newLinks.splice(targetIndex + 1, 0, duplicate);
-    setLinks(newLinks);
+    setLinks([...safeLinks, newLink]);
+    toast.success("Link duplicated (click Save to persist)");
   };
 
   const executeDelete = async () => {
     if (!deleteConfirmId) return;
+
     try {
+      if (deleteConfirmId.startsWith("temp-")) {
+        setLinks((prev) =>
+          (Array.isArray(prev) ? prev : []).filter(
+            (l) => l.id !== deleteConfirmId,
+          ),
+        );
+        toast.success("Link deleted");
+        setDeleteConfirmId(null);
+        return;
+      }
+
       await deleteLink(deleteConfirmId);
-      const safeLinks = Array.isArray(links) ? links : [];
-      setLinks(safeLinks.filter((l) => l.id !== deleteConfirmId));
+      setLinks((prev) =>
+        (Array.isArray(prev) ? prev : []).filter(
+          (l) => l.id !== deleteConfirmId,
+        ),
+      );
       toast.success("Link deleted");
     } catch (error) {
       console.error("Failed to delete link:", error);
@@ -216,50 +235,39 @@ export default function CreatorLinkManagement() {
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
-    // Access operation properties with proper type casting through unknown
-    const operation = event.operation as unknown as {
-      active: { id: string };
-      over: { id: string } | null;
-    };
+    if (event.canceled) return;
 
-    if (!operation?.active || !operation?.over) return;
-    if (operation.active.id === operation.over.id) return;
+    const safe = Array.isArray(links) ? links : [];
+    const moved = move(safe, event);
+    if (!Array.isArray(moved)) return;
 
-    let newItems: LinkItem[] = [];
-    setLinks((items) => {
-      const activeIndex = items.findIndex(
-        (item) => item.id === operation.active.id,
-      );
-      const overIndex = items.findIndex(
-        (item) => item.id === operation.over?.id,
-      );
+    const updatedLinks: LinkItem[] = moved.map((item, idx) => ({
+      ...item,
+      position: idx,
+    }));
 
-      if (activeIndex === -1 || overIndex === -1) return items;
+    setLinks(updatedLinks);
 
-      const updatedItems = [...items];
-      const [movedItem] = updatedItems.splice(activeIndex, 1);
-      updatedItems.splice(overIndex, 0, movedItem);
+    const persistedLinkIds = updatedLinks
+      .filter((l) => !l.isNew && !l.id.startsWith("temp-"))
+      .map((l) => l.id);
 
-      // Update position values
-      newItems = updatedItems.map((item, idx) => ({
-        ...item,
-        position: idx,
-      }));
-
-      return newItems;
-    });
-
-    // Save reordered links to API
-    if (newItems.length > 0) {
-      for (const link of newItems) {
-        if (link.title && link.url && !link.isNew) {
-          try {
-            await updateLink({
-              id: link.id,
-              position: link.position,
-            });
-          } catch (error) {
-            console.error(`Failed to update link position ${link.id}:`, error);
+    if (persistedLinkIds.length > 0) {
+      try {
+        await reorderLinksApi(persistedLinkIds);
+      } catch (error) {
+        console.error("Failed to reorder links via batch API:", error);
+        // Fallback to individual position updates
+        for (const link of updatedLinks) {
+          if (link.title && link.url && !link.isNew && !link.id.startsWith("temp-")) {
+            try {
+              await updateLink({
+                id: link.id,
+                position: link.position,
+              });
+            } catch (err) {
+              console.error(`Failed to update link position ${link.id}:`, err);
+            }
           }
         }
       }
@@ -382,12 +390,12 @@ export default function CreatorLinkManagement() {
             {!loading && Array.isArray(links) && (
               <DragDropProvider onDragEnd={handleDragEnd}>
                 <ul className="space-y-3">
-                  {links.map((link) => (
+                  {links.map((link, idx) => (
                     <DraggableLinks
                       key={link.id}
                       id={link.id}
                       username={username}
-                      index={link}
+                      index={{ ...link, position: idx }}
                       onUpdate={handleUpdateLink}
                       onDuplicate={handleDuplicateLink}
                       onSave={handleSaveLink}

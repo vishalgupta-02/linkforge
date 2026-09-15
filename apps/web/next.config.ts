@@ -73,6 +73,10 @@ const nextConfig: NextConfig = {
         source: "/api/auth/:path*",
         destination: `${backendUrl.replace(/\/$/, "")}/api/auth/:path*`,
       },
+      {
+        source: "/r/:path*",
+        destination: `${backendUrl.replace(/\/$/, "")}/r/:path*`,
+      },
     ];
   },
 };

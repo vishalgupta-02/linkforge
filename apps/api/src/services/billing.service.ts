@@ -4,6 +4,7 @@ import { stripe } from "../lib/stripe.ts";
 import { AppError } from "../utils/api-error.ts";
 import { isProPlan } from "../utils/plan.ts";
 import { enqueueProUpgradeEmail } from "../queues/email.queue.ts";
+import { recordSubscriptionUpgrade } from "../lib/metrics.ts";
 
 export const createProCheckoutSession = async (userId: string) => {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -24,6 +25,7 @@ export const createProCheckoutSession = async (userId: string) => {
     select: {
       id: true,
       email: true,
+      name: true,
       userName: true,
       plan: true,
       stripeCustomerId: true,
@@ -38,7 +40,9 @@ export const createProCheckoutSession = async (userId: string) => {
     throw new AppError("You already have an active Pro subscription.", 409);
   }
 
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const frontendUrl = (
+    process.env.FRONTEND_URL || "http://localhost:3000"
+  ).replace(/\/$/, "");
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -50,8 +54,9 @@ export const createProCheckoutSession = async (userId: string) => {
           quantity: 1,
         },
       ],
-      customer: user.stripeCustomerId || undefined,
-      customer_email: user.stripeCustomerId ? undefined : user.email,
+      ...(user.stripeCustomerId
+        ? { customer: user.stripeCustomerId }
+        : { customer_email: user.email }),
       client_reference_id: user.id,
       metadata: {
         userId: user.id,
@@ -65,8 +70,8 @@ export const createProCheckoutSession = async (userId: string) => {
       },
       allow_promotion_codes: true,
       billing_address_collection: "auto",
-      success_url: `${frontendUrl}/dashboard?checkout=success`,
-      cancel_url: `${frontendUrl}/#pricing?checkout=cancelled`,
+      success_url: `${frontendUrl}/dashboard/settings?checkout=success`,
+      cancel_url: `${frontendUrl}/?checkout=cancelled#pricing`,
     });
 
     if (!session.url) {
@@ -99,6 +104,7 @@ export const createCustomerPortalSession = async (userId: string) => {
     select: {
       id: true,
       email: true,
+      name: true,
       userName: true,
       plan: true,
       stripeCustomerId: true,
@@ -116,7 +122,9 @@ export const createCustomerPortalSession = async (userId: string) => {
     );
   }
 
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  const frontendUrl = (
+    process.env.FRONTEND_URL || "http://localhost:3000"
+  ).replace(/\/$/, "");
   const returnUrl = `${frontendUrl}/dashboard/settings`;
   const portalConfigId = process.env.STRIPE_BILLING_PORTAL_CONFIGURATION_ID;
 
@@ -124,14 +132,11 @@ export const createCustomerPortalSession = async (userId: string) => {
     const session = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
       return_url: returnUrl,
-      configuration: portalConfigId || undefined,
+      ...(portalConfigId ? { configuration: portalConfigId } : {}),
     });
 
     if (!session.url) {
-      throw new AppError(
-        "Failed to generate Stripe Customer Portal URL",
-        500,
-      );
+      throw new AppError("Failed to generate Stripe Customer Portal URL", 500);
     }
 
     return {
@@ -155,6 +160,7 @@ export const getBillingStatus = async (userId: string) => {
     select: {
       id: true,
       email: true,
+      name: true,
       userName: true,
       plan: true,
       planExpiry: true,
@@ -178,23 +184,25 @@ export const getBillingStatus = async (userId: string) => {
       );
       subscriptionStatus = subscription.status.toUpperCase();
       cancelAtPeriodEnd = Boolean(subscription.cancel_at_period_end);
-      if (subscription.items.data[0]?.price?.recurring?.interval) {
-        // has recurring interval
-      }
-      if (subscription.current_period_end) {
-        nextBillingDate = new Date(
-          subscription.current_period_end * 1000,
-        ).toISOString();
+      const periodEnd = subscription.items?.data?.[0]?.current_period_end;
+      if (periodEnd) {
+        nextBillingDate = new Date(periodEnd * 1000).toISOString();
       }
     } catch (err) {
       console.warn(
         `⚠️ Could not fetch Stripe subscription ${user.stripeSubscriptionId}:`,
         err,
       );
-      if (user.planExpiry && user.planExpiry.getTime() > 0) {
-        nextBillingDate = user.planExpiry.toISOString();
-      }
     }
+  }
+
+  // Fallback nextBillingDate to user's planExpiry if future date is stored and no Stripe date found
+  if (
+    !nextBillingDate &&
+    user.planExpiry &&
+    user.planExpiry.getTime() > Date.now()
+  ) {
+    nextBillingDate = user.planExpiry.toISOString();
   }
 
   return {
@@ -238,6 +246,9 @@ const handleCheckoutSessionCompleted = async (
       ? session.subscription
       : session.subscription?.id || null;
 
+  const customerEmail =
+    session.customer_details?.email || session.customer_email || null;
+
   let user = null;
 
   if (userId) {
@@ -270,6 +281,21 @@ const handleCheckoutSessionCompleted = async (
     });
   }
 
+  if (!user && customerEmail) {
+    user = await prisma.user.findUnique({
+      where: { email: customerEmail.toLowerCase() },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        userName: true,
+        plan: true,
+        stripeCustomerId: true,
+        stripeSubscriptionId: true,
+      },
+    });
+  }
+
   if (!user) {
     console.warn(
       `⚠️ Could not find Linkforge user for completed checkout session ${session.id} (userId: ${userId}, customerId: ${customerId})`,
@@ -283,6 +309,9 @@ const handleCheckoutSessionCompleted = async (
     });
     return;
   }
+
+  const wasUpgrade = user.plan !== "PRO";
+  const planExpiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   // Atomic database transaction: persist webhook event ID + update user plan + write audit log
   await prisma.$transaction(async (tx) => {
@@ -299,6 +328,7 @@ const handleCheckoutSessionCompleted = async (
       where: { id: user.id },
       data: {
         plan: "PRO",
+        planExpiry: planExpiryDate,
         stripeCustomerId: customerId || user.stripeCustomerId,
         stripeSubscriptionId: subscriptionId || user.stripeSubscriptionId,
       },
@@ -325,10 +355,17 @@ const handleCheckoutSessionCompleted = async (
     `✅ Successfully upgraded user ${user.id} (${user.userName || "unknown"}) to PRO (eventId=${eventId})`,
   );
 
+  // 📊 Record business metric only if this was an actual plan upgrade from non-PRO
+  if (wasUpgrade) {
+    recordSubscriptionUpgrade("PRO");
+  }
+
   // 4. Asynchronously enqueue Pro upgrade congratulations email job in BullMQ
   try {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    const dashboardUrl = `${frontendUrl.replace(/\/$/, "")}/dashboard`;
+    const frontendUrl = (
+      process.env.FRONTEND_URL || "http://localhost:3000"
+    ).replace(/\/$/, "");
+    const dashboardUrl = `${frontendUrl}/dashboard/settings`;
     await enqueueProUpgradeEmail(
       {
         userId: user.id,
@@ -455,6 +492,114 @@ const handleSubscriptionDeleted = async (
   );
 };
 
+const handleSubscriptionUpdated = async (
+  eventId: string,
+  subscription: Stripe.Subscription,
+) => {
+  const userId = subscription.metadata?.userId || null;
+  const customerId =
+    typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer?.id || null;
+  const subscriptionId = subscription.id;
+
+  let user = null;
+
+  if (userId) {
+    user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        userName: true,
+        plan: true,
+        stripeCustomerId: true,
+        stripeSubscriptionId: true,
+      },
+    });
+  }
+
+  if (!user && subscriptionId) {
+    user = await prisma.user.findFirst({
+      where: { stripeSubscriptionId: subscriptionId },
+      select: {
+        id: true,
+        userName: true,
+        plan: true,
+        stripeCustomerId: true,
+        stripeSubscriptionId: true,
+      },
+    });
+  }
+
+  if (!user && customerId) {
+    user = await prisma.user.findFirst({
+      where: { stripeCustomerId: customerId },
+      select: {
+        id: true,
+        userName: true,
+        plan: true,
+        stripeCustomerId: true,
+        stripeSubscriptionId: true,
+      },
+    });
+  }
+
+  if (!user) {
+    await prisma.stripeWebhookEvent.create({
+      data: {
+        eventId,
+        eventType: "customer.subscription.updated",
+      },
+    });
+    return;
+  }
+
+  const isCanceledOrUnpaid =
+    subscription.status === "canceled" ||
+    subscription.status === "unpaid" ||
+    subscription.status === "incomplete_expired";
+
+  const targetPlan = isCanceledOrUnpaid ? "FREE" : "PRO";
+
+  await prisma.$transaction(async (tx) => {
+    await tx.stripeWebhookEvent.create({
+      data: {
+        eventId,
+        eventType: "customer.subscription.updated",
+      },
+    });
+
+    if (user.plan !== targetPlan) {
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          plan: targetPlan,
+          stripeSubscriptionId: isCanceledOrUnpaid ? null : subscriptionId,
+        },
+      });
+
+      await tx.auditlog.create({
+        data: {
+          userId: user.id,
+          action: isCanceledOrUnpaid ? "PLAN_CANCELLED" : "PLAN_UPGRADED",
+          metadata: {
+            stripeEventId: eventId,
+            stripeSubscriptionId: subscription.id,
+            stripeCustomerId: customerId,
+            plan: targetPlan,
+            status: subscription.status,
+          },
+          ipAddress: "stripe_webhook",
+        },
+      });
+    }
+  });
+
+  if (!isCanceledOrUnpaid && user.plan === "FREE") {
+    recordSubscriptionUpgrade("PRO");
+  }
+};
+
 export const handleStripeWebhook = async (
   rawBody: Buffer | string,
   signature: string | undefined,
@@ -463,7 +608,10 @@ export const handleStripeWebhook = async (
 
   if (!webhookSecret) {
     console.error("❌ Missing STRIPE_WEBHOOK_SECRET in environment variables");
-    throw new AppError("Stripe webhook secret is not configured on server", 500);
+    throw new AppError(
+      "Stripe webhook secret is not configured on server",
+      500,
+    );
   }
 
   if (!signature) {
@@ -512,8 +660,16 @@ export const handleStripeWebhook = async (
         break;
       }
 
+      case "customer.subscription.updated": {
+        const subscription = event.data.object as Stripe.Subscription;
+        await handleSubscriptionUpdated(event.id, subscription);
+        break;
+      }
+
       default: {
-        console.log(`ℹ️ Unhandled Stripe event received: ${event.type} (${event.id})`);
+        console.log(
+          `ℹ️ Unhandled Stripe event received: ${event.type} (${event.id})`,
+        );
         await prisma.stripeWebhookEvent.create({
           data: {
             eventId: event.id,

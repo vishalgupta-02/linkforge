@@ -2,57 +2,32 @@ import { redis } from "../lib/redis.ts";
 import { CACHE_KEYS, LIVE_VISITOR_TTL } from "../lib/cache-keys.ts";
 
 export const createLiveVisitor = async (userId: string, sessionId: string) => {
-  const key = CACHE_KEYS.liveVisitor(userId, sessionId);
+  const key = CACHE_KEYS.liveVisitorZSet(userId);
+  const expireAt = Date.now() + LIVE_VISITOR_TTL * 1000;
 
-  await redis.set(key, "1", "EX", LIVE_VISITOR_TTL);
+  await redis.zadd(key, expireAt, sessionId);
+  await redis.expire(key, LIVE_VISITOR_TTL * 2);
 };
 
 export const refreshLiveVisitor = async (userId: string, sessionId: string) => {
-  const key = CACHE_KEYS.liveVisitor(userId, sessionId);
-
-  const exists = await redis.exists(key);
-
-  if (!exists) {
-    await redis.set(key, "1", "EX", LIVE_VISITOR_TTL);
-    return;
-  }
-
-  await redis.expire(key, LIVE_VISITOR_TTL);
+  await createLiveVisitor(userId, sessionId);
 };
 
 export const removeLiveVisitor = async (userId: string, sessionId: string) => {
-  const key = CACHE_KEYS.liveVisitor(userId, sessionId);
+  const key = CACHE_KEYS.liveVisitorZSet(userId);
 
-  await redis.del(key);
-};
-
-const scanKeys = async (pattern: string): Promise<string[]> => {
-  const keys: string[] = [];
-
-  let cursor = "0";
-
-  do {
-    const [nextCursor, foundKeys] = await redis.scan(
-      cursor,
-      "MATCH",
-      pattern,
-      "COUNT",
-      100,
-    );
-
-    cursor = nextCursor;
-
-    keys.push(...foundKeys);
-  } while (cursor !== "0");
-
-  return keys;
+  await redis.zrem(key, sessionId);
 };
 
 export const getLiveVisitorCount = async (userId: string) => {
-  const pattern = CACHE_KEYS.liveVisitorPattern(userId);
+  const key = CACHE_KEYS.liveVisitorZSet(userId);
+  const now = Date.now();
 
-  const keys = await scanKeys(pattern);
+  // Prune expired entries in O(log(N) + M)
+  await redis.zremrangebyscore(key, "-inf", now);
 
-  return keys.length;
+  // Return active visitor count in O(1)
+  return await redis.zcard(key);
 };
+
 

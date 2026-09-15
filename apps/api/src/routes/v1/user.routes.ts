@@ -12,7 +12,8 @@ import { changeUsernameController } from "../../controllers/user/username.contro
 const router: Router = Router();
 
 router.get("/public/:username", publicProfileController);
-router.post("/user/me", getUsernameController);
+router.get("/me", protectedRoute, getUsernameController);
+router.post("/user/me", protectedRoute, getUsernameController);
 router.patch("/profile", protectedRoute, profileUpdateController);
 router.patch("/profile/username", protectedRoute, changeUsernameController);
 
