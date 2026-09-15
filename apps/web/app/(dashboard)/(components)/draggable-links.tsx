@@ -33,14 +33,10 @@ const DraggableLinks = ({
   savingId,
   setDeleteConfirmId,
 }: DraggableLinksProps) => {
-  const [element, setElement] = useState<Element | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const handleRef = useRef<HTMLButtonElement | null>(null);
-  const { isDragging } = useSortable({
+  const { ref, handleRef, isDragging } = useSortable({
     id,
     index: index.position,
-    element,
-    handle: handleRef,
   });
 
   const updateLink = (updates: Partial<LinkItem>) => {
@@ -59,26 +55,38 @@ const DraggableLinks = ({
       return;
     }
 
-    const shareUrl = `${window.location.origin}/public/${username}`;
+    const shareUrl = `${window.location.origin}/username/${username}`;
 
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopiedId(index.id);
+      toast.success("Profile link copied to clipboard!");
       setTimeout(() => setCopiedId(null), 2000);
     } catch (err) {
+      toast.error("Failed to copy link.");
       console.error("Failed to copy:", err);
     }
   };
 
   return (
-    <li ref={setElement} className="item" data-shadow={isDragging || undefined}>
+    <li
+      ref={ref}
+      className={`item select-none list-none transition-all duration-150 ${
+        isDragging
+          ? "relative z-50 scale-[1.02] opacity-80 shadow-2xl ring-2 ring-primary"
+          : ""
+      }`}
+      data-shadow={isDragging || undefined}
+    >
       <div
         className={`group flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-zinc-50/50 hover:shadow-md sm:flex-row sm:items-start sm:gap-4 dark:border-white/5 dark:bg-[#111] dark:hover:bg-white/3 ${!index.isActive ? "opacity-60 grayscale-[20%]" : ""}`}
       >
         <div className="flex flex-1 items-start gap-3 sm:gap-4">
           <button
             ref={handleRef}
-            className="touch:bg-zinc-50 dark:touch:bg-white/5 flex h-10 w-10 shrink-0 cursor-grab items-center justify-center rounded-lg text-zinc-300 transition-all hover:bg-zinc-100 hover:text-zinc-500 active:scale-95 active:cursor-grabbing dark:text-zinc-600 dark:hover:bg-white/10 dark:hover:text-zinc-400"
+            type="button"
+            className="touch-none flex h-10 w-10 shrink-0 cursor-grab items-center justify-center rounded-lg text-zinc-400 transition-all hover:bg-zinc-100 hover:text-zinc-600 active:scale-95 active:cursor-grabbing dark:text-zinc-500 dark:hover:bg-white/10 dark:hover:text-zinc-300"
+            style={{ touchAction: "none" }}
             title="Drag to reorder"
           >
             <GripVertical size={18} />

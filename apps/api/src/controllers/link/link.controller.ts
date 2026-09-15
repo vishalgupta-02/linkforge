@@ -6,6 +6,7 @@ import {
   getLinkStats,
   getPublicLinks,
   reorderLinks,
+  toggleLink,
   updateLink,
 } from "../../services/link.service.ts";
 import { AppError } from "../../utils/api-error.ts";
@@ -109,7 +110,7 @@ export const toggleLinkController = async (req: Request, res: Response) => {
 
   if (!userId) throw new AppError("Unauthorized", 401);
 
-  const result = await reorderLinks(userId, id);
+  const result = await toggleLink(userId, id);
 
   return res.json(ApiResponse(result, "Link visibility updated", 200));
 };

@@ -6,6 +6,15 @@ export const upload = multer({
   storage,
   limits: {
     files: 1,
-    fileSize: 2 * 1024 * 1024,
+    fileSize: 2 * 1024 * 1024, // 2MB limit
+  },
+  fileFilter: (_req, file, cb) => {
+    const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only JPEG, PNG, WEBP, and GIF images are allowed."));
+    }
   },
 });
+

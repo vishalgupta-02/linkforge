@@ -16,8 +16,8 @@ import {
   sendClickMilestoneEmail,
   sendPasswordResetEmail,
 } from "../services/email.service.ts";
-
 import * as Sentry from "@sentry/node";
+import { logger } from "../lib/logger.ts";
 
 export const emailWorker = new Worker<EmailJobData>(
   EMAIL_QUEUE_NAME,
@@ -35,15 +35,20 @@ export const emailWorker = new Worker<EmailJobData>(
       },
       async () => {
         try {
-          console.log(`📦 [EmailWorker] Processing job ${job.id} (name: ${job.name})`);
+          logger.info("Processing email job", {
+            event: "worker.email.processing",
+            queue: EMAIL_QUEUE_NAME,
+            jobName: job.name,
+            jobId: String(job.id),
+          });
 
           const { userId, userName, email } = job.data;
 
           // Validate common required fields
           if (!userId || !email) {
-            console.error(
-              `❌ [EmailWorker] Job ${job.id} has invalid payload: missing required fields (userId or email).`,
-              { userId, email },
+            logger.error(
+              "Job has invalid payload: missing required fields",
+              { event: "worker.email.invalid_payload", queue: EMAIL_QUEUE_NAME, jobId: String(job.id), userId, email },
             );
             throw new UnrecoverableError("Invalid email job payload: missing required fields");
           }
@@ -51,8 +56,9 @@ export const emailWorker = new Worker<EmailJobData>(
           // Basic email format check
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(email)) {
-            console.error(
-              `❌ [EmailWorker] Job ${job.id} has invalid email format: ${email}`,
+            logger.error(
+              "Job has invalid email format",
+              { event: "worker.email.invalid_email", queue: EMAIL_QUEUE_NAME, jobId: String(job.id), email },
             );
             throw new UnrecoverableError(`Invalid email format: ${email}`);
           }
@@ -61,16 +67,20 @@ export const emailWorker = new Worker<EmailJobData>(
             const resetData = job.data as PasswordResetEmailJobData;
 
             if (!resetData.resetUrl) {
-              console.error(
-                `❌ [EmailWorker] Job ${job.id} missing resetUrl`,
-                { userId, email },
+              logger.error(
+                "Job missing resetUrl",
+                { event: "worker.email.missing_reset_url", queue: EMAIL_QUEUE_NAME, jobId: String(job.id), userId, email },
               );
               throw new UnrecoverableError("Invalid password reset email job payload: missing resetUrl");
             }
 
-            console.log(
-              `✉️ [EmailWorker] Sending password reset email to ${email} (user: ${userId})`,
-            );
+            logger.info("Sending password reset email", {
+              event: "worker.email.send_password_reset",
+              queue: EMAIL_QUEUE_NAME,
+              jobId: String(job.id),
+              userId,
+              email,
+            });
 
             const result = await sendPasswordResetEmail({
               to: email,
@@ -79,18 +89,23 @@ export const emailWorker = new Worker<EmailJobData>(
               expiresInMinutes: resetData.expiresInMinutes || 60,
             });
 
-            console.log(
-              `✅ [EmailWorker] Password reset email sent successfully for user ${userId} (${email}), Resend ID: ${result.id}`,
-            );
+            logger.info("Password reset email sent successfully", {
+              event: "worker.email.password_reset_sent",
+              queue: EMAIL_QUEUE_NAME,
+              jobId: String(job.id),
+              userId,
+              email,
+              resendId: result.id,
+            });
 
             return result;
           }
 
           const dashboardUrl = (job.data as any).dashboardUrl;
           if (!dashboardUrl) {
-            console.error(
-              `❌ [EmailWorker] Job ${job.id} missing dashboardUrl for job type ${job.name}`,
-              { userId, email },
+            logger.error(
+              "Job missing dashboardUrl",
+              { event: "worker.email.missing_dashboard_url", queue: EMAIL_QUEUE_NAME, jobId: String(job.id), jobName: job.name, userId, email },
             );
             throw new UnrecoverableError(`Invalid email job payload: missing dashboardUrl for ${job.name}`);
           }
@@ -99,16 +114,21 @@ export const emailWorker = new Worker<EmailJobData>(
             const milestoneData = job.data as ClickMilestoneEmailJobData;
 
             if (!milestoneData.milestone || typeof milestoneData.totalClicks !== "number") {
-              console.error(
-                `❌ [EmailWorker] Job ${job.id} has invalid milestone data:`,
-                milestoneData,
+              logger.error(
+                "Job has invalid milestone data",
+                { event: "worker.email.invalid_milestone_data", queue: EMAIL_QUEUE_NAME, jobId: String(job.id), milestone: milestoneData.milestone, totalClicks: milestoneData.totalClicks },
               );
               throw new UnrecoverableError("Invalid click milestone email job payload");
             }
 
-            console.log(
-              `✉️ [EmailWorker] Sending click milestone (${milestoneData.milestone}) email to ${email} (user: ${userId})`,
-            );
+            logger.info("Sending click milestone email", {
+              event: "worker.email.send_milestone",
+              queue: EMAIL_QUEUE_NAME,
+              jobId: String(job.id),
+              userId,
+              email,
+              milestone: milestoneData.milestone,
+            });
 
             const result = await sendClickMilestoneEmail({
               to: email,
@@ -118,17 +138,26 @@ export const emailWorker = new Worker<EmailJobData>(
               dashboardUrl,
             });
 
-            console.log(
-              `✅ [EmailWorker] Click milestone (${milestoneData.milestone}) email sent successfully for user ${userId} (${email}), Resend ID: ${result.id}`,
-            );
+            logger.info("Click milestone email sent successfully", {
+              event: "worker.email.milestone_sent",
+              queue: EMAIL_QUEUE_NAME,
+              jobId: String(job.id),
+              userId,
+              email,
+              resendId: result.id,
+            });
 
             return result;
           }
 
           if (job.name === PRO_UPGRADE_EMAIL_JOB_NAME) {
-            console.log(
-              `✉️ [EmailWorker] Sending Pro upgrade email to ${email} (user: ${userId}, name: ${userName || "Creator"})`,
-            );
+            logger.info("Sending Pro upgrade email", {
+              event: "worker.email.send_pro_upgrade",
+              queue: EMAIL_QUEUE_NAME,
+              jobId: String(job.id),
+              userId,
+              email,
+            });
 
             const result = await sendProUpgradeEmail({
               to: email,
@@ -136,17 +165,26 @@ export const emailWorker = new Worker<EmailJobData>(
               dashboardUrl,
             });
 
-            console.log(
-              `✅ [EmailWorker] Pro upgrade email sent successfully for user ${userId} (${email}), Resend ID: ${result.id}`,
-            );
+            logger.info("Pro upgrade email sent successfully", {
+              event: "worker.email.pro_upgrade_sent",
+              queue: EMAIL_QUEUE_NAME,
+              jobId: String(job.id),
+              userId,
+              email,
+              resendId: result.id,
+            });
 
             return result;
           }
 
           if (job.name === WELCOME_EMAIL_JOB_NAME) {
-            console.log(
-              `✉️ [EmailWorker] Sending welcome email to ${email} (user: ${userId}, name: ${userName || "Creator"})`,
-            );
+            logger.info("Sending welcome email", {
+              event: "worker.email.send_welcome",
+              queue: EMAIL_QUEUE_NAME,
+              jobId: String(job.id),
+              userId,
+              email,
+            });
 
             const result = await sendWelcomeEmail({
               to: email,
@@ -154,14 +192,24 @@ export const emailWorker = new Worker<EmailJobData>(
               dashboardUrl,
             });
 
-            console.log(
-              `✅ [EmailWorker] Welcome email sent successfully for user ${userId} (${email}), Resend ID: ${result.id}`,
-            );
+            logger.info("Welcome email sent successfully", {
+              event: "worker.email.welcome_sent",
+              queue: EMAIL_QUEUE_NAME,
+              jobId: String(job.id),
+              userId,
+              email,
+              resendId: result.id,
+            });
 
             return result;
           }
 
-          console.warn(`⚠️ [EmailWorker] Unrecognized job name: ${job.name} (jobId: ${job.id})`);
+          logger.warn("Unrecognized job name", {
+            event: "worker.email.unrecognized_job",
+            queue: EMAIL_QUEUE_NAME,
+            jobName: job.name,
+            jobId: String(job.id),
+          });
           throw new UnrecoverableError(`Unrecognized email job name: ${job.name}`);
         } catch (err) {
           Sentry.withScope((scope) => {
@@ -186,24 +234,33 @@ export const emailWorker = new Worker<EmailJobData>(
 
 // Worker lifecycle event listeners
 emailWorker.on("completed", (job) => {
-  console.log(`🎉 [EmailWorker] Job ${job.id} completed successfully`);
+  logger.info("Email job completed successfully", {
+    event: "queue.job.completed",
+    queue: EMAIL_QUEUE_NAME,
+    jobId: String(job.id),
+  });
 });
 
 emailWorker.on("failed", (job, error) => {
-  console.error(
-    `❌ [EmailWorker] Job ${job?.id} failed with error:`,
-    error.message || error,
+  logger.error(
+    "Email job failed",
+    {
+      event: "queue.job.failed",
+      queue: EMAIL_QUEUE_NAME,
+      jobId: job ? String(job.id) : undefined,
+    },
+    error,
   );
 });
 
 // Graceful shutdown handler
 const shutdownEmailWorker = async () => {
-  console.log("🛑 SIGTERM/SIGINT received. Closing email worker...");
+  logger.info("Closing email worker gracefully", { event: "worker.shutdown.started", queue: EMAIL_QUEUE_NAME });
   try {
     await emailWorker.close();
-    console.log("✅ Email worker closed gracefully");
+    logger.info("Email worker closed gracefully", { event: "worker.shutdown.completed", queue: EMAIL_QUEUE_NAME });
   } catch (error) {
-    console.error("❌ Error during email worker shutdown:", error);
+    logger.error("Error during email worker shutdown", { event: "worker.shutdown.error", queue: EMAIL_QUEUE_NAME }, error);
   }
 };
 

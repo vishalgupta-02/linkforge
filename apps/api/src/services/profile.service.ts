@@ -9,6 +9,7 @@ import { sleep } from "../utils/sleep.ts";
 
 type UpdateProfileInput = {
   userId: string;
+  name?: string | undefined;
   bio?: string | undefined;
   image?: string | undefined;
 };
@@ -223,16 +224,16 @@ export const getPublicProfile = async (username: string) => {
         },
 
         select: {
-          id: true,
           name: true,
           userName: true,
           bio: true,
           image: true,
-          email: true,
 
           links: {
             where: {
               isActive: true,
+              deletedAt: null,
+              public: true,
             },
 
             orderBy: {
@@ -240,13 +241,9 @@ export const getPublicProfile = async (username: string) => {
             },
 
             select: {
-              id: true,
+              publicId: true,
               title: true,
               url: true,
-              isActive: true,
-              scheduledStart: true,
-              scheduledEnd: true,
-              public: true,
               position: true,
             },
           },
@@ -282,17 +279,20 @@ export const getPublicProfile = async (username: string) => {
 
 export const updateProfile = async ({
   userId,
+  name,
   bio,
   image,
 }: UpdateProfileInput) => {
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
+      ...(name !== undefined && { name }),
       ...(bio !== undefined && { bio }),
       ...(image !== undefined && { image }),
     },
     select: {
       id: true,
+      name: true,
       userName: true,
       bio: true,
       image: true,
@@ -361,8 +361,12 @@ export const getPublicProfileByUserId = async (userId: string) => {
       },
       select: {
         id: true,
+        name: true,
         userName: true,
         plan: true,
+        bio: true,
+        image: true,
+        email: true,
       },
     });
 

@@ -11,6 +11,7 @@ export interface User {
 
 export interface Link {
   id: string;
+  publicId?: string | null;
   title: string;
   url: string;
   position: number;
@@ -24,6 +25,13 @@ export interface Link {
   scheduledEnd: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PublicProfileLink {
+  publicId: string;
+  title: string;
+  url: string;
+  position: number;
 }
 
 export interface ApiResponse<T> {

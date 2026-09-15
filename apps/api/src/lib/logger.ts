@@ -1,14 +1,26 @@
+import pino from "pino";
 import * as Sentry from "@sentry/node";
+import { getRequestId, getUserId } from "./request-context.ts";
+import { getTraceContext } from "../utils/tracing-utils.ts";
 
-export type LogLevel = "debug" | "info" | "warn" | "error";
+export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
 
 export interface LogContext {
   event?: string;
-  requestId?: string;
-  userId?: string;
+  requestId?: string | null;
+  userId?: string | null;
   linkId?: string;
   plan?: string;
   durationMs?: number;
+  statusCode?: number;
+  route?: string;
+  method?: string;
+  traceId?: string;
+  spanId?: string;
+  trace_id?: string;
+  span_id?: string;
+  err?: unknown;
+  error?: unknown;
   [key: string]: unknown;
 }
 
@@ -56,65 +68,134 @@ export function scrubSensitiveData(data: unknown): unknown {
 }
 
 /**
- * Emits a structured JSON log and sends a breadcrumb to Sentry
+ * Base Pino Logger Instance configured with custom ISO timestamp,
+ * string level labels, message key, and sensitive data redaction.
  */
-function emitLog(
-  level: LogLevel,
-  message: string,
-  context: LogContext = {},
-  error?: unknown,
-): void {
-  const timestamp = new Date().toISOString();
-  const sanitizedContext = (scrubSensitiveData(context) as LogContext) || {};
+export const pinoInstance = pino({
+  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === "production" ? "info" : "debug"),
+  messageKey: "message",
+  timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
+  formatters: {
+    level: (label) => ({ level: label }),
+  },
+  redact: {
+    paths: [
+      "password",
+      "*.password",
+      "token",
+      "*.token",
+      "accessToken",
+      "*.accessToken",
+      "refreshToken",
+      "*.refreshToken",
+      "authorization",
+      "*.authorization",
+      "cookie",
+      "*.cookie",
+      "secret",
+      "*.secret",
+      "apiKey",
+      "*.apiKey",
+      "stripe-signature",
+      "creditCard",
+      "cvv",
+    ],
+    censor: "[REDACTED]",
+  },
+});
 
-  const logPayload = {
-    timestamp,
-    level,
-    message,
-    ...sanitizedContext,
-    ...(error instanceof Error
-      ? {
-          error: {
-            name: error.name,
-            message: error.message,
-            stack: error.stack,
-          },
-        }
-      : error
-      ? { error: String(error) }
-      : {}),
+/**
+ * Normalizes log context by combining:
+ * 1. AsyncLocalStorage request context (requestId, userId)
+ * 2. Active OpenTelemetry trace context (traceId, spanId)
+ * 3. User-supplied log context and error objects
+ */
+function buildEnrichedLogContext(contextInput?: LogContext | unknown, errInput?: unknown): Record<string, unknown> {
+  const currentReqId = getRequestId();
+  const currentUserId = getUserId();
+  const traceCtx = getTraceContext();
+
+  const baseContext: Record<string, unknown> = {
+    requestId: currentReqId ?? null,
+    userId: currentUserId ?? null,
   };
 
-  // 1. Output to stdout/stderr in structured JSON
-  const output = JSON.stringify(logPayload);
-  if (level === "error") {
-    console.error(output);
-  } else if (level === "warn") {
-    console.warn(output);
-  } else {
-    console.log(output);
+  if (traceCtx.traceId) {
+    baseContext.traceId = traceCtx.traceId;
+    baseContext.spanId = traceCtx.spanId;
+    // Also include snake_case for OpenTelemetry backwards compatibility
+    baseContext.trace_id = traceCtx.traceId;
+    baseContext.span_id = traceCtx.spanId;
   }
 
-  // 2. Add Breadcrumb to Sentry for tracing context (does NOT create an alert/error issue)
+  let userContext: Record<string, unknown> = {};
+  if (contextInput && typeof contextInput === "object" && !Array.isArray(contextInput)) {
+    userContext = contextInput as Record<string, unknown>;
+  }
+
+  // Handle passed error objects
+  const rawError = errInput || userContext.error || userContext.err;
+  const errorObj =
+    rawError instanceof Error
+      ? {
+          name: rawError.name,
+          message: rawError.message,
+          stack: rawError.stack,
+        }
+      : rawError
+      ? { message: String(rawError) }
+      : undefined;
+
+  const sanitizedUserContext = (scrubSensitiveData(userContext) as Record<string, unknown>) || {};
+  if (errorObj) {
+    sanitizedUserContext.error = errorObj;
+  }
+
+  return {
+    ...baseContext,
+    ...sanitizedUserContext,
+  };
+}
+
+/**
+ * Dispatches log through Pino and records Sentry breadcrumb
+ */
+function emitPinoLog(
+  level: LogLevel,
+  message: string,
+  context?: LogContext,
+  error?: unknown,
+): void {
+  const enriched = buildEnrichedLogContext(context, error);
+
+  // 1. Emit structured JSON via Pino
+  pinoInstance[level](enriched, message);
+
+  // 2. Add Sentry breadcrumb
   try {
     Sentry.addBreadcrumb({
-      category: sanitizedContext.event || "app.log",
+      category: (context?.event as string) || "app.log",
       message,
-      level: level === "warn" ? "warning" : level === "error" ? "error" : "info",
-      data: sanitizedContext,
+      level: level === "warn" ? "warning" : level === "error" || level === "fatal" ? "error" : "info",
+      data: enriched,
     });
   } catch {
-    // Sentry telemetry failure must never interrupt application execution
+    // Sentry failure must never interrupt log emission
   }
 }
 
 export const logger = {
   info: (message: string, context?: LogContext) =>
-    emitLog("info", message, context),
+    emitPinoLog("info", message, context),
   warn: (message: string, context?: LogContext, error?: unknown) =>
-    emitLog("warn", message, context, error),
+    emitPinoLog("warn", message, context, error),
   error: (message: string, context?: LogContext, error?: unknown) =>
-    emitLog("error", message, context, error),
+    emitPinoLog("error", message, context, error),
   debug: (message: string, context?: LogContext) =>
-    emitLog("debug", message, context),
+    emitPinoLog("debug", message, context),
+  trace: (message: string, context?: LogContext) =>
+    emitPinoLog("trace", message, context),
+  fatal: (message: string, context?: LogContext, error?: unknown) =>
+    emitPinoLog("fatal", message, context, error),
+  child: (bindings: pino.Bindings) => pinoInstance.child(bindings),
 };

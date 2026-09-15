@@ -23,7 +23,8 @@ router.patch("/reorder", protectedRoute, reorderLinksController);
 router.patch("/:id/toggle", protectedRoute, toggleLinkController);
 router.get("/profile/:username/links", getPublicLinksController);
 router.get("/stats", protectedRoute, getLinkStatsController);
-router.get("/deleted", getDeletedLinksController);
-router.patch("/:id/restore", restoreLink);
+router.get("/deleted", protectedRoute, getDeletedLinksController);
+router.patch("/:id/restore", protectedRoute, restoreLink);
 
 export default router;
+

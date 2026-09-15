@@ -1,6 +1,8 @@
 // services/username.service.ts
 import { prisma } from "../db/client.ts";
 import { AppError } from "../utils/api-error.ts";
+import { redis } from "../lib/redis.ts";
+import { CACHE_KEYS } from "../lib/cache-keys.ts";
 import {
   normalizeUsername,
   isValidUsername,
@@ -56,7 +58,7 @@ export const changeUsername = async (userId: string, newUsername: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
-      username: true,
+      userName: true,
       userName_lower: true,
       lastUsernameChangedAt: true,
     },
@@ -93,18 +95,25 @@ export const changeUsername = async (userId: string, newUsername: string) => {
   }
 
   try {
-    return prisma.user.update({
+    const updated = await prisma.user.update({
       where: { id: userId },
       data: {
-        username: newUsername,
+        userName: newUsername,
         userName_lower: normalized,
         lastUsernameChangedAt: new Date(),
       },
       select: {
         id: true,
-        username: true,
+        userName: true,
       },
     });
+
+    if (user.userName) {
+      await redis.del(CACHE_KEYS.publicProfile(user.userName.toLowerCase()));
+    }
+    await redis.del(CACHE_KEYS.publicProfile(normalized));
+
+    return updated;
   } catch (error) {
     throw new AppError("Username already taken", 409);
   }

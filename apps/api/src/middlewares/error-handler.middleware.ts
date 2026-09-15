@@ -73,12 +73,11 @@ export function errorMiddleware(
     message = err.message || message;
   }
 
-  // 📝 Structured error log
-  logger.error("api.request.error", {
+  // 📝 Structured error log via Pino
+  logger.error("HTTP request error", {
     event: "api.request.error",
-    requestId: req.id || req.requestId,
     method: req.method,
-    path: req.path,
+    route: (req.baseUrl || "") + (req.route?.path || req.path || req.originalUrl?.split("?")[0] || "unknown"),
     statusCode,
   }, err);
 

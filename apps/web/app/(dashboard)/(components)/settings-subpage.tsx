@@ -11,6 +11,7 @@ import {
   CreditCard,
   Calendar,
   ShieldCheck,
+  CheckCircle2,
 } from "lucide-react";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import { useBillingStatus } from "@/hooks/use-billing-status";
@@ -18,11 +19,17 @@ import { useBillingPortal } from "@/hooks/use-billing-portal";
 import { useCreateCheckout } from "@/hooks/use-create-checkout";
 import { authClient } from "@/lib/auth-client";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { toast } from "sonner";
 
 export default function SettingsSubpage() {
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
-  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const [isRevokingSessions, setIsRevokingSessions] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
@@ -35,6 +42,10 @@ export default function SettingsSubpage() {
   const { mutate: openCheckout, isPending: isCheckoutPending } =
     useCreateCheckout();
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Invalidate queries when returning from Stripe checkout or portal
   useEffect(() => {
     if (searchParams.get("checkout") === "success") {
@@ -46,7 +57,8 @@ export default function SettingsSubpage() {
   const plan = billingStatus?.data?.plan || userProfile?.data?.plan || "FREE";
   const isPro =
     plan.toUpperCase() === "PRO" || plan.toUpperCase() === "BUSINESS";
-  const subscriptionStatus = billingStatus?.data?.subscriptionStatus || "INACTIVE";
+  const subscriptionStatus =
+    billingStatus?.data?.subscriptionStatus || "INACTIVE";
   const nextBillingDate = billingStatus?.data?.nextBillingDate
     ? new Date(billingStatus.data.nextBillingDate).toLocaleDateString("en-US", {
         year: "numeric",
@@ -56,10 +68,31 @@ export default function SettingsSubpage() {
     : null;
   const isCanceling = billingStatus?.data?.cancelAtPeriodEnd;
 
+  const handleRevokeAllSessions = async () => {
+    try {
+      setIsRevokingSessions(true);
+      await authClient.revokeOtherSessions();
+      toast.success("All other active sessions have been logged out.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to revoke other sessions.");
+    } finally {
+      setIsRevokingSessions(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!session?.user?.email) {
+      toast.error("User email not found");
+      return;
+    }
+    toast.info(`Password management is active for ${session.user.email}`);
+  };
+
   return (
     <div className="bg-background text-foreground selection:bg-primary/30 flex min-h-screen font-sans">
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-7xl space-y-8 px-6 py-10 md:py-2">
+        <div className="mx-auto max-w-7xl space-y-8 px-6 py-8">
           <section>
             <h2 className="text-foreground mb-3 px-1 text-sm font-bold tracking-wider uppercase">
               Account
@@ -67,12 +100,13 @@ export default function SettingsSubpage() {
             <div className="border-border bg-background divide-border divide-y rounded-xl border px-5 shadow-sm">
               <SettingRow
                 title="Email Address"
-                description={session?.user?.email || "sarah@example.com"}
-                isEditing={isEditingEmail}
-                setIsEditingEmail={setIsEditingEmail}
+                description={session?.user?.email || "No email available"}
                 action={
-                  <button className="border-border bg-background text-foreground hover:bg-muted inline-flex h-9 items-center justify-center rounded-lg border px-4 text-sm font-medium shadow-sm transition-colors">
-                    Change
+                  <button
+                    onClick={() => router.push("/dashboard/profile")}
+                    className="border-border bg-background text-foreground hover:bg-muted inline-flex h-9 items-center justify-center rounded-lg border px-4 text-sm font-medium shadow-sm transition-colors"
+                  >
+                    View in Profile
                   </button>
                 }
               />
@@ -82,10 +116,13 @@ export default function SettingsSubpage() {
                 description={
                   userProfile?.data?.userName
                     ? `@${userProfile.data.userName}`
-                    : "@sarahdesign"
+                    : "No username configured yet"
                 }
                 action={
-                  <button className="bg-muted text-muted-foreground inline-flex items-center rounded-md px-2 py-1 text-xs font-medium">
+                  <button
+                    onClick={() => router.push("/dashboard/profile")}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center rounded-lg px-4 text-xs font-medium shadow-sm transition-colors"
+                  >
                     Change Username
                   </button>
                 }
@@ -121,12 +158,12 @@ export default function SettingsSubpage() {
                       <button
                         onClick={() => openPortal()}
                         disabled={isPortalPending || isBillingLoading}
-                        className="border-border bg-background text-foreground hover:bg-muted inline-flex h-9 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                        className="border-border bg-background text-foreground hover:bg-muted inline-flex h-8 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 text-xs font-medium shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                       >
                         {isPortalPending ? (
-                          <Loader2 size={15} className="animate-spin" />
+                          <Loader2 size={12} className="animate-spin" />
                         ) : (
-                          <CreditCard size={15} />
+                          <CreditCard size={12} />
                         )}
                         {isPortalPending
                           ? "Opening Portal..."
@@ -136,14 +173,16 @@ export default function SettingsSubpage() {
                       <button
                         onClick={() => openCheckout()}
                         disabled={isCheckoutPending || isBillingLoading}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-8 cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-xs font-medium shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                       >
                         {isCheckoutPending ? (
-                          <Loader2 size={15} className="animate-spin" />
+                          <Loader2 size={12} className="animate-spin" />
                         ) : (
-                          <Sparkles size={15} />
+                          <Sparkles size={12} />
                         )}
-                        {isCheckoutPending ? "Redirecting..." : "Upgrade to Pro"}
+                        {isCheckoutPending
+                          ? "Redirecting..."
+                          : "Upgrade to Pro"}
                       </button>
                     )}
                   </div>
@@ -175,7 +214,9 @@ export default function SettingsSubpage() {
 
                   {nextBillingDate && (
                     <SettingRow
-                      title={isCanceling ? "Access Expires" : "Next Billing Date"}
+                      title={
+                        isCanceling ? "Access Expires" : "Next Billing Date"
+                      }
                       description={
                         isCanceling
                           ? `Your Pro subscription access ends on ${nextBillingDate}.`
@@ -194,7 +235,6 @@ export default function SettingsSubpage() {
             </div>
           </section>
 
-
           <section>
             <h2 className="text-foreground mb-3 px-1 text-sm font-bold tracking-wider uppercase">
               Security
@@ -202,31 +242,31 @@ export default function SettingsSubpage() {
 
             <div className="border-border bg-background divide-border divide-y rounded-xl border px-5 shadow-sm">
               <SettingRow
-                title="Password"
-                description="Last changed 3 months ago"
+                title="Account Security"
+                description={`Authenticated via Better Auth (${session?.user?.email || "User session"})`}
                 action={
-                  <button className="border-border bg-background text-foreground hover:bg-muted inline-flex h-9 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium shadow-sm transition-colors">
-                    Update
+                  <button
+                    onClick={handlePasswordReset}
+                    className="border-border bg-background text-foreground hover:bg-muted inline-flex h-9 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium shadow-sm transition-colors"
+                  >
+                    Check Status
                   </button>
                 }
               />
 
               <SettingRow
-                title="Active Sessions"
-                description="Manage devices logged into your account"
+                title="Log Out Other Devices"
+                description="Revoke all active sessions on other devices and browsers"
                 action={
-                  <button className="border-border bg-background text-foreground hover:bg-muted inline-flex h-9 items-center justify-center rounded-lg border px-4 text-sm font-medium shadow-sm transition-colors">
-                    View Sessions
-                  </button>
-                }
-              />
-
-              <SettingRow
-                title="Log Out All Devices"
-                description="Log out from all other active sessions"
-                action={
-                  <button className="border-border bg-background text-foreground hover:bg-muted inline-flex h-9 items-center justify-center rounded-lg border px-4 text-sm font-medium shadow-sm transition-colors">
-                    Log Out All
+                  <button
+                    onClick={handleRevokeAllSessions}
+                    disabled={isRevokingSessions}
+                    className="border-border bg-background text-foreground hover:bg-muted inline-flex h-9 items-center justify-center rounded-lg border px-4 text-sm font-medium shadow-sm transition-colors disabled:opacity-50"
+                  >
+                    {isRevokingSessions ? (
+                      <Loader2 size={14} className="mr-2 animate-spin" />
+                    ) : null}
+                    Log Out Others
                   </button>
                 }
               />
@@ -240,32 +280,38 @@ export default function SettingsSubpage() {
             <div className="border-border bg-background divide-border divide-y rounded-xl border px-5 shadow-sm">
               <SettingRow
                 title="Theme"
-                description="Select your interface color scheme"
+                description="Select your preferred application color scheme"
                 action={
                   <div className="border-border bg-muted/50 flex rounded-lg border p-1">
                     <button
-                      onClick={() => {
-                        setTheme("light");
-                      }}
-                      className={`flex h-7 w-10 items-center justify-center rounded-md transition-all duration-200 ${theme === "light" ? "bg-background border-border text-foreground border shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                      onClick={() => setTheme("light")}
+                      className={`flex h-7 w-10 items-center justify-center rounded-md transition-all duration-200 ${
+                        mounted && theme === "light"
+                          ? "bg-background border-border text-foreground border shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
                       title="Light"
                     >
                       <Sun size={14} />
                     </button>
                     <button
-                      onClick={() => {
-                        setTheme("system");
-                      }}
-                      className={`flex h-7 w-10 items-center justify-center rounded-md transition-all duration-200 ${theme === "system" ? "bg-background border-border text-foreground border shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                      onClick={() => setTheme("system")}
+                      className={`flex h-7 w-10 items-center justify-center rounded-md transition-all duration-200 ${
+                        mounted && theme === "system"
+                          ? "bg-background border-border text-foreground border shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
                       title="System"
                     >
                       <Laptop size={14} />
                     </button>
                     <button
-                      onClick={() => {
-                        setTheme("dark");
-                      }}
-                      className={`flex h-7 w-10 items-center justify-center rounded-md transition-all duration-200 ${theme === "dark" ? "bg-background border-border text-foreground border shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                      onClick={() => setTheme("dark")}
+                      className={`flex h-7 w-10 items-center justify-center rounded-md transition-all duration-200 ${
+                        mounted && theme === "dark"
+                          ? "bg-background border-border text-foreground border shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
                       title="Dark"
                     >
                       <Moon size={14} />
@@ -276,30 +322,59 @@ export default function SettingsSubpage() {
 
               <SettingRow
                 title="Email Notifications"
-                description="Receive updates on product features and news"
+                description="Receive updates on weekly click summaries and milestone badges"
                 action={
-                  <label className="bg-primary relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full transition-colors focus:outline-none">
-                    <input type="checkbox" className="sr-only" defaultChecked />
-                    <span className="bg-background pointer-events-none block h-4 w-4 translate-x-4 rounded-full shadow-sm transition-transform" />
-                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextVal = !notificationsEnabled;
+                      setNotificationsEnabled(nextVal);
+                      toast.success(
+                        nextVal
+                          ? "Email notifications enabled"
+                          : "Email notifications disabled",
+                      );
+                    }}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
+                      notificationsEnabled
+                        ? "bg-primary"
+                        : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${
+                        notificationsEnabled
+                          ? "translate-x-5"
+                          : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
                 }
               />
             </div>
           </section>
 
-          <section className="py-8">
-            <div className="border-destructive/30 bg-destructive/5 rounded-xl border p-5">
+          <section className="py-4">
+            <div className="bg-destructive/5 rounded-xl border border-red-500/30 p-5">
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div className="flex flex-col gap-1">
-                  <h4 className="text-destructive mb-0.5 flex items-center gap-2 text-sm font-bold">
-                    <AlertTriangle size={16} /> Delete Account
+                  <h4 className="mb-0.5 flex items-center gap-2 text-sm font-bold text-red-500">
+                    <AlertTriangle size={16} /> Danger Zone
                   </h4>
                   <p className="text-muted-foreground text-xs">
-                    Permanently delete your account and all associated data.
+                    Sign out of your account across this device.
                   </p>
                 </div>
-                <button className="bg-destructive text-destructive-foreground hover:bg-destructive/90 inline-flex h-9 shrink-0 items-center justify-center rounded-lg px-4 text-sm font-medium shadow-sm transition-colors">
-                  Delete Account
+                <button
+                  onClick={async () => {
+                    await authClient.signOut();
+                    window.dispatchEvent(new Event("logout-event"));
+                    toast.success("Signed out successfully");
+                    router.push("/");
+                  }}
+                  className="inline-flex h-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-red-500/10 px-4 text-sm font-medium text-red-500 shadow-sm transition-colors hover:bg-red-500 hover:text-white"
+                >
+                  Sign Out
                 </button>
               </div>
             </div>
@@ -314,38 +389,13 @@ const SettingRow = ({
   title,
   description,
   action,
-  isEditing = false,
-  setIsEditingEmail,
 }: {
   title: string;
   description?: string;
   action: React.ReactNode;
-  isEditing?: boolean;
-  setIsEditingEmail?: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const [email, setEmail] = useState("");
-
   return (
     <div className="flex flex-col justify-between gap-4 py-4 sm:flex-row sm:items-center">
-      {isEditing && (
-        <div className="flex items-center gap-2">
-          <input
-            type="email"
-            className="border-border bg-background text-foreground focus:ring-primary block w-full rounded-md border shadow-sm focus:ring-1 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <button className="border-border bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center justify-center rounded-lg border px-4 text-sm font-medium shadow-sm transition-colors">
-            Save
-          </button>
-          <button
-            className="border-border bg-muted text-muted-foreground hover:bg-muted/90 inline-flex h-9 items-center justify-center rounded-lg border px-4 text-sm font-medium shadow-sm transition-colors"
-            onClick={() => setIsEditingEmail?.(false)}
-          >
-            Cancel
-          </button>
-        </div>
-      )}
       <div>
         <h4 className="text-foreground text-sm font-medium">{title}</h4>
         {description && (

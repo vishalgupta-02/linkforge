@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 
 const CallToAction = () => {
   return (
@@ -8,12 +9,15 @@ const CallToAction = () => {
           Create your page in seconds.
         </h2>
         <p className="mb-8 text-lg text-zinc-600 dark:text-zinc-400">
-          Claim your unique URL before someone else does. It's free, fast, and
+          Claim your unique URL before someone else does. It&apos;s free, fast, and
           beautifully yours.
         </p>
-        <button className="bg-primary hover:bg-primary/80 text-primary-foreground inline-flex h-14 cursor-pointer items-center justify-center rounded-xl px-8 text-lg font-semibold shadow-sm transition-all active:scale-[0.98]">
+        <Link
+          href="/signup"
+          className="bg-primary hover:bg-primary/80 text-primary-foreground inline-flex h-14 cursor-pointer items-center justify-center rounded-xl px-8 text-lg font-semibold shadow-sm transition-all active:scale-[0.98]"
+        >
           Get started for free
-        </button>
+        </Link>
         <p className="mt-4 text-[13px] font-medium text-zinc-500">
           No credit card required.
         </p>

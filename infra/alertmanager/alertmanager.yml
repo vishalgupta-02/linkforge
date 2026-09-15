@@ -1,0 +1,113 @@
+# ==============================================================================
+# LinkFlow Alertmanager Production Configuration
+# ==============================================================================
+
+global:
+  resolve_timeout: 5m
+  # SMTP Smarthost / Mail Transfer Agent Configuration
+  # Configured via environment variables (e.g. Resend, SendGrid, Amazon SES, or Mailgun SMTP)
+  smtp_smarthost: "${SMTP_HOST:-smtp.resend.com}:${SMTP_PORT:-587}"
+  smtp_from: "${ALERT_FROM_EMAIL:-alerts@linkflow.dev}"
+  smtp_auth_username: "${SMTP_USERNAME:-resend}"
+  smtp_auth_password: "${SMTP_PASSWORD:-}"
+  smtp_require_tls: true
+
+# ==============================================================================
+# Routing Tree
+# ==============================================================================
+route:
+  # Group alerts by alertname, severity, and application to prevent notification floods
+  group_by: ["alertname", "severity", "app"]
+  
+  # How long to initially wait to buffer alerts before sending the first notification
+  group_wait: 30s
+  
+  # How long to wait before sending a notification about new alerts in an existing group
+  group_interval: 5m
+  
+  # How long to wait before resending an active, unresolved alert
+  repeat_interval: 4h
+  
+  # Default fallback receiver
+  receiver: "email-notifications"
+
+  # Sub-routes
+  routes:
+    - receiver: "email-notifications"
+      matchers:
+        - severity =~ "critical|warning"
+      continue: false
+
+# ==============================================================================
+# Notification Receivers
+# ==============================================================================
+receivers:
+  - name: "email-notifications"
+    email_configs:
+      - to: "${ALERT_TO_EMAIL:-admin@linkflow.dev}"
+        send_resolved: true
+        headers:
+          Subject: >-
+            [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] 
+            [{{ .CommonLabels.severity | toUpper }}] {{ .CommonLabels.alertname }} - LinkFlow Observability
+        html: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 24px; }
+              .container { max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
+              .header { padding: 20px 24px; background-color: {{ if eq .Status "firing" }}{{ if eq .CommonLabels.severity "critical" }}#dc2626{{ else }}#f59e0b{{ end }}{{ else }}#16a34a{{ end }}; color: #ffffff; }
+              .header h1 { margin: 0; font-size: 20px; font-weight: 700; }
+              .header p { margin: 4px 0 0 0; font-size: 14px; opacity: 0.9; }
+              .content { padding: 24px; }
+              .alert-card { background-color: #0f172a; border-radius: 8px; border: 1px solid #334155; padding: 16px; margin-bottom: 16px; }
+              .alert-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #38bdf8; }
+              .field { margin-bottom: 8px; font-size: 14px; }
+              .field-label { color: #94a3b8; font-weight: 500; }
+              .field-value { color: #f1f5f9; }
+              .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+              .badge-critical { background-color: #7f1d1d; color: #fca5a5; }
+              .badge-warning { background-color: #78350f; color: #fde68a; }
+              .btn { display: inline-block; padding: 10px 18px; background-color: #3b82f6; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600; margin-top: 12px; }
+              .footer { padding: 16px 24px; font-size: 12px; color: #64748b; border-top: 1px solid #334155; text-align: center; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>{{ if eq .Status "firing" }}🔥 ALERT FIRING: {{ .CommonLabels.alertname }}{{ else }}✅ ALERT RESOLVED: {{ .CommonLabels.alertname }}{{ end }}</h1>
+                <p>LinkFlow Observability Alert Notification</p>
+              </div>
+              <div class="content">
+                {{ range .Alerts }}
+                <div class="alert-card">
+                  <div class="alert-title">{{ .Annotations.summary }}</div>
+                  <div class="field"><span class="field-label">Severity:</span> <span class="badge {{ if eq .Labels.severity "critical" }}badge-critical{{ else }}badge-warning{{ end }}">{{ .Labels.severity }}</span></div>
+                  <div class="field"><span class="field-label">Description:</span> <span class="field-value">{{ .Annotations.description }}</span></div>
+                  {{ if .Annotations.threshold }}<div class="field"><span class="field-label">Threshold:</span> <span class="field-value">{{ .Annotations.threshold }}</span></div>{{ end }}
+                  <div class="field"><span class="field-label">Active Since:</span> <span class="field-value">{{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}</span></div>
+                  {{ if .Annotations.runbook_url }}<a href="{{ .Annotations.runbook_url }}" class="btn">View Operational Runbook</a>{{ end }}
+                </div>
+                {{ end }}
+              </div>
+              <div class="footer">
+                LinkFlow Production Monitoring • Prometheus & Alertmanager System
+              </div>
+            </div>
+          </body>
+          </html>
+        text: |
+          ==============================================================================
+          LinkFlow Observability Alert: {{ .CommonLabels.alertname }} ({{ .Status | toUpper }})
+          ==============================================================================
+          {{ range .Alerts }}
+          Summary:     {{ .Annotations.summary }}
+          Severity:    {{ .Labels.severity }}
+          Description: {{ .Annotations.description }}
+          Threshold:   {{ .Annotations.threshold }}
+          Starts At:   {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+          Runbook:     {{ .Annotations.runbook_url }}
+          ------------------------------------------------------------------------------
+          {{ end }}

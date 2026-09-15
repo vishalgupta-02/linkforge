@@ -47,3 +47,17 @@ export async function updateLink({
     throw error;
   }
 }
+
+export async function reorderLinksApi(linkIds: string[]) {
+  try {
+    const res = await axios.patch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/links/reorder`,
+      { linkIds },
+      { withCredentials: true },
+    );
+    return res.data;
+  } catch (error) {
+    console.error("Failed to reorder links:", error);
+    throw error;
+  }
+}

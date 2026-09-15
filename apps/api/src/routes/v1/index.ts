@@ -17,6 +17,7 @@ router.use("/users", userRoutes);
 router.use("/uploads", uploadRoutes);
 router.use("/links", linkRoutes);
 router.use("/redirect", redirectRoutes);
+router.use("/r", redirectRoutes);
 router.use("/analytics", analyticsRoutes);
 router.use("/admin", adminRoutes);
 router.use("/live", liveRoutes);

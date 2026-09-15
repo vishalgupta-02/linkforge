@@ -1,0 +1,61 @@
+# ==============================================================================
+# LinkFlow Prometheus Production Alerting Rules
+# ==============================================================================
+
+groups:
+  - name: linkflow-application-alerts
+    rules:
+      # ========================================================================
+      # 1. High HTTP Error Rate (> 5% 5xx errors continuously for 5 minutes)
+      # ========================================================================
+      - alert: HighHTTPErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status_code=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+          ) > 0.05 and sum(rate(http_requests_total[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+          app: linkforge-api
+        annotations:
+          summary: "High HTTP 5xx error rate detected on API"
+          description: "HTTP 5xx server error rate has exceeded 5% for more than 5 continuous minutes (current rate: {{ $value | humanizePercentage }})."
+          threshold: "5%"
+          runbook_url: "https://github.com/vishalgupta-02/linkforge/blob/main/docs/observability/prometheus-alertmanager-email-alerts.md#highhttperrorrate"
+
+      # ========================================================================
+      # 2. High HTTP P99 Latency (> 2.0 seconds)
+      # ========================================================================
+      - alert: HighHTTPP99Latency
+        expr: |
+          histogram_quantile(
+            0.99,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 2
+        for: 2m
+        labels:
+          severity: critical
+          app: linkforge-api
+        annotations:
+          summary: "High HTTP P99 request latency detected on API"
+          description: "Overall HTTP request P99 latency has exceeded 2.0 seconds for more than 2 minutes (current P99: {{ $value | humanizeDuration }})."
+          threshold: "2.0s"
+          runbook_url: "https://github.com/vishalgupta-02/linkforge/blob/main/docs/observability/prometheus-alertmanager-email-alerts.md#highhttpp99latency"
+
+      # ========================================================================
+      # 3. High Queue Depth (> 1000 pending jobs)
+      # ========================================================================
+      - alert: HighQueueDepth
+        expr: |
+          queue_depth > 1000
+        for: 2m
+        labels:
+          severity: warning
+          app: linkforge-api
+        annotations:
+          summary: "High BullMQ click tracking queue depth detected"
+          description: "Pending queue workload (waiting + delayed + prioritized jobs) has exceeded 1000 jobs for more than 2 minutes (current depth: {{ $value }} jobs)."
+          threshold: "1000 jobs"
+          runbook_url: "https://github.com/vishalgupta-02/linkforge/blob/main/docs/observability/prometheus-alertmanager-email-alerts.md#highqueuedepth"

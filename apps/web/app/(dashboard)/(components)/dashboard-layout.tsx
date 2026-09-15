@@ -15,7 +15,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <AppSidebar />
         <main className="w-full flex-1 overflow-auto">
           <div className="flex items-center justify-between gap-4 px-4">
-            <SidebarTrigger className="bg-primary text-primary-foreground m-4 h-8 w-8" />
+            <SidebarTrigger className="bg-primary text-primary-foreground m-4 h-8 w-8 cursor-pointer" />
             <div className="flex items-center gap-2">
               <AnimatedThemeToggler className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 shadow-sm transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-white/10 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-white" />
 

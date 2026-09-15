@@ -72,9 +72,7 @@ export const profileUpdateController = async (req: Request, res: Response) => {
 };
 
 export const getUsernameController = async (req: Request, res: Response) => {
-  // const userId = req.user?.id;
-
-  const { userId } = req.body;
+  const userId = req.user?.id;
 
   if (!userId) {
     throw new AppError("Unauthorized", 401);
@@ -86,7 +84,7 @@ export const getUsernameController = async (req: Request, res: Response) => {
     return res.json(ApiResponse(null, "User not found", 404));
   }
 
-  const response = ApiResponse(profile, "Username fetched successfully", 200);
+  const response = ApiResponse(profile, "User profile fetched successfully", 200);
 
   return res.json(response);
 };

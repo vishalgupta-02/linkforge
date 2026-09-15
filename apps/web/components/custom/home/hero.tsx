@@ -1,8 +1,23 @@
 "use client";
 
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { BadgeCheck, Camera, Globe, Palette, PlayCircle } from "lucide-react";
 
 const Hero = () => {
+  const [username, setUsername] = useState("");
+  const router = useRouter();
+
+  const handleCreatePage = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = username.trim().toLowerCase();
+    if (clean) {
+      router.push(`/signup?username=${encodeURIComponent(clean)}`);
+    } else {
+      router.push("/signup");
+    }
+  };
+
   return (
     <section className="relative overflow-hidden border-b border-zinc-200 pt-16 pb-16 md:pt-12 md:pb-12 dark:border-white/5">
       <div className="relative z-10 mx-auto flex w-full max-w-[1200px] flex-col items-center gap-32 px-6 md:gap-12 lg:flex-row">
@@ -19,21 +34,29 @@ const Hero = () => {
             designed page. Turn your audience into a destination.
           </p>
 
-          <div className="mx-auto mb-3 flex max-w-lg flex-col items-center justify-center gap-3 sm:flex-row lg:mx-0 lg:justify-start">
+          <form
+            onSubmit={handleCreatePage}
+            className="mx-auto mb-3 flex max-w-lg flex-col items-center justify-center gap-3 sm:flex-row lg:mx-0 lg:justify-start"
+          >
             <div className="relative w-full">
               <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-sm font-medium text-zinc-700 dark:text-zinc-400">
                 linkforge.bio/
               </span>
               <input
                 type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 placeholder="username"
                 className="h-12 w-full rounded-xl border border-zinc-200 bg-white pr-4 pl-33 font-medium text-zinc-900 shadow-sm transition-all outline-none placeholder:text-zinc-400 focus:ring-1 focus:ring-violet-500 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-zinc-600"
               />
             </div>
-            <button className="bg-primary/90 hover:bg-primary/70 text-background inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-xl px-6 text-sm font-semibold whitespace-nowrap shadow-sm transition-all active:scale-[0.98] sm:w-auto">
+            <button
+              type="submit"
+              className="bg-primary/90 hover:bg-primary/70 text-background inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-xl px-6 text-sm font-semibold whitespace-nowrap shadow-sm transition-all active:scale-[0.98] sm:w-auto"
+            >
               Create page
             </button>
-          </div>
+          </form>
           <p className="mb-3 pl-3 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
             It&apos;s free, and takes less than 30 seconds.
           </p>

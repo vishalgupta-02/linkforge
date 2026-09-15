@@ -79,7 +79,7 @@ const Pricing = () => {
               </button>
             ) : (
               <Link
-                href="/sign-up"
+                href="/signup"
                 className="inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 text-sm font-bold text-zinc-900 shadow-sm transition-all hover:bg-zinc-100 active:scale-[0.98] dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
               >
                 {freePlan.ctaLabel}

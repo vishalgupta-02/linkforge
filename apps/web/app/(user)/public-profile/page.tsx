@@ -100,8 +100,8 @@ export default function CreatorPublicProfile() {
 
   const { email, name, plan, userName, bio, image, links } = profileData;
 
-  const publicLinks = links.filter(
-    (link) => link.isActive && !link.scheduledStart,
+  const publicLinks = (links || []).filter(
+    (link) => link.public && link.isActive,
   );
 
   return (
@@ -138,7 +138,7 @@ export default function CreatorPublicProfile() {
             </div>
 
             <p className="font-custom-serif mb-4 max-w-sm text-[15px] leading-relaxed font-medium text-zinc-600 dark:text-zinc-300">
-              @{name ? name : "userName"} {bio && `- ${bio}`}
+              @{userName || name} {bio && `- ${bio}`}
             </p>
 
             <div className="flex items-center justify-center gap-4 text-zinc-500 dark:text-zinc-400">
@@ -171,34 +171,46 @@ export default function CreatorPublicProfile() {
 
           <div className="w-full space-y-4">
             {publicLinks.length > 0 ? (
-              publicLinks.map((link, index) => (
-                <a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group animate-fade-in-up flex w-full items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98] dark:border-white/10 dark:bg-white/3 dark:hover:bg-white/5"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 transition-transform group-hover:scale-105 dark:bg-violet-500/10 dark:text-violet-400">
-                    <LinkIcon size={20} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-[15px] font-bold text-zinc-900 dark:text-white">
-                      {link.title}
-                    </h3>
-                    <p className="truncate text-[13px] font-medium text-zinc-500">
-                      {new URL(link.url).hostname}
-                    </p>
-                  </div>
-                  <div className="shrink-0 pr-2">
-                    <ArrowUpRight
-                      size={18}
-                      className="text-zinc-400 transition-colors group-hover:text-zinc-900 dark:group-hover:text-white"
-                    />
-                  </div>
-                </a>
-              ))
+              publicLinks.map((link, index) => {
+                const redirectIdentifier = link.publicId || link.id;
+                const redirectUrl = `/r/${redirectIdentifier}`;
+                let displayHostname = link.url;
+                try {
+                  const formatted = link.url.startsWith("http://") || link.url.startsWith("https://") ? link.url : `https://${link.url}`;
+                  displayHostname = new URL(formatted).hostname;
+                } catch {
+                  displayHostname = link.url;
+                }
+
+                return (
+                  <a
+                    key={redirectIdentifier}
+                    href={redirectUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group animate-fade-in-up flex w-full items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-[0.98] dark:border-white/10 dark:bg-white/3 dark:hover:bg-white/5"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 transition-transform group-hover:scale-105 dark:bg-violet-500/10 dark:text-violet-400">
+                      <LinkIcon size={20} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate text-[15px] font-bold text-zinc-900 dark:text-white">
+                        {link.title}
+                      </h3>
+                      <p className="truncate text-[13px] font-medium text-zinc-500">
+                        {displayHostname}
+                      </p>
+                    </div>
+                    <div className="shrink-0 pr-2">
+                      <ArrowUpRight
+                        size={18}
+                        className="text-zinc-400 transition-colors group-hover:text-zinc-900 dark:group-hover:text-white"
+                      />
+                    </div>
+                  </a>
+                );
+              })
             ) : (
               <div className="animate-fade-in-up flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-200 p-8 text-center dark:border-white/10">
                 <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 dark:bg-white/5">
@@ -219,8 +231,8 @@ export default function CreatorPublicProfile() {
             style={{ animationDelay: "500ms" }}
           >
             <a
-              href="#"
-              className="group flex items-center gap-2 text-zinc-400 transition-colors hover:text-zinc-900 dark:hover:text-white"
+              href="/"
+              className="group flex items-center gap-2 text-zinc-400 transition-colors hover:text-zinc-950 dark:hover:text-white"
             >
               <div className="flex h-5 w-5 items-center justify-center rounded bg-zinc-200 transition-colors group-hover:bg-violet-500 dark:bg-white/10">
                 <Pentagon
