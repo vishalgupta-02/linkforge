@@ -24,6 +24,10 @@ import * as Sentry from "@sentry/node";
 
 const app: Express = express();
 
+// 🔐 1. trust proxy (MUST be configured before any IP-dependent middleware)
+app.set("trust proxy", 1);
+app.disable("x-powered-by");
+
 startCleanupJob();
 startBusinessMetricsRefresher();
 
@@ -33,7 +37,7 @@ app.use(requestIdMiddleware);
 // 📊 Prometheus HTTP Metrics Middleware
 app.use(metricsMiddleware);
 
-// Parse JSON and URL-encoded bodies BEFORE auth handler
+// 🌐 CORS Middleware (MUST run before body parsers and route handlers)
 app.use(corsMiddleware);
 
 // ⚡ Stripe Webhook requires raw Buffer body for signature verification
@@ -47,12 +51,9 @@ app.use(
   }),
 );
 app.use(express.urlencoded({ extended: true }));
+
+// 🚦 Global rate limiting
 app.use(rateLimitMiddleware);
-
-app.disable("x-powered-by");
-
-// 🔐 trust proxy (needed for correct IP + HSTS behind proxies)
-app.set("trust proxy", 1);
 
 // 🔐 Helmet (with custom CSP)
 app.use(

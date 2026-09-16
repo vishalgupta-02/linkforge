@@ -11,34 +11,43 @@ import { isUsernameAvailable } from "../services/username.service.ts";
 import { enqueueWelcomeEmail } from "../queues/email.queue.ts";
 import { recordUserSignup } from "./metrics.ts";
 
-import { getAllowedOrigins, isOriginAllowed } from "../middlewares/cors.ts";
+import {
+  getAllowedOrigins,
+  isOriginAllowed,
+  sanitizeOrigin,
+} from "../middlewares/cors.ts";
 
-const appBaseUrl =
-  process.env.FRONTEND_URL ||
-  process.env.NEXT_PUBLIC_APP_URL ||
-  process.env.APP_URL ||
-  process.env.BETTER_AUTH_URL?.replace(/\/api\/auth.*/, "") ||
+const frontendBaseUrl =
+  sanitizeOrigin(process.env.FRONTEND_URL) ||
+  sanitizeOrigin(process.env.NEXT_PUBLIC_APP_URL) ||
+  sanitizeOrigin(process.env.APP_URL) ||
   "http://localhost:3000";
 
-const dashboardUrl = `${appBaseUrl.replace(/\/$/, "")}/dashboard`;
+const backendBaseUrl =
+  sanitizeOrigin(process.env.BETTER_AUTH_URL) ||
+  "http://localhost:5000/api/auth";
+
+const dashboardUrl = `${frontendBaseUrl}/dashboard`;
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
     usePlural: false,
   }),
+  baseURL: backendBaseUrl,
   trustedOrigins: (request) => {
-    const origins = [...getAllowedOrigins(), appBaseUrl.replace(/\/$/, "")];
+    const origins = [...getAllowedOrigins(), frontendBaseUrl];
     const origin = request?.headers?.get("origin");
     if (origin && isOriginAllowed(origin)) {
-      origins.push(origin);
+      origins.push(sanitizeOrigin(origin));
     }
-    return origins;
+    return Array.from(new Set(origins));
   },
   advanced: {
     defaultCookieAttributes: {
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      // In production cross-site context (vercel.app -> railway.app), SameSite MUST be 'none'
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       httpOnly: true,
       maxAge: 60 * 60 * 24 * 7, // 7 days
     },
@@ -50,7 +59,6 @@ export const auth = betterAuth({
     disableSessionRefresh: true,
     updateAge: 24 * 60 * 60,
   },
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000/api/auth",
   socialProviders: {
     google: {
       prompt: "select_account consent",
@@ -65,7 +73,7 @@ export const auth = betterAuth({
         process.env.GOOGLE_CALLBACK_URL ||
         process.env.GOOGLE_OAUTH_REDIRECT_URI ||
         process.env.GOOGLE_REDIRECT_URI ||
-        "http://localhost:5000/callback/google",
+        `${backendBaseUrl.replace(/\/api\/auth.*/, "")}/api/auth/callback/google`,
     },
     github: {
       clientId: (process.env.GITHUB_OAUTH_CLIENT_ID ||
@@ -78,7 +86,7 @@ export const auth = betterAuth({
         process.env.GITHUB_CALLBACK_URL ||
         process.env.GITHUB_OAUTH_REDIRECT_URI ||
         process.env.GITHUB_REDIRECT_URI ||
-        "http://localhost:5000/callback/github",
+        `${backendBaseUrl.replace(/\/api\/auth.*/, "")}/api/auth/callback/github`,
     },
   },
   databaseHooks: {
