@@ -6,7 +6,8 @@
     "strict": true,
     "esModuleInterop": true,
     "paths": {
-      "@repo/types": ["packages/types/src"]
+      "@vyrex/types": ["packages/types/index.ts"],
+      "@repo/types": ["packages/types/index.ts"]
     }
   }
 }
