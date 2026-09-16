@@ -96,7 +96,8 @@ import type { Request } from "express";
 import { clickQueue } from "../queues/click.queue.ts";
 
 type TrackClickInput = {
-  linkId: string;
+  linkId?: string;
+  socialLinkId?: string;
   userId: string;
   req: Request;
 };
@@ -236,6 +237,7 @@ type TrackClickInput = {
 
 export const enqueueClickEvent = async ({
   linkId,
+  socialLinkId,
   userId,
   req,
 }: TrackClickInput) => {
@@ -256,7 +258,8 @@ export const enqueueClickEvent = async ({
     "track-click",
 
     {
-      linkId,
+      linkId: linkId || null,
+      socialLinkId: socialLinkId || null,
       userId,
 
       rawReferrer,

@@ -24,6 +24,7 @@ model User {
   stripeSubscriptionId String?
 
   links                Link[]
+  socialLinks          SocialLink[]
 
   clickEvent ClickEvent[]
 
@@ -83,6 +84,27 @@ model Link {
   @@index([userId, deletedAt])
 }
 
+model SocialLink {
+  id        String    @id @default(uuid())
+  publicId  String?   @unique
+  platform  String    // e.g. "instagram", "twitter", "youtube", "linkedin", "github", "tiktok", "twitch", "discord", "spotify", "facebook", "website", etc.
+  url       String
+  position  Int       @default(0)
+  counts    Int       @default(0)
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  clickEvent ClickEvent[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId, deletedAt])
+}
+
 model ClickEvent {
   id         String @id @default(uuid())
 
@@ -97,8 +119,11 @@ model ClickEvent {
   ipAddress  String
   userAgent  String
 
-  linkId String
-  link   Link @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  linkId String?
+  link   Link? @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  socialLinkId String?
+  socialLink   SocialLink? @relation(fields: [socialLinkId], references: [id], onDelete: Cascade)
 
   userId String
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -106,6 +131,7 @@ model ClickEvent {
   createdAt DateTime @default(now())
 
   @@index([linkId])
+  @@index([socialLinkId])
   @@index([userId])
 }
 

@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
-import { flushSync } from "react-dom";
 import { useTheme } from "next-themes";
 
 import { cn } from "@/lib/utils";
@@ -13,83 +12,54 @@ interface AnimatedThemeTogglerProps extends React.ComponentPropsWithoutRef<"butt
 
 export const AnimatedThemeToggler = ({
   className,
-  duration = 400,
+  duration,
   ...props
 }: AnimatedThemeTogglerProps) => {
-  const { theme, setTheme } = useTheme();
-  const [isDark, setIsDark] = useState(false);
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setMounted(true);
-    setIsDark(theme === "dark");
-  }, [theme]);
+  }, []);
+
+  const currentTheme = theme === "system" ? resolvedTheme : theme;
+  const isDark = currentTheme === "dark";
 
   const handleToggle = useCallback(() => {
     if (!mounted) return;
+    setTheme(isDark ? "light" : "dark");
+  }, [isDark, setTheme, mounted]);
 
-    const button = buttonRef.current;
-    if (!button) {
-      setTheme(isDark ? "light" : "dark");
-      return;
-    }
-
-    const { top, left, width, height } = button.getBoundingClientRect();
-    const x = left + width / 2;
-    const y = top + height / 2;
-    const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
-    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-    const maxRadius = Math.hypot(
-      Math.max(x, viewportWidth - x),
-      Math.max(y, viewportHeight - y),
+  if (!mounted) {
+    return (
+      <button
+        type="button"
+        className={cn("inline-flex items-center justify-center p-2 rounded-lg", className)}
+        {...props}
+      >
+        <span className="h-4 w-4" />
+        <span className="sr-only">Toggle theme</span>
+      </button>
     );
-
-    const applyTheme = () => {
-      setTheme(isDark ? "light" : "dark");
-    };
-
-    if (typeof document.startViewTransition !== "function") {
-      applyTheme();
-      return;
-    }
-
-    const transition = document.startViewTransition(() => {
-      flushSync(applyTheme);
-    });
-
-    const ready = transition?.ready;
-    if (ready && typeof ready.then === "function") {
-      ready.then(() => {
-        document.documentElement.animate(
-          {
-            clipPath: [
-              `polygon(0 0, 100% 0, 100% 0, 0 0)`,
-              `polygon(0 0, 100% 0, 100% 100%, 0 100%)`,
-            ],
-          },
-          {
-            duration,
-            easing: "ease-in-out",
-            pseudoElement: "::view-transition-new(root)",
-          },
-        );
-      });
-    }
-  }, [isDark, setTheme, duration, mounted]);
-
-  if (!mounted) return null;
+  }
 
   return (
     <button
       type="button"
-      ref={buttonRef}
       onClick={handleToggle}
-      className={cn(className)}
+      className={cn(
+        "inline-flex items-center justify-center p-2 rounded-lg transition-transform duration-150 active:scale-95 cursor-pointer",
+        className
+      )}
       {...props}
     >
-      {isDark ? <Sun size={16} /> : <Moon size={16} />}
+      {isDark ? (
+        <Sun size={16} className="transition-transform duration-150 rotate-0 scale-100" />
+      ) : (
+        <Moon size={16} className="transition-transform duration-150 rotate-0 scale-100" />
+      )}
       <span className="sr-only">Toggle theme</span>
     </button>
   );
 };
+

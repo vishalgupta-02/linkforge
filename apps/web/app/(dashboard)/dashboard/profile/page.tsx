@@ -31,6 +31,7 @@ import { updateLink } from "@/apis/update-link";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { SocialMediaManager } from "@/components/custom/social-media-manager";
 
 export default function CreatorDashboardProfile() {
   const router = useRouter();
@@ -399,6 +400,10 @@ export default function CreatorDashboardProfile() {
                       {isSaving ? "Saving..." : "Save Changes"}
                     </button>
                   </div>
+                </div>
+
+                <div className="pt-4">
+                  <SocialMediaManager />
                 </div>
               </form>
             ) : activeTab === "links" ? (

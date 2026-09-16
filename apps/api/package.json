@@ -15,6 +15,7 @@
     "test:milestone-email": "tsx tests/click-milestone-email.test.ts",
     "test:password-reset": "tsx tests/password-reset.test.ts",
     "test:links": "tsx tests/links-crud.test.ts",
+    "test:socials": "tsx tests/social-links.test.ts",
     "test:redirect": "tsx tests/public-redirect.test.ts",
     "test:sentry": "tsx tests/sentry-context.test.ts",
     "test:metrics": "tsx tests/metrics.test.ts",

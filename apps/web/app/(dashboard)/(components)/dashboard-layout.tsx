@@ -29,6 +29,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                   links
                 </h1>
               )}
+              {pathname === "/dashboard/social-media" && (
+                <h1 className="px-4 text-3xl font-semibold tracking-tight">
+                  social media
+                </h1>
+              )}
               {pathname === "/dashboard/analytics" && (
                 <h1 className="px-4 text-3xl font-semibold tracking-tight">
                   analytics

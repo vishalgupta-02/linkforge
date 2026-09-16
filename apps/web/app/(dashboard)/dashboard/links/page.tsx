@@ -17,6 +17,8 @@ import { authClient } from "@/lib/auth-client";
 import { getPublicProfile } from "@/apis/get-public-profile";
 import { getMe } from "@/apis/get-user-profile";
 
+import { SocialMediaManager } from "@/components/custom/social-media-manager";
+
 // --- Types ---
 interface LinkItem extends Link {
   featured?: boolean;
@@ -259,7 +261,12 @@ export default function CreatorLinkManagement() {
         console.error("Failed to reorder links via batch API:", error);
         // Fallback to individual position updates
         for (const link of updatedLinks) {
-          if (link.title && link.url && !link.isNew && !link.id.startsWith("temp-")) {
+          if (
+            link.title &&
+            link.url &&
+            !link.isNew &&
+            !link.id.startsWith("temp-")
+          ) {
             try {
               await updateLink({
                 id: link.id,

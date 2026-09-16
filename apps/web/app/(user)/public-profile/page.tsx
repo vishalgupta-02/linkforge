@@ -15,8 +15,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getPublicProfile } from "@/apis/get-public-profile";
 import { authClient } from "@/lib/auth-client";
-import type { User, Link as LinkType } from "@vyrex/types";
+import type { User, Link as LinkType, PublicProfileSocial } from "@vyrex/types";
 import { getMe } from "@/apis/get-user-profile";
+import { getPlatformConfig } from "@/components/custom/social-media-manager";
 
 interface PublicProfileData {
   id: string;
@@ -27,6 +28,7 @@ interface PublicProfileData {
   bio: string | null;
   image: string | null;
   links: LinkType[];
+  socialLinks?: PublicProfileSocial[];
 }
 
 export default function CreatorPublicProfile() {
@@ -39,31 +41,22 @@ export default function CreatorPublicProfile() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log("Inside the Public page");
     const fetchProfile = async () => {
       try {
         setLoading(true);
 
         const username = await getMe(session?.user?.id || "");
-        console.log("Inside the useeffect");
 
         if (!username) {
-          // User doesn't have a username (likely from social signin)
           setError("Please set up your username to view your public profile");
-
           setLoading(false);
-          // Redirect to settings/profile page to complete username setup
-
           setTimeout(() => {
             router.push("/dashboard/settings");
           }, 2000);
-
           return;
         }
 
-        // Fetch public profile using the public API
         const data = await getPublicProfile(username.data.userName);
-
         setProfileData(data.data);
       } catch (err) {
         console.error("Failed to fetch profile:", err);
@@ -98,7 +91,7 @@ export default function CreatorPublicProfile() {
     );
   }
 
-  const { email, name, plan, userName, bio, image, links } = profileData;
+  const { email, name, plan, userName, bio, image, links, socialLinks } = profileData;
 
   const publicLinks = (links || []).filter(
     (link) => link.public && link.isActive,
@@ -141,32 +134,30 @@ export default function CreatorPublicProfile() {
               @{userName || name} {bio && `- ${bio}`}
             </p>
 
-            <div className="flex items-center justify-center gap-4 text-zinc-500 dark:text-zinc-400">
-              <div className="flex items-center gap-3">
-                <a
-                  href="https://twitter.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition-colors hover:text-zinc-950 dark:hover:text-white"
-                >
-                  <Twitter size={18} />
-                </a>
-                <a
-                  href="https://instagram.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition-colors hover:text-zinc-950 dark:hover:text-white"
-                >
-                  <Instagram size={18} />
-                </a>
-                <a
-                  href={`mailto:${email}`}
-                  className="transition-colors hover:text-zinc-950 dark:hover:text-white"
-                >
-                  <Mail size={18} />
-                </a>
+            {socialLinks && socialLinks.length > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                {socialLinks.map((social) => {
+                  const platformConfig = getPlatformConfig(social.platform);
+                  const Icon = platformConfig.icon;
+                  const redirectUrl = social.publicId
+                    ? `/r/${social.publicId}`
+                    : social.url;
+
+                  return (
+                    <a
+                      key={social.publicId || social.id || social.platform}
+                      href={redirectUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex size-9 items-center justify-center rounded-full border border-zinc-200 bg-white p-2 text-zinc-700 shadow-2xs transition-all hover:scale-110 hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:text-zinc-300"
+                      title={platformConfig.name}
+                    >
+                      <Icon className="size-4.5" />
+                    </a>
+                  );
+                })}
               </div>
-            </div>
+            )}
           </header>
 
           <div className="w-full space-y-4">

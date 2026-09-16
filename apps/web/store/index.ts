@@ -44,6 +44,13 @@ type PublicProfile = {
   name: string;
   userName: string;
   createdAt: Date;
+  socialMedia: {
+    id: string;
+    name: string;
+    icon?: string;
+    url: string;
+    position: number;
+  };
   links: {
     id: string;
     title: string;

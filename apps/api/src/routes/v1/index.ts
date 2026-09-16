@@ -10,12 +10,14 @@ import liveRoutes from "./live.routes.ts";
 import billingRoutes from "./billing.routes.ts";
 import emailRoutes from "./email.routes.ts";
 import authRoutes from "./auth.routes.ts";
+import socialRoutes from "./social.routes.ts";
 
 const router: Router = Router();
 
 router.use("/users", userRoutes);
 router.use("/uploads", uploadRoutes);
 router.use("/links", linkRoutes);
+router.use("/socials", socialRoutes);
 router.use("/redirect", redirectRoutes);
 router.use("/r", redirectRoutes);
 router.use("/analytics", analyticsRoutes);
