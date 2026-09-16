@@ -31,10 +31,9 @@ export default function Navbar() {
 
   const checkSession = async () => {
     try {
-      const session = await authClient.getSession();
+      const session = await authClient?.getSession();
       setLoggedIn(!!session.data?.user);
-    } catch (error) {
-      console.error("Failed to check session:", error);
+    } catch {
       setLoggedIn(false);
     }
   };
