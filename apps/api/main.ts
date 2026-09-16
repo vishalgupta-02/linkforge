@@ -111,7 +111,9 @@ app.use("/api/auth", toNodeHandler(auth));
 // 🔐 Direct OAuth Callback Route (e.g. http://localhost:5000/callback/google -> /api/auth/callback/google)
 app.get("/callback/:provider", (req, res) => {
   const provider = req.params.provider;
-  const query = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
+  const query = req.url.includes("?")
+    ? req.url.slice(req.url.indexOf("?"))
+    : "";
   res.redirect(`/api/auth/callback/${provider}${query}`);
 });
 
@@ -138,7 +140,9 @@ app.get("/metrics", async (req, res) => {
   const metricsToken = process.env.METRICS_TOKEN;
   if (metricsToken) {
     const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : authHeader;
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7).trim()
+      : authHeader;
     if (token !== metricsToken) {
       return res.status(403).send("Forbidden: Invalid metrics token");
     }

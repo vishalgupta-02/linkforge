@@ -40,6 +40,7 @@ export const auth = betterAuth({
         )
       : []),
     "https://linkforge.vercel.app",
+    "https://linkforge-web-iota.vercel.app",
     appBaseUrl,
   ].filter(Boolean),
   account: {
@@ -214,7 +215,6 @@ export const auth = betterAuth({
             });
           }
 
-          // 📊 Record business metric for successfully created user
           recordUserSignup();
 
           // 📬 Asynchronously enqueue welcome email job into BullMQ
