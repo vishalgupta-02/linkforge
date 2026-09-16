@@ -24,6 +24,7 @@ import {
   Pentagon,
   Earth,
   CodeSquare,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -49,6 +50,11 @@ const menuItems = [
     title: "Links",
     url: "/dashboard/links",
     icon: Link2,
+  },
+  {
+    title: "Social Media",
+    url: "/dashboard/social-media",
+    icon: Users,
   },
   {
     title: "Analytics",

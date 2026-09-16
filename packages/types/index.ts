@@ -27,11 +27,72 @@ export interface Link {
   updatedAt: string;
 }
 
+export type SocialPlatform =
+  | "instagram"
+  | "twitter"
+  | "x"
+  | "youtube"
+  | "linkedin"
+  | "github"
+  | "tiktok"
+  | "twitch"
+  | "discord"
+  | "spotify"
+  | "facebook"
+  | "threads"
+  | "telegram"
+  | "pinterest"
+  | "snapchat"
+  | "patreon"
+  | "substack"
+  | "medium"
+  | "whatsapp"
+  | "custom"
+  | string;
+
+export interface SocialLink {
+  id: string;
+  publicId?: string | null;
+  platform: string;
+  url: string;
+  position: number;
+  counts: number;
+  isActive: boolean;
+  deletedAt: string | null;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PublicProfileLink {
   publicId: string;
   title: string;
   url: string;
   position: number;
+}
+
+export interface PublicProfileSocial {
+  id?: string;
+  publicId: string;
+  platform: string;
+  url: string;
+  position: number;
+  counts?: number;
+}
+
+export interface SocialClickItem {
+  socialLinkId: string;
+  platform: string;
+  url: string;
+  clicks: number;
+  percentage: number;
+  relativeWidth: number;
+}
+
+export interface SocialMediaAnalytics {
+  totalSocialClicks: number;
+  topSocial: SocialClickItem | null;
+  clicksBySocial: SocialClickItem[];
 }
 
 export interface ApiResponse<T> {
@@ -46,3 +107,4 @@ export enum Plan {
   PRO = "PRO",
   BUSINESS = "BUSINESS",
 }
+

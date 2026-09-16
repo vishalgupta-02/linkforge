@@ -11,12 +11,18 @@ import {
   ChevronDown,
   Globe,
   ExternalLink,
+  Share2,
+  Sparkles,
+  Lock,
+  Crown,
+  TrendingUp,
 } from "lucide-react";
 import type { AnalyticsRange } from "@/apis/get-analytics";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import { useRouter } from "next/navigation";
 import { LiveVisitors } from "@/components/custom/live-visitors";
+import { getPlatformConfig } from "@/components/custom/social-media-manager";
 
 const calculateChartHeights = (
   dailyData?: Array<{ date: string; clicks: number }>,
@@ -281,6 +287,212 @@ export default function AnalyticsDashboard() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* 🌟 Social Media Performance Analytics (Tiered: Top for Free, Detailed for Pro) */}
+              <div className="border-border bg-background rounded-2xl border p-6 shadow-sm">
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                  <div className="flex items-center gap-2.5">
+                    <div className="bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-xl">
+                      <Share2 size={18} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-foreground text-base font-bold tracking-tight">
+                          Social Media Performance
+                        </h3>
+                        {isPro ? (
+                          <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                            <Crown size={11} /> Pro Detailed View
+                          </span>
+                        ) : (
+                          <span className="bg-muted text-muted-foreground border border-border inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium">
+                            Free Tier Summary
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground text-xs">
+                        How many times your social profiles were clicked and which platforms perform best.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="bg-muted/40 border-border flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold">
+                      <span className="text-muted-foreground">Total Social Clicks:</span>
+                      <span className="text-foreground font-bold">
+                        {loading ? "..." : (analytics?.socialAnalytics?.totalSocialClicks || 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {loading ? (
+                  <div className="flex items-center justify-center py-10">
+                    <p className="text-muted-foreground text-xs">Loading social analytics...</p>
+                  </div>
+                ) : !analytics?.socialAnalytics || analytics.socialAnalytics.totalSocialClicks === 0 ? (
+                  <div className="border-border/60 bg-muted/20 mt-6 flex flex-col items-center justify-center rounded-xl border border-dashed py-8 text-center">
+                    <div className="bg-muted flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground">
+                      <Share2 size={18} />
+                    </div>
+                    <h4 className="text-foreground mt-2 text-sm font-semibold">No social media clicks yet</h4>
+                    <p className="text-muted-foreground mt-1 max-w-sm text-xs">
+                      When visitors click your social media icons on your public profile, their clicks and engagement will appear here.
+                    </p>
+                    <button
+                      onClick={() => router.push("/dashboard/links")}
+                      className="border-border bg-background hover:bg-muted text-foreground mt-3 inline-flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium shadow-xs transition-colors"
+                    >
+                      Manage Social Links
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-6 space-y-6">
+                    {/* Top Social Highlight (Shown to both Free & Pro) */}
+                    {analytics.socialAnalytics.topSocial && (() => {
+                      const top = analytics.socialAnalytics.topSocial;
+                      const platformConfig = getPlatformConfig(top.platform);
+                      const Icon = platformConfig.icon;
+
+                      return (
+                        <div className="border-border bg-muted/30 flex flex-col justify-between gap-4 rounded-xl border p-4 sm:flex-row sm:items-center">
+                          <div className="flex items-center gap-3.5">
+                            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-xs ${platformConfig.color}`}>
+                              <Icon size={20} />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                                  #1 Top Performer
+                                </span>
+                                <h4 className="text-foreground text-sm font-bold">
+                                  {platformConfig.name}
+                                </h4>
+                              </div>
+                              <p className="text-muted-foreground truncate text-xs mt-0.5">
+                                {top.url}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <p className="text-foreground text-lg font-extrabold tracking-tight">
+                                {top.clicks} <span className="text-muted-foreground text-xs font-normal">clicks</span>
+                              </p>
+                              <p className="text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                                {top.percentage}% of all social clicks
+                              </p>
+                            </div>
+                            <a
+                              href={top.url.startsWith("http") ? top.url : `https://${top.url}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="border-border bg-background text-muted-foreground hover:text-foreground flex h-8 w-8 items-center justify-center rounded-lg border transition-colors shadow-2xs"
+                              title="Open destination"
+                            >
+                              <ExternalLink size={13} />
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Tier-Based Display */}
+                    {!isPro ? (
+                      /* Free Tier: Locked preview with Upgrade Banner */
+                      <div className="relative overflow-hidden rounded-xl border border-dashed border-violet-500/30 bg-gradient-to-br from-violet-500/5 via-fuchsia-500/5 to-transparent p-6 text-center">
+                        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 mb-3">
+                          <Lock size={20} />
+                        </div>
+                        <h4 className="text-foreground text-sm font-bold">
+                          Unlock Detailed Social Channel Breakdown
+                        </h4>
+                        <p className="text-muted-foreground mx-auto mt-1 max-w-md text-xs leading-relaxed">
+                          Free plan shows your single top-performing social platform. Upgrade to <strong>Pro</strong> to see a granular breakdown of every platform, individual handle click counts, traffic shares, and referral paths.
+                        </p>
+                        <button
+                          onClick={() => router.push("/dashboard/settings")}
+                          className="bg-violet-600 hover:bg-violet-700 text-white mt-4 inline-flex h-9 items-center gap-2 rounded-xl px-5 text-xs font-bold shadow-md transition-all active:scale-[0.98]"
+                        >
+                          <Sparkles size={14} /> Upgrade to Pro for $9/mo
+                        </button>
+                      </div>
+                    ) : (
+                      /* Pro Tier: Complete Detailed Breakdown Table / List */
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between px-1">
+                          <h4 className="text-foreground text-xs font-bold uppercase tracking-wider">
+                            Detailed Social Media Click Breakdown ({analytics.socialAnalytics.clicksBySocial.length})
+                          </h4>
+                          <span className="text-muted-foreground text-xs font-medium">
+                            Sorted by click volume
+                          </span>
+                        </div>
+
+                        <div className="border-border bg-background divide-border divide-y rounded-xl border shadow-xs overflow-hidden">
+                          {analytics.socialAnalytics.clicksBySocial.map((item, index) => {
+                            const platformConfig = getPlatformConfig(item.platform);
+                            const Icon = platformConfig.icon;
+
+                            return (
+                              <div
+                                key={item.socialLinkId || `${item.platform}-${index}`}
+                                className="hover:bg-muted/30 flex items-center justify-between gap-4 p-3.5 transition-colors"
+                              >
+                                <div className="flex min-w-0 flex-1 items-center gap-3">
+                                  <span className="text-muted-foreground w-4 text-center text-xs font-bold">
+                                    #{index + 1}
+                                  </span>
+                                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${platformConfig.color}`}>
+                                    <Icon size={16} />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-foreground truncate text-xs font-bold">
+                                        {platformConfig.name}
+                                      </p>
+                                      <span className="text-muted-foreground text-[11px] truncate">
+                                        {item.url}
+                                      </span>
+                                    </div>
+                                    <div className="bg-muted mt-1.5 h-1.5 w-full overflow-hidden rounded-full">
+                                      <div
+                                        className="bg-primary h-full rounded-full transition-all duration-500"
+                                        style={{ width: `${item.relativeWidth}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex shrink-0 items-center gap-3">
+                                  <div className="text-right">
+                                    <p className="text-foreground text-xs font-bold">
+                                      {item.clicks} <span className="text-muted-foreground text-[10px] font-normal">clicks</span>
+                                    </p>
+                                    <p className="text-muted-foreground text-[10px] font-semibold">
+                                      {item.percentage}% share
+                                    </p>
+                                  </div>
+                                  <a
+                                    href={item.url.startsWith("http") ? item.url : `https://${item.url}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-muted-foreground hover:text-foreground p-1 transition-colors"
+                                    title="Open link"
+                                  >
+                                    <ExternalLink size={13} />
+                                  </a>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

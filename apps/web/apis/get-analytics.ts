@@ -28,6 +28,8 @@ export interface DeviceData {
 }
 
 
+import type { SocialMediaAnalytics } from "@vyrex/types";
+
 export interface SourceData {
   source: string;
   clicks: number;
@@ -55,6 +57,7 @@ export interface AnalyticsResponse {
   clicksByDevice: DeviceData[];
   clicksByLink: LinkData[];
   clicksBySource: SourceData[];
+  socialAnalytics?: SocialMediaAnalytics;
 }
 
 export type AnalyticsRange = "7d" | "30d" | "90d";

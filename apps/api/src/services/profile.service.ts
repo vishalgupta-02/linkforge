@@ -247,6 +247,24 @@ export const getPublicProfile = async (username: string) => {
               position: true,
             },
           },
+
+          socialLinks: {
+            where: {
+              isActive: true,
+              deletedAt: null,
+            },
+
+            orderBy: {
+              position: "asc",
+            },
+
+            select: {
+              publicId: true,
+              platform: true,
+              url: true,
+              position: true,
+            },
+          },
         },
       });
 

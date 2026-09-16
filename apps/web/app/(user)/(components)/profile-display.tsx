@@ -5,30 +5,10 @@ import { usePublicProfileStore } from "@/store";
 import React, { useEffect } from "react";
 import { LinkIcon } from "lucide-react";
 import { THEMES, THEME_BUTTONS, ThemeKey } from "@/lib/themes";
-import { Instagram, Twitter, Linkedin, Youtube } from "lucide-react";
 import UserNotFound from "@/app/(user)/(components)/public-profile-not-found";
 import Link from "next/link";
-
-const SOCIAL_ICONS = {
-  instagram: Instagram,
-  twitter: Twitter,
-  linkedin: Linkedin,
-  youtube: Youtube,
-};
-
-const SOCIAL_COLORS = {
-  instagram: "hover:text-pink-500",
-  twitter: "hover:text-blue-400",
-  linkedin: "hover:text-blue-600",
-  youtube: "hover:text-red-500",
-};
-
-const DUMMY_SOCIALS = {
-  instagram: "https://instagram.com/alex",
-  twitter: "https://twitter.com/alex",
-  linkedin: "https://linkedin.com/in/alex",
-  youtube: "https://youtube.com/@alex",
-};
+import { getPlatformConfig } from "@/components/custom/social-media-manager";
+import type { PublicProfileSocial } from "@vyrex/types";
 
 interface PublicProfilePageProps {
   username: string;
@@ -46,7 +26,6 @@ export function PublicProfileDisplay({ username }: PublicProfilePageProps) {
   useEffect(() => {
     if (profile) {
       setProfile(profile);
-      console.log("Profile data set in store:", profile);
     }
   }, [profile, setProfile]);
 
@@ -77,6 +56,9 @@ export function PublicProfileDisplay({ username }: PublicProfilePageProps) {
   const displayUsername =
     profile.data?.userName || profile.username || profile.data?.name;
 
+  const socialLinks: PublicProfileSocial[] =
+    profile.data?.socialLinks || profile.socialLinks || [];
+
   return (
     <>
       <div
@@ -103,7 +85,7 @@ export function PublicProfileDisplay({ username }: PublicProfilePageProps) {
             </h1>
 
             <p className="mb-4 text-[13px] font-semibold opacity-60">
-              {!displayUsername ? "@" + displayUsername : "LinkForge User"}
+              {displayUsername ? "@" + displayUsername : "LinkForge User"}
             </p>
 
             {displayBio && (
@@ -112,31 +94,41 @@ export function PublicProfileDisplay({ username }: PublicProfilePageProps) {
               </p>
             )}
 
-            <div className="flex items-center justify-center gap-3 pt-2">
-              {Object.entries(DUMMY_SOCIALS).map(([key, url]) => {
-                const Icon = SOCIAL_ICONS[key as keyof typeof SOCIAL_ICONS];
-                const colorClass =
-                  SOCIAL_COLORS[key as keyof typeof SOCIAL_COLORS];
+            {socialLinks && socialLinks.length > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
+                {socialLinks.map((social) => {
+                  const platformConfig = getPlatformConfig(social.platform);
+                  const Icon = platformConfig.icon;
+                  const redirectUrl = social.publicId
+                    ? `/r/${social.publicId}`
+                    : social.url;
 
-                return (
-                  <a
-                    key={key}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex size-8 items-center justify-center rounded-full border bg-zinc-100 px-2 py-2 transition hover:scale-110 hover:shadow-md ${colorClass}`}
-                  >
-                    <Icon className="size-5" />
-                  </a>
-                );
-              })}
-            </div>
+                  return (
+                    <a
+                      key={social.publicId || social.id || social.platform}
+                      href={redirectUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex size-9 items-center justify-center rounded-full border border-black/10 bg-white/80 p-2 shadow-xs backdrop-blur-xs transition-all duration-200 hover:scale-110 hover:border-black/20 hover:shadow-md dark:border-white/10 dark:bg-white/10 dark:hover:border-white/30"
+                      title={platformConfig.name}
+                    >
+                      <Icon className="size-4.5 transition-transform duration-200 group-hover:scale-105" />
+                    </a>
+                  );
+                })}
+              </div>
+            )}
           </header>
 
           <div className="animate-fade-in-up w-full space-y-3.5 delay-100">
             {profile.data?.links && profile.data.links.length > 0 ? (
               profile.data.links.map(
-                (link: { publicId?: string; id?: string; url: string; title: string }) => {
+                (link: {
+                  publicId?: string;
+                  id?: string;
+                  url: string;
+                  title: string;
+                }) => {
                   const redirectIdentifier = link.publicId || link.id;
                   const redirectUrl = `/r/${redirectIdentifier}`;
                   return (

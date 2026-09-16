@@ -124,7 +124,7 @@ export const clickWorker = new Worker(
       },
       async () => {
         try {
-          const { linkId, userId, rawReferrer, userAgent, ipAddress } = job.data;
+          const { linkId, socialLinkId, userId, rawReferrer, userAgent, ipAddress } = job.data;
 
           const source = parseReferrerSource(rawReferrer);
           const referrer = rawReferrer || "direct";
@@ -134,7 +134,8 @@ export const clickWorker = new Worker(
 
           await prisma.clickEvent.create({
             data: {
-              linkId,
+              ...(linkId ? { linkId } : {}),
+              ...(socialLinkId ? { socialLinkId } : {}),
               userId,
               source,
               referrer,
@@ -154,6 +155,7 @@ export const clickWorker = new Worker(
             queue: "click-tracking",
             jobId: String(job.id),
             linkId,
+            socialLinkId,
           });
 
           // -----------------------------------------------------------------

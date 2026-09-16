@@ -298,6 +298,7 @@ export const getDashboardAnalytics = async (
     clicksByCountry,
     clicksByDevice,
     clicksByLink,
+    clicksBySocial,
     clicksBySource,
     clicksByDayArray7d,
     clicksByDayArray30d,
@@ -342,9 +343,21 @@ export const getDashboardAnalytics = async (
       by: ["linkId"],
       where: {
         userId,
+        linkId: { not: null },
       },
       _count: {
         linkId: true,
+      },
+    }),
+
+    prisma.clickEvent.groupBy({
+      by: ["socialLinkId"],
+      where: {
+        userId,
+        socialLinkId: { not: null },
+      },
+      _count: {
+        socialLinkId: true,
       },
     }),
 
@@ -378,7 +391,7 @@ export const getDashboardAnalytics = async (
   ]);
 
   // Transform clicksByLink to include title and url
-  const linkIds = clicksByLink.map((item) => item.linkId);
+  const linkIds = clicksByLink.map((item) => item.linkId).filter(Boolean) as string[];
   const links = await prisma.link.findMany({
     where: {
       id: {
@@ -391,19 +404,6 @@ export const getDashboardAnalytics = async (
       url: true,
     },
   });
-
-  // const enrichedClicksByLink = clicksByLink
-  //   .map((item) => {
-  //     const link = links.find((l) => l.id === item.linkId);
-
-  //     return {
-  //       linkId: item.linkId,
-  //       title: link?.title || "Untitled",
-  //       url: link?.url || "",
-  //       clicks: item._count.linkId,
-  //     };
-  //   })
-  //   .sort((a, b) => b.clicks - a.clicks);
 
   const maxClicks = clicksByLink[0]?._count.linkId || 1;
 
@@ -431,6 +431,58 @@ export const getDashboardAnalytics = async (
       };
     })
     .sort((a, b) => b.clicks - a.clicks);
+
+  // Transform clicksBySocial
+  const socialLinkIds = clicksBySocial
+    .map((item) => item.socialLinkId)
+    .filter(Boolean) as string[];
+
+  const socials = await prisma.socialLink.findMany({
+    where: {
+      id: {
+        in: socialLinkIds,
+      },
+    },
+    select: {
+      id: true,
+      platform: true,
+      url: true,
+    },
+  });
+
+  const totalSocialClicks = clicksBySocial.reduce(
+    (sum, item) => sum + item._count.socialLinkId,
+    0,
+  );
+
+  const maxSocialClicks = clicksBySocial[0]?._count.socialLinkId || 1;
+
+  const enrichedClicksBySocial = clicksBySocial
+    .map((item) => {
+      const social = socials.find((s) => s.id === item.socialLinkId);
+      const clicks = item._count.socialLinkId;
+
+      return {
+        socialLinkId: item.socialLinkId!,
+        platform: social?.platform || "custom",
+        url: social?.url || "",
+        clicks,
+        percentage:
+          totalSocialClicks > 0
+            ? Number(((clicks / totalSocialClicks) * 100).toFixed(1))
+            : 0,
+        relativeWidth: (clicks / maxSocialClicks) * 100,
+      };
+    })
+    .sort((a, b) => b.clicks - a.clicks);
+
+  const topSocial = enrichedClicksBySocial[0] || null;
+
+  const socialAnalytics = {
+    totalSocialClicks,
+    topSocial,
+    clicksBySocial: enrichedClicksBySocial,
+  };
 
   // Build clicksByDay object based on which ranges were fetched
   const clicksByDay: Record<string, number> = {};
@@ -525,6 +577,7 @@ export const getDashboardAnalytics = async (
     clicksByDevice,
     clicksByLink: enrichedClicksByLink,
     clicksBySource: enrichedSources,
+    socialAnalytics,
   };
 
   // 🔥 Cache result
