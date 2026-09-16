@@ -1,7 +1,7 @@
 # ==============================================================================
 # Base Stage: Setup Node runtime and Corepack / pnpm
 # ==============================================================================
-FROM node:20-slim AS base
+FROM node:26-slim AS base
 
 # Enable Corepack and configure pnpm
 ENV PNPM_HOME="/pnpm"
@@ -48,7 +48,7 @@ RUN pnpm --filter web build
 # ==============================================================================
 # Runner Stage: Minimal production standalone runtime
 # ==============================================================================
-FROM node:20-slim AS runner
+FROM node:26-slim AS runner
 
 WORKDIR /app
 
