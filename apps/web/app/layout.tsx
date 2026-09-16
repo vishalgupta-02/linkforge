@@ -22,10 +22,71 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.FRONTEND_URL ||
+  "https://linkforge.bio";
+
 export const metadata: Metadata = {
-  title: "Linkforge - Your Personalised Link Management System",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "LinkForge — Build links. Understand every click.",
+    template: "%s | LinkForge",
+  },
   description:
-    "Linkforge - Organize and share your links with personalized workflows",
+    "Link management, ultra-low latency routing, and real-time click intelligence for developers and creators.",
+  keywords: [
+    "link-in-bio",
+    "link management",
+    "click analytics",
+    "url redirect",
+    "developer tools",
+    "real-time tracking",
+    "creator platform",
+  ],
+  authors: [{ name: "LinkForge Team" }],
+  creator: "LinkForge",
+  publisher: "LinkForge",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+    siteName: "LinkForge",
+    title: "LinkForge — Build links. Understand every click.",
+    description:
+      "Link management, ultra-low latency routing, and real-time click intelligence for developers and creators.",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1730,
+        height: 909,
+        alt: "LinkForge — Build links. Understand every click.",
+        type: "image/png",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LinkForge — Build links. Understand every click.",
+    description:
+      "Link management, ultra-low latency routing, and real-time click intelligence for developers and creators.",
+    images: ["/twitter-image"],
+    creator: "@linkforge",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: "/",
+  },
   icons: [
     {
       rel: "icon",

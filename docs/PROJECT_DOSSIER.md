@@ -253,6 +253,7 @@ flowchart TD
 ```mermaid
 erDiagram
     User ||--o{ Link : "owns"
+    User ||--o{ SocialLink : "owns"
     User ||--o{ ClickEvent : "receives"
     User ||--o{ LinkSection : "creates"
     User ||--o{ Auditlog : "generates"
@@ -263,6 +264,7 @@ erDiagram
     User ||--o{ Account : "links"
     
     Link ||--o{ ClickEvent : "logs"
+    SocialLink ||--o{ ClickEvent : "logs"
     LinkSection ||--o{ Link : "categorizes"
 
     User {
@@ -287,6 +289,7 @@ erDiagram
 
     Link {
         String id PK
+        String publicId UK
         String title
         String url
         Int position
@@ -298,6 +301,20 @@ erDiagram
         String sectionId FK
         DateTime scheduledStart
         DateTime scheduledEnd
+        DateTime createdAt
+        DateTime updatedAt
+    }
+
+    SocialLink {
+        String id PK
+        String publicId UK
+        String platform
+        String url
+        Int position
+        Int counts
+        Boolean isActive
+        DateTime deletedAt
+        String userId FK
         DateTime createdAt
         DateTime updatedAt
     }
@@ -314,6 +331,7 @@ erDiagram
         String ipAddress
         String userAgent
         String linkId FK
+        String socialLinkId FK
         String userId FK
         DateTime createdAt
     }
@@ -340,9 +358,9 @@ erDiagram
 1. **Username Uniqueness & Normalization**:
    - `userName_lower`: Unique index preventing case-variant impersonation (e.g., `Creator` vs `creator`).
 2. **Soft Deletion Filtering**:
-   - Index: `Link @@index([userId, deletedAt])` — ensures `getLinks(userId)` skips soft-deleted records without full table scans.
+   - Index: `Link @@index([userId, deletedAt])` and `SocialLink @@index([userId, deletedAt])` — ensures queries skip soft-deleted records without full table scans.
 3. **Analytics Lookups**:
-   - Indexes: `ClickEvent @@index([linkId])`, `ClickEvent @@index([userId])` — guarantees fast grouping and aggregations across millions of event rows.
+   - Indexes: `ClickEvent @@index([linkId])`, `ClickEvent @@index([socialLinkId])`, `ClickEvent @@index([userId])` — guarantees fast grouping and aggregations across millions of event rows.
 4. **Milestone Concurrency Prevention**:
    - `ClickMilestone @@unique([userId, milestone])` — prevents duplicate reward emails or duplicate milestone claims during rapid concurrent click surges.
 
@@ -390,9 +408,14 @@ All API endpoints follow semantic REST conventions, return consistent JSON envel
 | `PATCH` | `/api/v1/links/reorder` | Batch update link position ordering | `protectedRoute` | `reorderLinksSchema` |
 | `PATCH` | `/api/v1/links/:id/toggle` | Toggle link public visibility | `protectedRoute` | None |
 | `DELETE` | `/api/v1/links/delete/:id` | Soft delete link (`deletedAt = now()`) | `protectedRoute` | None |
-| `GET` | `/api/v1/r/:id` | Public link click tracking & redirect | Public | None |
+| `GET` | `/api/v1/socials` | List all active social links for user | `protectedRoute` | None |
+| `POST` | `/api/v1/socials` | Create a new social media link | `protectedRoute` | `createSocialLinkSchema` |
+| `PUT` | `/api/v1/socials/:id` | Update social media link | `protectedRoute` | `updateSocialLinkSchema` |
+| `DELETE` | `/api/v1/socials/:id` | Soft delete social media link | `protectedRoute` | None |
+| `PATCH` | `/api/v1/socials/reorder` | Batch update social links position ordering | `protectedRoute` | `reorderSocialLinksSchema` |
+| `GET` | `/r/:publicId` | Public redirect & asynchronous click tracking | Public | None |
 | `GET` | `/api/v1/links/profile/:username/links` | Fetch public links for creator profile | Public | None |
-| `GET` | `/api/v1/analytics` | Aggregated analytics (range: 7d/30d/90d)| `protectedRoute` | `analyticsQuerySchema` |
+| `GET` | `/api/v1/analytics` | Aggregated analytics with tiered social breakdown | `protectedRoute` | `analyticsQuerySchema` |
 | `POST` | `/api/v1/billing/checkout/pro` | Create Stripe Pro checkout session | `protectedRoute` | None |
 | `GET` | `/api/v1/billing/portal` | Create Stripe Customer Billing Portal | `protectedRoute` | None |
 | `POST` | `/api/v1/billing/webhook` | Process Stripe subscription events | Stripe Signature | `express.raw` Body Check |

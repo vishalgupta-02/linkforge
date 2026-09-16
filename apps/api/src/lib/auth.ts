@@ -30,15 +30,18 @@ export const auth = betterAuth({
     ...(process.env.FRONTEND_URL
       ? [process.env.FRONTEND_URL.replace(/\/$/, "")]
       : []),
+    ...(process.env.APP_URL ? [process.env.APP_URL.replace(/\/$/, "")] : []),
+    ...(process.env.NEXT_PUBLIC_APP_URL
+      ? [process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")]
+      : []),
     ...(process.env.CORS_ORIGIN
       ? process.env.CORS_ORIGIN.split(",").map((o) =>
           o.trim().replace(/\/$/, ""),
         )
       : []),
-    "https://*.vercel.app",
+    "https://linkforge.vercel.app",
     appBaseUrl,
-    // "https://*.yourdomain.com",
-  ],
+  ].filter(Boolean),
   account: {
     storeAccountCookie: true,
     storeStateStrategy: "database",

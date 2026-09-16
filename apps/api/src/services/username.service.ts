@@ -53,7 +53,15 @@ export const isUsernameAvailable = async (
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 
 export const changeUsername = async (userId: string, newUsername: string) => {
-  const normalized = newUsername.toLowerCase();
+  const normalized = normalizeUsername(newUsername);
+
+  if (!isValidUsername(normalized)) {
+    throw new AppError("Not a valid username format", 400);
+  }
+
+  if (isReservedUsername(normalized)) {
+    throw new AppError("This username is reserved and not available", 400);
+  }
 
   const user = await prisma.user.findUnique({
     where: { id: userId },

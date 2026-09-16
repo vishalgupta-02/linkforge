@@ -206,9 +206,13 @@ export const deleteLinkPermanently = async (req: Request, res: Response) => {
 
   if (!userId) throw new AppError("Unauthorized", 401);
 
-  await prisma.link.delete({
-    where: { id },
+  const result = await prisma.link.deleteMany({
+    where: { id, userId },
   });
+
+  if (result.count === 0) {
+    throw new AppError("Link not found", 404);
+  }
 
   res.json(ApiResponse(null, "Link permanently deleted", 200));
 };

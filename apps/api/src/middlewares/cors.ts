@@ -6,6 +6,14 @@ const getAllowedOrigins = (): string[] => {
   if (process.env.FRONTEND_URL) {
     origins.push(process.env.FRONTEND_URL.replace(/\/$/, ""));
   }
+  if (process.env.APP_URL) {
+    const appUrl = process.env.APP_URL.replace(/\/$/, "");
+    if (!origins.includes(appUrl)) origins.push(appUrl);
+  }
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    const publicUrl = process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+    if (!origins.includes(publicUrl)) origins.push(publicUrl);
+  }
   if (process.env.CORS_ORIGIN) {
     process.env.CORS_ORIGIN.split(",").forEach((o) => {
       const trimmed = o.trim().replace(/\/$/, "");
@@ -19,13 +27,17 @@ const getAllowedOrigins = (): string[] => {
 
 export const corsMiddleware = cors({
   origin: (origin, callback) => {
-    // allow non-browser requests (like curl, Postman)
+    // allow non-browser requests (like curl, server-to-server)
     if (!origin) return callback(null, true);
 
     const allowed = getAllowedOrigins();
-    const isLinkforgeVercel = /^https:\/\/linkforge(-[a-zA-Z0-9_-]+)?\.vercel\.app$/.test(origin);
 
-    if (allowed.includes(origin) || isLinkforgeVercel) {
+    // Strict regex matching official LinkForge production or preview deployment URLs on Vercel
+    const isOfficialVercelDeployment =
+      /^https:\/\/linkforge(?:-[a-zA-Z0-9]+)*\.vercel\.app$/.test(origin) &&
+      (process.env.NODE_ENV !== "production" || origin.startsWith("https://linkforge.vercel.app"));
+
+    if (allowed.includes(origin) || isOfficialVercelDeployment) {
       return callback(null, true);
     }
     return callback(new Error(`Origin ${origin} not allowed by CORS`));
@@ -44,3 +56,4 @@ export const corsMiddleware = cors({
   exposedHeaders: ["X-Request-ID"],
   optionsSuccessStatus: 204,
 });
+

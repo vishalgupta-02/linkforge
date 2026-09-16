@@ -2,6 +2,7 @@ import { Router } from "express";
 import { protectedRoute } from "../../middlewares/protected-routes.middleware.ts";
 import { Sentry } from "../../lib/sentry.ts";
 import { sleep } from "../../utils/sleep.ts";
+import { AppError } from "../../utils/api-error.ts";
 
 const router: Router = Router();
 
@@ -10,21 +11,22 @@ const router: Router = Router();
  * Strictly development/test only — disabled in production.
  */
 
-// Authenticated test error endpoint (requires valid session)
-router.get("/auth", protectedRoute, (_req, _res, next) => {
+// Production guard middleware for test endpoints
+router.use((_req, _res, next) => {
   if (process.env.NODE_ENV === "production") {
-    return next();
+    return next(new AppError("Not Found", 404));
   }
+  next();
+});
+
+// Authenticated test error endpoint (requires valid session)
+router.get("/auth", protectedRoute, (_req, _res) => {
   throw new Error("Sentry rich context integration test");
 });
 
 // Controlled Performance Test Endpoint
 // Generates measurable multi-step transaction with child spans
 router.get("/performance", async (_req, res, next) => {
-  if (process.env.NODE_ENV === "production") {
-    return next();
-  }
-
   try {
     const result = await Sentry.startSpan(
       { name: "sentry-performance-test-operation", op: "custom.test" },
@@ -72,12 +74,10 @@ router.get("/performance", async (_req, res, next) => {
   }
 });
 
-// Default test endpoint (tests authenticated or unauthenticated error depending on request headers)
-router.get("/", (_req, _res, next) => {
-  if (process.env.NODE_ENV === "production") {
-    return next();
-  }
+// Default test endpoint
+router.get("/", (_req, _res) => {
   throw new Error("Sentry rich context integration test");
 });
 
 export default router;
+
