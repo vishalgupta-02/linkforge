@@ -46,6 +46,7 @@
 //   },
 // );
 
+import crypto from "crypto";
 import { Worker } from "bullmq";
 import geoip from "geoip-lite";
 
@@ -132,6 +133,15 @@ export const clickWorker = new Worker(
           const geo = geoip.lookup(ipAddress);
           const country = geo?.country || "unknown";
 
+          // Anonymize IP to avoid persisting raw PII
+          const anonymizedIp = ipAddress
+            ? crypto
+                .createHash("sha256")
+                .update(ipAddress + (process.env.IP_HASH_SALT || "linkforge-analytics"))
+                .digest("hex")
+                .slice(0, 16)
+            : "unknown";
+
           await prisma.clickEvent.create({
             data: {
               ...(linkId ? { linkId } : {}),
@@ -142,7 +152,7 @@ export const clickWorker = new Worker(
               device,
               browser,
               country,
-              ipAddress,
+              ipAddress: anonymizedIp,
               userAgent,
             },
           });

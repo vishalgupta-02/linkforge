@@ -12,11 +12,7 @@ const Username = z
   });
 
 const changeUsernameSchema = z.object({
-  username: z
-    .string()
-    .min(3)
-    .max(20)
-    .regex(/^[A-Za-z][A-Za-z0-9_]*[A-Za-z0-9]$/),
+  username: Username,
 });
 
 export { Username, changeUsernameSchema };

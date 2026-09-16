@@ -1,7 +1,17 @@
 import type { Request, Response, NextFunction } from "express";
+import crypto from "crypto";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "../lib/auth.ts";
 import { AppError } from "../utils/api-error.ts";
+
+function safeCompare(a: string, b: string): boolean {
+  if (typeof a !== "string" || typeof b !== "string") {
+    return false;
+  }
+  const hashA = crypto.createHash("sha256").update(a).digest();
+  const hashB = crypto.createHash("sha256").update(b).digest();
+  return crypto.timingSafeEqual(hashA, hashB);
+}
 
 export const adminAuthMiddleware = async (
   req: Request,
@@ -9,7 +19,7 @@ export const adminAuthMiddleware = async (
   next: NextFunction,
 ) => {
   try {
-    // 1. Check for Bearer token in Authorization header
+    // 1. Check for Bearer token in Authorization header with constant-time comparison
     const authHeader = req.headers.authorization;
     const adminSecret = process.env.ADMIN_SECRET_KEY;
 
@@ -18,7 +28,7 @@ export const adminAuthMiddleware = async (
         ? authHeader.slice(7).trim()
         : authHeader.trim();
 
-      if (token === adminSecret) {
+      if (safeCompare(token, adminSecret)) {
         return next();
       }
     }
@@ -54,3 +64,4 @@ export const adminAuthMiddleware = async (
     return next(new AppError("Forbidden: Administrator access required", 403));
   }
 };
+

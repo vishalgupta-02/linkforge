@@ -1,4 +1,4 @@
-# LinkFlow
+# LinkForge
 
 ## Smart Link-in-Bio & Analytics Platform
 
@@ -20,7 +20,7 @@
 
 ## 1. Executive Summary
 
-LinkFlow is a multi-tenant SaaS platform that empowers creators, professionals, and businesses to consolidate their online presence into a single, beautiful, trackable link page. Unlike existing solutions, LinkFlow combines a fully customizable link-in-bio page with enterprise-grade click analytics, real-time visitor insights, custom domain support, and a monetization layer — all under one roof.
+LinkForge is a multi-tenant SaaS platform that empowers creators, professionals, and businesses to consolidate their online presence into a single, beautiful, trackable link page. Unlike existing solutions, LinkForge combines a fully customizable link-in-bio page with enterprise-grade click analytics, real-time visitor insights, custom domain support, and a monetization layer — all under one roof.
 
 This document defines the complete product requirements for the initial release (v1.0) and lays out the phased roadmap through v2.0.
 
@@ -40,7 +40,7 @@ Creators, freelancers, small businesses, and personal brands face a fragmented d
 
 ### 2.2 The Opportunity
 
-The creator economy has surpassed 200 million creators globally. Every one of them needs a single digital destination. LinkFlow enters this market with a data-first, developer-grade approach that serves both casual users and power users — from a solo influencer to a 50-person marketing team.
+The creator economy has surpassed 200 million creators globally. Every one of them needs a single digital destination. LinkForge enters this market with a data-first, developer-grade approach that serves both casual users and power users — from a solo influencer to a 50-person marketing team.
 
 ---
 
@@ -92,7 +92,7 @@ The creator economy has surpassed 200 million creators globally. Every one of th
 - **Platforms:** LinkedIn, Twitter/X, personal website
 - **Goal:** Replace their personal website with a fast, professional link page that showcases portfolio, books calls, and accepts payments
 - **Pain Point:** Website is expensive, slow to update, and has no analytics
-- **Success Metric:** Replaces their website, earns first payment through LinkFlow within 30 days
+- **Success Metric:** Replaces their website, earns first payment through LinkForge within 30 days
 
 #### Persona 3 — The Small Business / Team (Business Plan)
 
@@ -114,7 +114,7 @@ The creator economy has surpassed 200 million creators globally. Every one of th
 ### 5.1 In Scope — v1.0
 
 - User authentication (email/password, Google OAuth, GitHub OAuth)
-- Public link page at linkflow.app/username
+- Public link page at linkforge.bio/username
 - Link management (add, edit, delete, reorder links)
 - Profile customization (avatar, bio, theme, colors)
 - Click analytics dashboard (total clicks, geography, device type, referral source)
@@ -151,7 +151,7 @@ All unauthenticated users land on the marketing homepage. Authentication is hand
 
 ### 6.2 Link Management
 
-The core value of LinkFlow. Users manage their links via a drag-and-drop dashboard.
+The core value of LinkForge. Users manage their links via a drag-and-drop dashboard.
 
 | ID      | Feature           | Description                                                                      | Priority |
 | ------- | ----------------- | -------------------------------------------------------------------------------- | -------- |
@@ -199,7 +199,7 @@ Analytics are the core differentiator. All clicks are tracked asynchronously —
 
 | ID     | Feature             | Description                                                                   | Priority |
 | ------ | ------------------- | ----------------------------------------------------------------------------- | -------- |
-| DOM-01 | Add Custom Domain   | Pro users can point any domain to their LinkFlow page.                        | P1       |
+| DOM-01 | Add Custom Domain   | Pro users can point any domain to their LinkForge page.                        | P1       |
 | DOM-02 | DNS Instructions    | Step-by-step DNS setup guide shown in-app (CNAME record).                     | P1       |
 | DOM-03 | Auto HTTPS          | SSL certificate provisioned automatically via Let's Encrypt within 5 minutes. | P1       |
 | DOM-04 | Domain Verification | System polls DNS until propagation is confirmed and shows status in UI.       | P1       |
@@ -218,7 +218,7 @@ Analytics are the core differentiator. All clicks are tracked asynchronously —
 | **Team Members**         | 1           | 1           | Up to 5           |
 | **Analytics CSV Export** | No          | No          | Yes               |
 | **Priority Support**     | No          | No          | Yes               |
-| **LinkFlow Branding**    | Yes (shown) | Removable   | Removed           |
+| **LinkForge Branding**    | Yes (shown) | Removable   | Removed           |
 
 #### Billing Features
 
@@ -244,7 +244,7 @@ Analytics are the core differentiator. All clicks are tracked asynchronously —
 | 4    | Chooses a unique username                           | System checks availability in real-time; slug reserved       |
 | 5    | Adds 1-3 initial links                              | Links saved to DB                                            |
 | 6    | Selects a page theme                                | Theme preference saved                                       |
-| 7    | Clicks 'Launch My Page'                             | Redirected to /dashboard; page live at linkflow.app/username |
+| 7    | Clicks 'Launch My Page'                             | Redirected to /dashboard; page live at linkforge.bio/username |
 
 ### 7.2 Visitor Click Redirect Flow
 
@@ -252,7 +252,7 @@ This is the most performance-critical path in the entire application. Every mill
 
 | Step | System Action                                                      | Latency Target                |
 | ---- | ------------------------------------------------------------------ | ----------------------------- |
-| 1    | Visitor hits linkflow.app/username                                 | < 100ms (cached CDN response) |
+| 1    | Visitor hits linkforge.bio/username                                 | < 100ms (cached CDN response) |
 | 2    | Page loads, visitor clicks a link                                  | < 50ms (optimistic redirect)  |
 | 3    | Browser redirects to destination URL                               | Immediate (HTTP 301/307)      |
 | 4    | Click event queued in BullMQ                                       | Async, non-blocking           |
@@ -366,7 +366,7 @@ This is the most performance-critical path in the entire application. Every mill
 
 | #   | Question                                                                                          | Owner             | Status |
 | --- | ------------------------------------------------------------------------------------------------- | ----------------- | ------ |
-| 1   | Should free users see a 'Powered by LinkFlow' badge on their page? What is the opt-out condition? | Product           | Open   |
+| 1   | Should free users see a 'Powered by LinkForge' badge on their page? What is the opt-out condition? | Product           | Open   |
 | 2   | What is the username reclaim policy if an account is inactive for 12+ months?                     | Product / Legal   | Open   |
 | 3   | Do we enforce NSFW content policy at launch? If yes, how — automated or manual review?            | Trust & Safety    | Open   |
 | 4   | Should real-time analytics use WebSockets (Socket.io) or Server-Sent Events?                      | Engineering       | Open   |
@@ -381,7 +381,7 @@ This is the most performance-critical path in the entire application. Every mill
 
 | Term             | Definition                                                                                       |
 | ---------------- | ------------------------------------------------------------------------------------------------ |
-| **Slug**         | The unique URL-friendly identifier for a user's page (e.g., linkflow.app/johndoe)                |
+| **Slug**         | The unique URL-friendly identifier for a user's page (e.g., linkforge.bio/johndoe)                |
 | **Click Event**  | A recorded interaction where a visitor clicks a link on a profile page                           |
 | **BullMQ**       | A Redis-backed job queue library for processing background tasks                                 |
 | **CDN**          | Content Delivery Network — geographically distributed servers that cache and serve static assets |
@@ -404,7 +404,7 @@ This is the most performance-critical path in the entire application. Every mill
 
 ## Document Sign-Off
 
-By approving this document, stakeholders confirm alignment on scope, goals, and feature requirements for LinkFlow v1.0.
+By approving this document, stakeholders confirm alignment on scope, goals, and feature requirements for LinkForge v1.0.
 
 | Role             | Name | Signature | Date |
 | ---------------- | ---- | --------- | ---- |
@@ -412,3 +412,4 @@ By approving this document, stakeholders confirm alignment on scope, goals, and 
 | Engineering Lead |      |           |      |
 | Design Lead      |      |           |      |
 | CEO / Founder    |      |           |      |
+
