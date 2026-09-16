@@ -1,7 +1,7 @@
 # ==============================================================================
 # Base Stage: Setup Node runtime, OpenSSL (for Prisma), and Corepack / pnpm
 # ==============================================================================
-FROM node:20-slim AS base
+FROM node:26-slim AS base
 
 # Install OpenSSL for Prisma engine compatibility on Debian slim
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
@@ -59,7 +59,7 @@ RUN npx prisma generate
 # ==============================================================================
 # Runner Stage: Minimal production image
 # ==============================================================================
-FROM node:20-slim AS runner
+FROM node:26-slim AS runner
 
 WORKDIR /app
 
