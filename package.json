@@ -29,5 +29,11 @@
     "lint-staged": "^16.4.0",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.7.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "^19.2.14",
+      "@types/react-dom": "^19.2.3"
+    }
   }
 }
