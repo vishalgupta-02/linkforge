@@ -79,7 +79,7 @@
     "@vyrex/types": "workspace:*",
     "bcrypt": "^6.0.0",
     "better-auth": "^1.6.9",
-    "bullmq": "^5.76.10",
+    "bullmq": "^6.3.4",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
