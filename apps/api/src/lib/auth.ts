@@ -11,6 +11,8 @@ import { isUsernameAvailable } from "../services/username.service.ts";
 import { enqueueWelcomeEmail } from "../queues/email.queue.ts";
 import { recordUserSignup } from "./metrics.ts";
 
+import { getAllowedOrigins, isOriginAllowed } from "../middlewares/cors.ts";
+
 const appBaseUrl =
   process.env.FRONTEND_URL ||
   process.env.NEXT_PUBLIC_APP_URL ||
@@ -25,28 +27,16 @@ export const auth = betterAuth({
     provider: "postgresql",
     usePlural: false,
   }),
-  trustedOrigins: [
-    "http://localhost:3000",
-    ...(process.env.FRONTEND_URL
-      ? [process.env.FRONTEND_URL.replace(/\/$/, "")]
-      : []),
-    ...(process.env.APP_URL ? [process.env.APP_URL.replace(/\/$/, "")] : []),
-    ...(process.env.NEXT_PUBLIC_APP_URL
-      ? [process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")]
-      : []),
-    ...(process.env.CORS_ORIGIN
-      ? process.env.CORS_ORIGIN.split(",").map((o) =>
-          o.trim().replace(/\/$/, ""),
-        )
-      : []),
-    "https://linkforge.vercel.app",
-    "https://linkforge-web-iota.vercel.app",
-    appBaseUrl,
-  ].filter(Boolean),
-  account: {
-    storeAccountCookie: true,
-    storeStateStrategy: "database",
-    cookieOptions: {
+  trustedOrigins: (request) => {
+    const origins = [...getAllowedOrigins(), appBaseUrl.replace(/\/$/, "")];
+    const origin = request?.headers?.get("origin");
+    if (origin && isOriginAllowed(origin)) {
+      origins.push(origin);
+    }
+    return origins;
+  },
+  advanced: {
+    defaultCookieAttributes: {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       httpOnly: true,
