@@ -162,8 +162,8 @@ importers:
         specifier: ^22.5.0
         version: 22.5.0(@types/node@20.19.40)
       ua-parser-js:
-        specifier: ^2.0.9
-        version: 2.0.9
+        specifier: ^2.0.10
+        version: 2.0.10
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -323,10 +323,10 @@ importers:
         specifier: ^20.19.43
         version: 20.19.43
       '@types/react':
-        specifier: ^19.3.0
+        specifier: ^19.2.14
         version: 19.3.0
       '@types/react-dom':
-        specifier: ^19.3.0
+        specifier: ^19.2.3
         version: 19.3.0(@types/react@19.3.0)
       eslint:
         specifier: ^9.39.5
@@ -9449,8 +9449,8 @@ packages:
   ua-is-frozen@0.1.2:
     resolution: {integrity: sha512-RwKDW2p3iyWn4UbaxpP2+VxwqXh0jpvdxsYpZ5j/MLLiQOfbsV5shpgQiw93+KMYQPcteeMQ289MaAFzs3G9pw==}
 
-  ua-parser-js@2.0.9:
-    resolution: {integrity: sha512-OsqGhxyo/wGdLSXMSJxuMGN6H4gDnKz6Fb3IBm4bxZFMnyy0sdf6MN96Ie8tC6z/btdO+Bsy8guxlvLdwT076w==}
+  ua-parser-js@2.0.10:
+    resolution: {integrity: sha512-t+3Ktbq0Ies2vaSezfOaWiolH4OigQIO1dk+1xDpOydB1COVPocVYOrEV5rqZ0kFY9XYG1v9LutCyMgYBpABcw==}
     hasBin: true
 
   uid-promise@1.0.0:
@@ -13320,7 +13320,7 @@ snapshots:
       entities: 4.5.0
       html-to-text: 9.0.5
       html5parser: 3.0.0
-      prettier: 3.8.1
+      prettier: 3.9.6
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
@@ -19512,7 +19512,7 @@ snapshots:
 
   ua-is-frozen@0.1.2: {}
 
-  ua-parser-js@2.0.9:
+  ua-parser-js@2.0.10:
     dependencies:
       detect-europe-js: 0.1.2
       is-standalone-pwa: 0.1.1
