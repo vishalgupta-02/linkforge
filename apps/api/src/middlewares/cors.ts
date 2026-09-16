@@ -95,7 +95,11 @@ export const corsMiddleware = cors({
     "baggage",
     "x-request-id",
     "X-Request-ID",
+    "x-better-auth-session-token",
+    "x-requested-with",
+    "Cookie",
+    "Accept",
   ],
-  exposedHeaders: ["X-Request-ID"],
+  exposedHeaders: ["X-Request-ID", "Set-Cookie"],
   optionsSuccessStatus: 204,
 });
