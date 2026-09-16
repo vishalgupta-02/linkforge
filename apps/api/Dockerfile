@@ -1,15 +1,17 @@
 # ==============================================================================
-# Base Stage: Setup Node runtime, OpenSSL (for Prisma), and Corepack / pnpm
+# Base Stage: Setup Node runtime, OpenSSL (for Prisma), and pnpm
 # ==============================================================================
 FROM node:20-slim AS base
 
 # Install OpenSSL for Prisma engine compatibility on Debian slim
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
-# Enable Corepack and pnpm
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
+# Install matching pnpm version directly for fast & reliable builds
+RUN npm install -g pnpm@11.21.0
+
+# Disable Husky during Docker build
+ENV HUSKY=0
+ENV CI=true
 
 WORKDIR /app
 
@@ -18,12 +20,13 @@ WORKDIR /app
 # ==============================================================================
 FROM base AS builder
 
-# Copy monorepo configuration and package manifests for optimal layer caching
+# Copy all monorepo package manifests so pnpm workspace resolves cleanly with frozen lockfile
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
 COPY packages/types/package.json ./packages/types/
 
-# Install full workspace dependencies (including TypeScript and esbuild)
+# Install full workspace dependencies (including TypeScript, esbuild, and Prisma)
 RUN pnpm install --frozen-lockfile
 
 # Copy Prisma schema and generate Prisma Client
@@ -46,6 +49,7 @@ FROM base AS prod-deps
 # Copy workspace manifests
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
 COPY packages/types/package.json ./packages/types/
 
 # Deploy isolated production workspace for apps/api
