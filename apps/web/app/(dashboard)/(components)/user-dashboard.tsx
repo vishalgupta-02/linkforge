@@ -15,7 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Link as LinkType } from "@vyrex/types";
 import { useLinks, linksKeys } from "@/hooks/use-links";
 import { useDashboardAnalytics } from "@/hooks/use-dashboard-analytics";
@@ -32,6 +32,22 @@ export default function UserDashboard() {
 
   const { data: userProfile } = useUserProfile();
   const { data: linksData, isLoading: linksLoading } = useLinks();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const authStatus = params.get("auth");
+      if (authStatus === "google_success" || authStatus === "success") {
+        toast.dismiss("google-auth");
+        toast.success("Signed in with Google successfully! Welcome back.", {
+          id: "google-auth-success",
+        });
+        // Remove the query parameter from URL without page reload
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, "", cleanUrl);
+      }
+    }
+  }, []);
 
   const { data: analytics, isLoading: analyticsLoading } =
     useDashboardAnalytics();

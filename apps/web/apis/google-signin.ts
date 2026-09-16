@@ -2,12 +2,13 @@
 
 import { authClient } from "@/lib/auth-client";
 
-export async function googleSignIn() {
+export async function googleSignIn(customCallbackUrl?: string) {
   try {
     const dashboardCallback =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/dashboard`
-        : "http://localhost:3000/dashboard";
+      customCallbackUrl ||
+      (typeof window !== "undefined"
+        ? `${window.location.origin}/dashboard?auth=google_success`
+        : "http://localhost:3000/dashboard?auth=google_success");
 
     const data = await authClient.signIn.social({
       provider: "google",
@@ -20,3 +21,4 @@ export async function googleSignIn() {
     throw error;
   }
 }
+
