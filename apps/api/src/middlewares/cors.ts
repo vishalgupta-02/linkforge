@@ -6,19 +6,34 @@ import cors from "cors";
  * stripping surrounding quotes, and removing trailing slashes.
  */
 export const sanitizeOrigin = (url?: string): string =>
-  url?.trim().replace(/^["']|["']$/g, "").replace(/\/+$/, "") || "";
+  url
+    ?.trim()
+    .replace(/^["']|["']$/g, "")
+    .replace(/\/+$/, "") || "";
 
 /**
- * Regex matching any LinkForge Vercel domain (production & preview deployments)
- * Examples:
- * - https://linkforge.vercel.app
- * - https://linkforge-web-iota.vercel.app
- * - https://linkforge-git-feature-xxx.vercel.app
+ * Flexible domain regex matchers for Vercel, Railway, and localhost environments
  */
-export const VERCEL_LINKFORGE_REGEX = /^https:\/\/linkforge[a-zA-Z0-9_-]*\.vercel\.app$/;
+export const VERCEL_DOMAIN_REGEX = /^https:\/\/[a-zA-Z0-9_-]+\.vercel\.app$/i;
+export const RAILWAY_DOMAIN_REGEX = /^https:\/\/[a-zA-Z0-9_-]+(\.up)?\.railway\.app$/i;
+export const LOCALHOST_REGEX = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i;
 
 /**
- * Returns a consolidated, sanitized list of allowed origin strings.
+ * Checks if an origin matches a wildcard pattern (e.g. "https://*.vercel.app" or "*.railway.app")
+ */
+export const matchesWildcardPattern = (origin: string, pattern: string): boolean => {
+  if (pattern === origin) return true;
+  if (!pattern.includes("*")) return false;
+
+  const escaped = pattern
+    .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*/g, ".*");
+  const regex = new RegExp(`^${escaped}$`, "i");
+  return regex.test(origin);
+};
+
+/**
+ * Returns a consolidated, sanitized list of allowed origin strings and patterns.
  */
 export const getAllowedOrigins = (): string[] => {
   const origins = new Set<string>([
@@ -28,11 +43,16 @@ export const getAllowedOrigins = (): string[] => {
     "https://linkforge-web-iota.vercel.app",
   ]);
 
-  // Environment-provided frontend URLs
+  // Environment-provided URLs
   const envUrls = [
     process.env.FRONTEND_URL,
     process.env.APP_URL,
     process.env.NEXT_PUBLIC_APP_URL,
+    process.env.BETTER_AUTH_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+    process.env.NEXT_PUBLIC_VERCEL_URL
+      ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+      : undefined,
   ];
 
   envUrls.forEach((url) => {
@@ -40,13 +60,20 @@ export const getAllowedOrigins = (): string[] => {
     if (sanitized) origins.add(sanitized);
   });
 
-  // Comma-separated CORS_ORIGIN list if defined
-  if (process.env.CORS_ORIGIN) {
-    process.env.CORS_ORIGIN.split(",").forEach((item) => {
-      const sanitized = sanitizeOrigin(item);
-      if (sanitized) origins.add(sanitized);
-    });
-  }
+  // Comma-separated or whitespace-separated CORS_ORIGIN / BETTER_AUTH_TRUSTED_ORIGINS
+  const corsEnvs = [
+    process.env.CORS_ORIGIN,
+    process.env.BETTER_AUTH_TRUSTED_ORIGINS,
+  ];
+
+  corsEnvs.forEach((envVal) => {
+    if (envVal) {
+      envVal.split(/[\s,]+/).forEach((item) => {
+        const sanitized = sanitizeOrigin(item);
+        if (sanitized) origins.add(sanitized);
+      });
+    }
+  });
 
   return Array.from(origins);
 };
@@ -64,16 +91,17 @@ export const isOriginAllowed = (origin?: string): boolean => {
   // 1. Direct match with configured origins
   if (allowedList.includes(clean)) return true;
 
-  // 2. Match any LinkForge Vercel preview or production deployment
-  if (VERCEL_LINKFORGE_REGEX.test(clean)) return true;
+  // 2. Wildcard pattern match with configured origins
+  if (allowedList.some((pat) => matchesWildcardPattern(clean, pat))) return true;
 
-  // 3. In non-production, allow any localhost port (e.g. Vite, Next, Storybook)
-  if (
-    process.env.NODE_ENV !== "production" &&
-    /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(clean)
-  ) {
-    return true;
-  }
+  // 3. Match any Vercel domain (production & preview deployments)
+  if (VERCEL_DOMAIN_REGEX.test(clean)) return true;
+
+  // 4. Match any Railway deployment domain
+  if (RAILWAY_DOMAIN_REGEX.test(clean)) return true;
+
+  // 5. Allow localhost on any port
+  if (LOCALHOST_REGEX.test(clean)) return true;
 
   return false;
 };
@@ -88,18 +116,9 @@ export const corsMiddleware = cors({
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "sentry-trace",
-    "baggage",
-    "x-request-id",
-    "X-Request-ID",
-    "x-better-auth-session-token",
-    "x-requested-with",
-    "Cookie",
-    "Accept",
-  ],
-  exposedHeaders: ["X-Request-ID", "Set-Cookie"],
+  // Reflect Access-Control-Request-Headers dynamically for robust preflight
+  exposedHeaders: ["X-Request-ID", "Set-Cookie", "Authorization"],
+  maxAge: 86400,
   optionsSuccessStatus: 204,
 });
+

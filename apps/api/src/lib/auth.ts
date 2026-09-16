@@ -23,9 +23,14 @@ const frontendBaseUrl =
   sanitizeOrigin(process.env.APP_URL) ||
   "http://localhost:3000";
 
-const backendBaseUrl =
-  sanitizeOrigin(process.env.BETTER_AUTH_URL) ||
-  "http://localhost:5000/api/auth";
+const rawBackendAuthUrl =
+  process.env.BETTER_AUTH_URL ||
+  process.env.BACKEND_URL ||
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  "http://localhost:5000";
+
+const backendBaseUrl = sanitizeOrigin(rawBackendAuthUrl);
+const backendApiOrigin = backendBaseUrl.replace(/\/api\/auth\/?$/, "");
 
 const dashboardUrl = `${frontendBaseUrl}/dashboard`;
 
@@ -35,8 +40,17 @@ export const auth = betterAuth({
     usePlural: false,
   }),
   baseURL: backendBaseUrl,
-  trustedOrigins: (request) => {
-    const origins = [...getAllowedOrigins(), frontendBaseUrl];
+  trustedOrigins: async (request) => {
+    const origins = [
+      ...getAllowedOrigins(),
+      frontendBaseUrl,
+      backendApiOrigin,
+      "https://*.vercel.app",
+      "https://*.railway.app",
+      "https://*.up.railway.app",
+      "http://localhost:*",
+      "http://127.0.0.1:*",
+    ];
     const origin = request?.headers?.get("origin");
     if (origin && isOriginAllowed(origin)) {
       origins.push(sanitizeOrigin(origin));
@@ -73,7 +87,7 @@ export const auth = betterAuth({
         process.env.GOOGLE_CALLBACK_URL ||
         process.env.GOOGLE_OAUTH_REDIRECT_URI ||
         process.env.GOOGLE_REDIRECT_URI ||
-        `${backendBaseUrl.replace(/\/api\/auth.*/, "")}/api/auth/callback/google`,
+        `${backendApiOrigin}/api/auth/callback/google`,
     },
     github: {
       clientId: (process.env.GITHUB_OAUTH_CLIENT_ID ||
@@ -86,7 +100,7 @@ export const auth = betterAuth({
         process.env.GITHUB_CALLBACK_URL ||
         process.env.GITHUB_OAUTH_REDIRECT_URI ||
         process.env.GITHUB_REDIRECT_URI ||
-        `${backendBaseUrl.replace(/\/api\/auth.*/, "")}/api/auth/callback/github`,
+        `${backendApiOrigin}/api/auth/callback/github`,
     },
   },
   databaseHooks: {
