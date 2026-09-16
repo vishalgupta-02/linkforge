@@ -23,11 +23,11 @@
   "license": "ISC",
   "packageManager": "pnpm@11.21.0+sha512.521705bce689924eac72f5a3587122f362689ef6571e55ba80076fd637c11132ecffada26fad4ea79c485bfddbfd3d5a2a5b05805a77e893de71ec8a6cca3bb1",
   "devDependencies": {
-    "@commitlint/cli": "^20.5.0",
-    "@commitlint/config-conventional": "^20.5.0",
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
     "husky": "^9.1.7",
-    "lint-staged": "^16.4.0",
-    "prettier": "^3.8.1",
-    "prettier-plugin-tailwindcss": "^0.7.2"
+    "lint-staged": "^17.5.1",
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.8.1"
   }
 }
