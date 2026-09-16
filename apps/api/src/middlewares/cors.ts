@@ -35,7 +35,7 @@ export const corsMiddleware = cors({
     // Strict regex matching official LinkForge production or preview deployment URLs on Vercel
     const isOfficialVercelDeployment =
       /^https:\/\/linkforge(?:-[a-zA-Z0-9]+)*\.vercel\.app$/.test(origin) &&
-      (process.env.NODE_ENV !== "production" || origin.startsWith("https://linkforge.vercel.app"));
+      (process.env.NODE_ENV !== "production" || origin.startsWith("https://linkforge-web-iota.vercel.app"));
 
     if (allowed.includes(origin) || isOfficialVercelDeployment) {
       return callback(null, true);
@@ -56,4 +56,3 @@ export const corsMiddleware = cors({
   exposedHeaders: ["X-Request-ID"],
   optionsSuccessStatus: 204,
 });
-
