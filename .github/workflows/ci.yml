@@ -8,12 +8,22 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
+env:
+  NODE_VERSION: 24
+  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/linkforge_test?schema=public"
+  NEXT_PUBLIC_BACKEND_URL: "http://localhost:5000"
+  NEXT_TELEMETRY_DISABLED: "1"
+
 jobs:
-  ci:
-    name: Build and Lint
+  quality-gate:
+    name: Lint, Test, TypeCheck & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -26,7 +36,7 @@ jobs:
       - name: Setup Node.js runtime
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
 
       - name: Install dependencies
@@ -35,8 +45,16 @@ jobs:
       - name: Generate Prisma Client
         run: pnpm --filter api exec prisma generate
 
-      - name: Run lint
+      - name: Run ESLint
         run: pnpm lint
 
-      - name: Run build
+      - name: Run TypeScript type checks
+        run: |
+          pnpm --filter api exec tsc --noEmit
+          pnpm --filter web exec tsc --noEmit
+
+      - name: Run API test suite
+        run: pnpm --filter api exec vitest run
+
+      - name: Build applications
         run: pnpm build
