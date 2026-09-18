@@ -12,14 +12,21 @@ import {
   Camera,
   PlayCircle,
   Globe,
+  Mail,
+  ArrowRight,
+  RotateCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { userSignup } from "@/apis/user-signup";
 import { googleSignIn } from "@/apis/google-signin";
+import { authClient } from "@/lib/auth-client";
 
 function SignupForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
+  const [isEmailSent, setIsEmailSent] = useState<boolean>(false);
+  const [isResending, setIsResending] = useState<boolean>(false);
+  const [resendCooldown, setResendCooldown] = useState<number>(0);
 
   const searchParams = useSearchParams();
   const [username, setUsername] = useState("");
@@ -37,6 +44,14 @@ function SignupForm() {
       setUsername(initialUsername);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCooldown > 0) {
+      timer = setTimeout(() => setResendCooldown((prev) => prev - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const hasMinLength = password.length >= 8;
   const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
@@ -64,8 +79,9 @@ function SignupForm() {
     setIsLoading(true);
     try {
       await userSignup(username.trim(), email.trim(), password);
-      toast.success("Account created successfully! Welcome to LinkForge.");
-      router.push("/dashboard");
+      setIsEmailSent(true);
+      setResendCooldown(60);
+      toast.success("Account registered! We've sent a verification email to your inbox.");
     } catch (err) {
       console.error("Signup error:", err);
       toast.error(
@@ -74,6 +90,23 @@ function SignupForm() {
       );
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (resendCooldown > 0 || isResending) return;
+    setIsResending(true);
+    try {
+      await authClient.sendVerificationEmail({
+        email: email.trim(),
+        callbackURL: "/signin?verified=true",
+      });
+      setResendCooldown(60);
+      toast.success("Verification email resent! Please check your inbox and spam folder.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to resend verification email.");
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -172,224 +205,291 @@ function SignupForm() {
               </span>
             </div>
 
-            <div className="mb-8 space-y-2">
-              <h1 className="text-3xl font-extrabold tracking-tight text-white">
-                Create your page
-              </h1>
-              <p className="text-sm font-medium text-zinc-400">
-                Start sharing everything in one place.
-              </p>
-            </div>
-
-            <button
-              onClick={handleGoogleSignup}
-              disabled={isGoogleLoading || isLoading}
-              type="button"
-              className="flex h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-white/10 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isGoogleLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
-              ) : (
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 18 18"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <g fill="none" fillRule="evenodd">
-                    <path
-                      d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
-                      fill="#4285F4"
-                    />
-                    <path
-                      d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"
-                      fill="#34A853"
-                    />
-                    <path
-                      d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"
-                      fill="#FBBC05"
-                    />
-                    <path
-                      d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"
-                      fill="#EA4335"
-                    />
-                  </g>
-                </svg>
-              )}
-              {isGoogleLoading ? "Connecting to Google..." : "Continue with Google"}
-            </button>
-
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-white/10" />
-              </div>
-              <div className="relative flex justify-center text-[12px] font-medium">
-                <span className="bg-[#0a0a0a] px-4 text-zinc-500">
-                  Or continue with email
-                </span>
-              </div>
-            </div>
-
-            <form onSubmit={handleSignup} className="space-y-5">
-              <div className="group/input space-y-2">
-                <label
-                  htmlFor="username"
-                  className="text-sm font-semibold text-zinc-300 transition-colors group-focus-within/input:text-violet-400"
-                >
-                  Username
-                </label>
-                <div className="relative flex items-center">
-                  <span className="pointer-events-none absolute left-4 text-sm font-medium text-zinc-500">
-                    linkforge.bio/
-                  </span>
-                  <input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={(e) =>
-                      setUsername(
-                        e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""),
-                      )
-                    }
-                    placeholder="yourname"
-                    autoFocus
-                    disabled={isLoading}
-                    className="flex h-11 w-full rounded-xl border border-white/10 bg-white/2 py-2 pr-4 pl-34 text-sm text-white shadow-sm transition-all placeholder:text-zinc-600 focus:bg-white/5 focus-visible:border-violet-500 focus-visible:ring-1 focus-visible:ring-violet-500 focus-visible:outline-none disabled:opacity-50"
-                  />
+            {isEmailSent ? (
+              <div className="space-y-6 text-center animate-fade-in-up">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-600/10 text-violet-400 ring-8 ring-violet-500/5">
+                  <Mail className="h-8 w-8" />
                 </div>
-                <p className="text-[11px] font-medium text-zinc-500">
-                  Pick a name your audience will remember.
-                </p>
-              </div>
 
-              <div className="group/input space-y-2">
-                <label
-                  htmlFor="email"
-                  className="text-sm font-semibold text-zinc-300 transition-colors group-focus-within/input:text-violet-400"
-                >
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  disabled={isLoading}
-                  className="flex h-11 w-full rounded-xl border border-white/10 bg-white/2 px-4 py-2 text-sm text-white shadow-sm transition-all placeholder:text-zinc-600 focus:bg-white/5 focus-visible:border-violet-500 focus-visible:ring-1 focus-visible:ring-violet-500 focus-visible:outline-none disabled:opacity-50"
-                />
-              </div>
+                <div className="space-y-2">
+                  <h1 className="text-2xl font-extrabold tracking-tight text-white">
+                    Check your inbox
+                  </h1>
+                  <p className="text-sm font-medium text-zinc-400">
+                    We sent a verification link to
+                  </p>
+                  <p className="inline-block rounded-lg bg-white/5 px-3 py-1 font-mono text-sm font-semibold text-violet-300">
+                    {email}
+                  </p>
+                </div>
 
-              <div className="group/input space-y-2">
-                <label
-                  htmlFor="password"
-                  className="text-sm font-semibold text-zinc-300 transition-colors group-focus-within/input:text-violet-400"
-                >
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    disabled={isLoading}
-                    className="flex h-11 w-full rounded-xl border border-white/10 bg-white/2 px-4 py-2 pr-10 text-sm text-white shadow-sm transition-all placeholder:text-zinc-600 focus:bg-white/5 focus-visible:border-violet-500 focus-visible:ring-1 focus-visible:ring-violet-500 focus-visible:outline-none disabled:opacity-50"
-                  />
+                <div className="rounded-xl border border-white/5 bg-white/2 p-4 text-xs text-zinc-400 text-left space-y-2">
+                  <p className="font-medium text-zinc-300">Next steps:</p>
+                  <ol className="list-decimal pl-4 space-y-1">
+                    <li>Open your email client and look for the email from LinkForge.</li>
+                    <li>Click the <strong>Verify Email Address</strong> button in the email.</li>
+                    <li>You will be redirected straight to sign in and access your account!</li>
+                  </ol>
+                </div>
+
+                <div className="space-y-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute top-1/2 right-3 -translate-y-1/2 text-zinc-500 transition-colors hover:text-zinc-300"
-                    tabIndex={-1}
+                    onClick={handleResendVerification}
+                    disabled={isResending || resendCooldown > 0}
+                    className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-white/10 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {isResending ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                    ) : (
+                      <RotateCw className="h-4 w-4 text-zinc-400" />
+                    )}
+                    {resendCooldown > 0
+                      ? `Resend link in ${resendCooldown}s`
+                      : isResending
+                        ? "Resending..."
+                        : "Resend verification email"}
+                  </button>
+
+                  <Link
+                    href="/signin"
+                    className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-violet-600 text-sm font-semibold text-white shadow-sm transition-all hover:bg-violet-700 active:scale-[0.98]"
+                  >
+                    Proceed to Sign In
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsEmailSent(false)}
+                    className="text-xs font-medium text-zinc-500 hover:text-zinc-300 transition-colors"
+                  >
+                    Need to change your email address?
                   </button>
                 </div>
+              </div>
+            ) : (
+              <>
+                <div className="mb-8 space-y-2">
+                  <h1 className="text-3xl font-extrabold tracking-tight text-white">
+                    Create your page
+                  </h1>
+                  <p className="text-sm font-medium text-zinc-400">
+                    Start sharing everything in one place.
+                  </p>
+                </div>
 
-                <div
-                  className={`space-y-2 overflow-hidden transition-all duration-300 ${password ? "max-h-20 pt-1 opacity-100" : "max-h-0 opacity-0"}`}
+                <button
+                  onClick={handleGoogleSignup}
+                  disabled={isGoogleLoading || isLoading}
+                  type="button"
+                  className="flex h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-white/10 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <div className="flex h-1 w-full gap-1">
-                    {[1, 2, 3].map((level) => (
-                      <div
-                        key={level}
-                        className={`h-full flex-1 rounded-full transition-colors duration-300 ${
-                          strength >= level
-                            ? strength === 1
-                              ? "bg-zinc-500"
-                              : strength === 2
-                                ? "bg-violet-400"
-                                : "bg-emerald-500"
-                            : "bg-white/10"
-                        }`}
-                      />
-                    ))}
+                  {isGoogleLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                  ) : (
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 18 18"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <g fill="none" fillRule="evenodd">
+                        <path
+                          d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
+                          fill="#4285F4"
+                        />
+                        <path
+                          d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"
+                          fill="#34A853"
+                        />
+                        <path
+                          d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"
+                          fill="#FBBC05"
+                        />
+                        <path
+                          d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"
+                          fill="#EA4335"
+                        />
+                      </g>
+                    </svg>
+                  )}
+                  {isGoogleLoading ? "Connecting to Google..." : "Continue with Google"}
+                </button>
+
+                <div className="relative my-8">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-white/10" />
                   </div>
-                  <div className="flex gap-4 text-[11px] font-medium">
-                    <span
-                      className={`flex items-center gap-1 transition-colors ${hasMinLength ? "text-emerald-400" : "text-zinc-500"}`}
-                    >
-                      {hasMinLength ? (
-                        <CheckCircle2 size={12} />
-                      ) : (
-                        <div className="h-3 w-3 rounded-full border border-zinc-600" />
-                      )}
-                      Min. 8 chars
-                    </span>
-                    <span
-                      className={`flex items-center gap-1 transition-colors ${hasSymbol ? "text-emerald-400" : "text-zinc-500"}`}
-                    >
-                      {hasSymbol ? (
-                        <CheckCircle2 size={12} />
-                      ) : (
-                        <div className="h-3 w-3 rounded-full border border-zinc-600" />
-                      )}
-                      1 symbol (!@#$)
+                  <div className="relative flex justify-center text-[12px] font-medium">
+                    <span className="bg-[#0a0a0a] px-4 text-zinc-500">
+                      Or continue with email
                     </span>
                   </div>
                 </div>
-              </div>
 
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={isLoading || (password.length > 0 && strength < 3)}
-                  className="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-xl bg-violet-600 text-sm font-semibold text-white shadow-sm transition-all hover:bg-violet-700 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 size={16} className="animate-spin" />
-                      Creating...
-                    </span>
-                  ) : (
-                    "Create my page"
-                  )}
-                </button>
-                <p className="mt-3 text-center text-[12px] font-medium text-zinc-500">
-                  You can customize everything later.
-                </p>
-              </div>
-            </form>
+                <form onSubmit={handleSignup} className="space-y-5">
+                  <div className="group/input space-y-2">
+                    <label
+                      htmlFor="username"
+                      className="text-sm font-semibold text-zinc-300 transition-colors group-focus-within/input:text-violet-400"
+                    >
+                      Username
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="pointer-events-none absolute left-4 text-sm font-medium text-zinc-500">
+                        linkforge.bio/
+                      </span>
+                      <input
+                        id="username"
+                        type="text"
+                        value={username}
+                        onChange={(e) =>
+                          setUsername(
+                            e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""),
+                          )
+                        }
+                        placeholder="yourname"
+                        autoFocus
+                        disabled={isLoading}
+                        className="flex h-11 w-full rounded-xl border border-white/10 bg-white/2 py-2 pr-4 pl-34 text-sm text-white shadow-sm transition-all placeholder:text-zinc-600 focus:bg-white/5 focus-visible:border-violet-500 focus-visible:ring-1 focus-visible:ring-violet-500 focus-visible:outline-none disabled:opacity-50"
+                      />
+                    </div>
+                    <p className="text-[11px] font-medium text-zinc-500">
+                      Pick a name your audience will remember.
+                    </p>
+                  </div>
 
-            <div className="mt-8 border-t border-white/5 pt-6">
-              <div className="mb-4 flex items-center justify-center gap-2 text-[11px] font-medium text-zinc-500">
-                <span>Free to start</span>
-                <span>•</span>
-                <span>No credit card</span>
-                <span>•</span>
-                <span>Takes 30 seconds</span>
-              </div>
-              <p className="text-center text-sm font-medium text-zinc-400">
-                Already have an account?{" "}
-                <Link
-                  href="/signin"
-                  className="font-semibold text-white transition-colors hover:text-violet-400"
-                >
-                  Sign in
-                </Link>
-              </p>
-            </div>
+                  <div className="group/input space-y-2">
+                    <label
+                      htmlFor="email"
+                      className="text-sm font-semibold text-zinc-300 transition-colors group-focus-within/input:text-violet-400"
+                    >
+                      Email address
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      disabled={isLoading}
+                      className="flex h-11 w-full rounded-xl border border-white/10 bg-white/2 px-4 py-2 text-sm text-white shadow-sm transition-all placeholder:text-zinc-600 focus:bg-white/5 focus-visible:border-violet-500 focus-visible:ring-1 focus-visible:ring-violet-500 focus-visible:outline-none disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="group/input space-y-2">
+                    <label
+                      htmlFor="password"
+                      className="text-sm font-semibold text-zinc-300 transition-colors group-focus-within/input:text-violet-400"
+                    >
+                      Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        disabled={isLoading}
+                        className="flex h-11 w-full rounded-xl border border-white/10 bg-white/2 px-4 py-2 pr-10 text-sm text-white shadow-sm transition-all placeholder:text-zinc-600 focus:bg-white/5 focus-visible:border-violet-500 focus-visible:ring-1 focus-visible:ring-violet-500 focus-visible:outline-none disabled:opacity-50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute top-1/2 right-3 -translate-y-1/2 text-zinc-500 transition-colors hover:text-zinc-300"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+
+                    <div
+                      className={`space-y-2 overflow-hidden transition-all duration-300 ${password ? "max-h-20 pt-1 opacity-100" : "max-h-0 opacity-0"}`}
+                    >
+                      <div className="flex h-1 w-full gap-1">
+                        {[1, 2, 3].map((level) => (
+                          <div
+                            key={level}
+                            className={`h-full flex-1 rounded-full transition-colors duration-300 ${
+                              strength >= level
+                                ? strength === 1
+                                  ? "bg-zinc-500"
+                                  : strength === 2
+                                    ? "bg-violet-400"
+                                    : "bg-emerald-500"
+                                : "bg-white/10"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex gap-4 text-[11px] font-medium">
+                        <span
+                          className={`flex items-center gap-1 transition-colors ${hasMinLength ? "text-emerald-400" : "text-zinc-500"}`}
+                        >
+                          {hasMinLength ? (
+                            <CheckCircle2 size={12} />
+                          ) : (
+                            <div className="h-3 w-3 rounded-full border border-zinc-600" />
+                          )}
+                          Min. 8 chars
+                        </span>
+                        <span
+                          className={`flex items-center gap-1 transition-colors ${hasSymbol ? "text-emerald-400" : "text-zinc-500"}`}
+                        >
+                          {hasSymbol ? (
+                            <CheckCircle2 size={12} />
+                          ) : (
+                            <div className="h-3 w-3 rounded-full border border-zinc-600" />
+                          )}
+                          1 symbol (!@#$)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={isLoading || (password.length > 0 && strength < 3)}
+                      className="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-xl bg-violet-600 text-sm font-semibold text-white shadow-sm transition-all hover:bg-violet-700 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      {isLoading ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 size={16} className="animate-spin" />
+                          Creating...
+                        </span>
+                      ) : (
+                        "Create my page"
+                      )}
+                    </button>
+                    <p className="mt-3 text-center text-[12px] font-medium text-zinc-500">
+                      You can customize everything later.
+                    </p>
+                  </div>
+                </form>
+
+                <div className="mt-8 border-t border-white/5 pt-6">
+                  <div className="mb-4 flex items-center justify-center gap-2 text-[11px] font-medium text-zinc-500">
+                    <span>Free to start</span>
+                    <span>•</span>
+                    <span>No credit card</span>
+                    <span>•</span>
+                    <span>Takes 30 seconds</span>
+                  </div>
+                  <p className="text-center text-sm font-medium text-zinc-400">
+                    Already have an account?{" "}
+                    <Link
+                      href="/signin"
+                      className="font-semibold text-white transition-colors hover:text-violet-400"
+                    >
+                      Sign in
+                    </Link>
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

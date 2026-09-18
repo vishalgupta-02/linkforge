@@ -1,13 +1,12 @@
-// middleware/rateLimit.ts
+
 import { RateLimiterRedis, RateLimiterMemory } from "rate-limiter-flexible";
 import { redis } from "../lib/redis.ts";
 
-// 🌐 Public (IP-based distributed limiter)
 export const publicRateLimiter = new RateLimiterRedis({
   storeClient: redis,
   keyPrefix: "rl:public",
-  points: 100, // 100 requests
-  duration: 60, // per 60 seconds
+  points: 100, 
+  duration: 60, 
   inmemoryBlockOnConsumed: 100,
   insuranceLimiter: new RateLimiterMemory({
     points: 100,
@@ -15,7 +14,6 @@ export const publicRateLimiter = new RateLimiterRedis({
   }),
 });
 
-// 🔐 Authenticated (user-based distributed limiter)
 export const authRateLimiter = new RateLimiterRedis({
   storeClient: redis,
   keyPrefix: "rl:auth",
@@ -27,4 +25,3 @@ export const authRateLimiter = new RateLimiterRedis({
     duration: 60,
   }),
 });
-

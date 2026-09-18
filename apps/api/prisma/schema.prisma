@@ -133,6 +133,9 @@ model ClickEvent {
   @@index([linkId])
   @@index([socialLinkId])
   @@index([userId])
+  @@index([userId, createdAt])
+  @@index([userId, linkId])
+  @@index([userId, socialLinkId])
 }
 
 model LinkSection {

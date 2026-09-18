@@ -46,7 +46,6 @@ export default function SettingsSubpage() {
     setMounted(true);
   }, []);
 
-  // Invalidate queries when returning from Stripe checkout or portal
   useEffect(() => {
     if (searchParams.get("checkout") === "success") {
       queryClient.invalidateQueries({ queryKey: ["billingStatus"] });

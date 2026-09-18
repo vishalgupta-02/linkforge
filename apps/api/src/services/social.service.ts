@@ -48,7 +48,6 @@ export const createSocialLink = async (userId: string, data: {
     },
   });
 
-  // Invalidate profile cache
   if (user.userName) {
     await redis.del(CACHE_KEYS.publicProfile(user.userName.toLowerCase()));
   }
@@ -106,7 +105,6 @@ export const updateSocialLink = async (
     data: updateData,
   });
 
-  // Invalidate redirect cache
   if (social.publicId) {
     await redis.del(CACHE_KEYS.redirect(social.publicId));
   }
@@ -148,7 +146,6 @@ export const deleteSocialLink = async (userId: string, socialId: string) => {
     },
   });
 
-  // Invalidate redirect cache
   if (social.publicId) {
     await redis.del(CACHE_KEYS.redirect(social.publicId));
   }
@@ -179,7 +176,6 @@ export const reorderSocialLinks = async (userId: string, socialIds: string[]) =>
     throw new AppError("Invalid social link IDs provided for reordering", 400);
   }
 
-  // Atomic reorder transaction
   await prisma.$transaction(
     socialIds.map((id, index) =>
       prisma.socialLink.update({
@@ -204,17 +200,15 @@ export const reorderSocialLinks = async (userId: string, socialIds: string[]) =>
 export const getSocialLinkByPublicId = async (publicId: string) => {
   const cacheKey = CACHE_KEYS.redirect(publicId);
 
-  // 1. Check Redis cache
   try {
     const cached = await redis.get(cacheKey);
     if (cached) {
       return JSON.parse(cached);
     }
   } catch (error) {
-    // Redis fail-open
+
   }
 
-  // 2. Query Database
   const social = await prisma.socialLink.findUnique({
     where: { publicId },
     select: {
@@ -232,7 +226,6 @@ export const getSocialLinkByPublicId = async (publicId: string) => {
     return null;
   }
 
-  // 3. Cache in Redis
   try {
     await redis.set(
       cacheKey,
@@ -241,7 +234,7 @@ export const getSocialLinkByPublicId = async (publicId: string) => {
       REDIRECT_CACHE_TTL,
     );
   } catch (error) {
-    // Redis fail-open
+
   }
 
   return social;

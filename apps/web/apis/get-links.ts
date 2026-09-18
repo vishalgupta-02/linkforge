@@ -1,23 +1,7 @@
-// apis/get-links.ts
-
 import axios from "axios";
+import type { Link, GetLinksResponse } from "@vyrex/types";
 
-export interface Link {
-  id: string;
-  title: string;
-  url: string;
-  position: number;
-  counts: number;
-  public: boolean;
-  isActive: boolean;
-  deletedAt: string | null;
-  userId: string;
-  sectionId: string | null;
-  scheduledStart: string | null;
-  scheduledEnd: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+export type { Link, GetLinksResponse };
 
 export async function getLinks(): Promise<Link[]> {
   try {
@@ -30,8 +14,6 @@ export async function getLinks(): Promise<Link[]> {
       throw new Error("Failed to fetch links");
     }
 
-    // API returns { success, message, data: [], statusCode }
-    // Extract data array from response
     let linksData: unknown = res.data;
 
     if (res.data.data !== undefined) {

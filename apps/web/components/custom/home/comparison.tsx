@@ -32,25 +32,25 @@ const Comparison = () => {
               </li>
             </ul>
           </div>
-          <div className="relative overflow-hidden rounded-3xl border border-violet-200 bg-white p-8 shadow-xl dark:border-violet-500/30 dark:bg-violet-500/5">
+          <div className="border-primary/30 dark:border-primary/30 dark:bg-primary/5 relative overflow-hidden rounded-3xl border bg-white p-8 shadow-xl">
             <div className="absolute top-0 right-0 p-8">
-              <Sparkles size={24} className="text-violet-500/20" />
+              <Sparkles size={24} className="text-primary" />
             </div>
             <h3 className="mb-6 flex items-center gap-2 text-lg font-bold text-zinc-950 dark:text-white">
               With Linkforge{" "}
-              <BadgeCheck size={18} className="text-violet-500" />
+              <BadgeCheck size={18} className="text-primary/50" />
             </h3>
             <ul className="space-y-4">
               <li className="flex items-center gap-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                <CheckCircle2 size={18} className="text-violet-500" /> Unlimited
+                <CheckCircle2 size={18} className="text-primary/70" /> Unlimited
                 links & embeds
               </li>
               <li className="flex items-center gap-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                <CheckCircle2 size={18} className="text-violet-500" /> Deep
+                <CheckCircle2 size={18} className="text-primary/70" /> Deep
                 click & view analytics
               </li>
               <li className="flex items-center gap-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                <CheckCircle2 size={18} className="text-violet-500" /> Custom
+                <CheckCircle2 size={18} className="text-primary/70" /> Custom
                 branding & themes
               </li>
             </ul>

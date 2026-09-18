@@ -11,8 +11,8 @@ import {
   CheckCircle2,
   Pentagon,
 } from "lucide-react";
+import { FeedbackDialog } from "./feedback-dialog";
 
-// Routes where footer should not be displayed
 const HIDDEN_FOOTER_ROUTES = [
   "/signin",
   "/signup",
@@ -34,20 +34,10 @@ const LINKS = [
       { label: "Live Demo", href: "#demo" },
       { label: "Changelog", href: "/changelog" },
       { label: "Roadmap", href: "/roadmap" },
-      { label: "Status", href: "/status" },
+      { label: "Status", href: "/" },
     ],
   },
-  {
-    title: "Solutions",
-    items: [
-      { label: "Creators", href: "/creators" },
-      { label: "Musicians", href: "/musicians" },
-      { label: "Podcasters", href: "/podcasters" },
-      { label: "Businesses", href: "/businesses" },
-      { label: "Agencies", href: "/agencies" },
-      { label: "Developers", href: "/developers" },
-    ],
-  },
+
   {
     title: "Resources",
     items: [
@@ -63,11 +53,11 @@ const LINKS = [
     title: "Company",
     items: [
       { label: "About", href: "/about" },
-      { label: "Careers", href: "/careers" },
-      { label: "Press Kit", href: "/press" },
-      { label: "Partners", href: "/partners" },
+      { label: "Careers", href: "/" },
+
       { label: "Contact", href: "/contact" },
-      { label: "Legal", href: "/legal" },
+      { label: "Privacy & Terms", href: "/privacy" },
+      { label: "Security", href: "/security" },
     ],
   },
 ];
@@ -82,7 +72,6 @@ export default function Footer() {
   const pathname = usePathname();
   const [subscribed, setSubscribed] = useState(false);
 
-  // Check if current route starts with any hidden route
   const shouldHideFooter = HIDDEN_FOOTER_ROUTES.some((route) =>
     pathname.startsWith(route),
   );
@@ -187,11 +176,7 @@ export default function Footer() {
                       className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors duration-200"
                     >
                       {link.label}
-                      {link.label === "Careers" && (
-                        <span className="bg-primary/15 text-primary ml-1.5 inline-flex rounded-full px-1.75 py-0.5 text-[10px] font-semibold">
-                          Hiring
-                        </span>
-                      )}
+
                       {link.label === "Status" && (
                         <span className="ml-1.5 inline-flex items-center gap-1 text-[10px] font-medium text-green-600">
                           <span className="inline-block h-1.25 w-1.25 rounded-full bg-green-600" />
@@ -289,22 +274,28 @@ export default function Footer() {
 
           <div className="flex items-center gap-6">
             <Link
-              href="#"
+              href="/feedback"
+              className="text-muted-foreground hover:text-foreground text-xs transition-all duration-200"
+            >
+              Feedback
+            </Link>
+            <Link
+              href="/privacy"
               className="text-muted-foreground hover:text-foreground text-xs transition-all duration-200"
             >
               Privacy Policy
             </Link>
             <Link
-              href="#"
+              href="/terms"
               className="text-muted-foreground hover:text-foreground text-xs transition-all duration-200"
             >
               Terms of Service
             </Link>
             <Link
-              href="#"
+              href="/security"
               className="text-muted-foreground hover:text-foreground text-xs transition-all duration-200"
             >
-              Cookie Policy
+              Security Policy
             </Link>
           </div>
         </div>

@@ -35,7 +35,6 @@ import {
 import type { SocialLink } from "@vyrex/types";
 import { toast } from "sonner";
 
-// Platform definition with icons and handle/URL helpers
 export interface PlatformConfig {
   id: string;
   name: string;
@@ -181,7 +180,6 @@ export function SocialMediaManager() {
   const [searchPlatform, setSearchPlatform] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Sync local list with server data
   useEffect(() => {
     if (serverSocials) {
       const sorted = [...serverSocials].sort(
@@ -191,7 +189,6 @@ export function SocialMediaManager() {
     }
   }, [serverSocials]);
 
-  // Handle Drag & Drop with instant zero-lag optimistic state update
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
       if (event.canceled) return;
@@ -205,10 +202,8 @@ export function SocialMediaManager() {
         position: idx,
       }));
 
-      // Instant optimistic UI update
       setItems(updatedList);
 
-      // Persist to backend
       const socialIds = updatedList.map((s) => s.id);
       try {
         await reorderSocials.mutateAsync(socialIds);
@@ -261,7 +256,7 @@ export function SocialMediaManager() {
 
   const handleToggleActive = async (social: SocialLink) => {
     const nextActive = !social.isActive;
-    // Optimistic update
+
     setItems((prev) =>
       prev.map((item) =>
         item.id === social.id ? { ...item, isActive: nextActive } : item,
@@ -274,7 +269,7 @@ export function SocialMediaManager() {
         isActive: nextActive,
       });
     } catch {
-      // Revert on error
+
       setItems((prev) =>
         prev.map((item) =>
           item.id === social.id ? { ...item, isActive: social.isActive } : item,
@@ -287,7 +282,6 @@ export function SocialMediaManager() {
     const trimmed = newUrl.trim();
     if (!trimmed) return;
 
-    // Optimistic
     setItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, url: trimmed } : item)),
     );
@@ -389,7 +383,6 @@ export function SocialMediaManager() {
         </div>
       )}
 
-      {/* Add Social Modal */}
       {isAddModalOpen && (
         <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs duration-200">
           <div className="border-border bg-background animate-in zoom-in-95 w-full max-w-lg overflow-hidden rounded-2xl border shadow-2xl duration-200">
@@ -412,7 +405,7 @@ export function SocialMediaManager() {
             </div>
 
             <form onSubmit={handleAddSocial} className="space-y-5 p-6">
-              {/* Platform Selector */}
+
               <div className="space-y-2">
                 <label className="text-foreground text-xs font-semibold">
                   Select Platform
@@ -458,7 +451,6 @@ export function SocialMediaManager() {
                 </div>
               </div>
 
-              {/* URL / Handle Input */}
               <div className="space-y-2">
                 <label className="text-foreground text-xs font-semibold">
                   {getPlatformConfig(selectedPlatform).name} URL / Username
@@ -507,7 +499,6 @@ export function SocialMediaManager() {
   );
 }
 
-// Draggable row item with drag handle, platform icon, inline edit, switch, delete
 function DraggableSocialRow({
   social,
   onToggleActive,
@@ -555,7 +546,7 @@ function DraggableSocialRow({
           !social.isActive ? "opacity-60 grayscale-[30%]" : ""
         }`}
       >
-        {/* Drag Handle + Platform Icon + Details */}
+
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <button
             ref={handleRef}
@@ -595,7 +586,6 @@ function DraggableSocialRow({
           </div>
         </div>
 
-        {/* Actions: Test link, active toggle, delete */}
         <div className="flex shrink-0 items-center gap-2">
           <a
             href={

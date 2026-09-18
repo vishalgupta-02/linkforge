@@ -1,4 +1,4 @@
-// services/username.service.ts
+
 import { prisma } from "../db/client.ts";
 import { AppError } from "../utils/api-error.ts";
 import { redis } from "../lib/redis.ts";
@@ -126,5 +126,3 @@ export const changeUsername = async (userId: string, newUsername: string) => {
     throw new AppError("Username already taken", 409);
   }
 };
-
-// const getUsername = () => {};

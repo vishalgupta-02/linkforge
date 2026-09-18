@@ -67,7 +67,6 @@ function ResetPasswordForm() {
     checkToken();
   }, [token]);
 
-  // Password strength calculation
   const hasMinLength = password.length >= 8;
   const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
   const passwordsMatch = password.length > 0 && password === confirmPassword;

@@ -1,4 +1,3 @@
-// apis/delete-link.ts
 
 import axios from "axios";
 

@@ -1,18 +1,5 @@
 "use client";
 
-// ─────────────────────────────────────────────
-// LinkFlow — Empty State Components
-//
-// EXPORTS:
-//   <EmptyAnalytics />          — analytics has no data yet
-//   <EmptyLinks />              — user has no links yet
-//   <EmptyActivity />           — no recent activity
-//   <EmptyLocations />          — no location data yet
-//
-// All accept an optional `action` prop for a CTA button:
-//   <EmptyAnalytics action={{ label: "Share my link", onClick: () => {} }} />
-// ─────────────────────────────────────────────
-
 import Link from "next/link";
 
 type Action = {
@@ -25,7 +12,6 @@ type EmptyProps = {
   action?: Action;
 };
 
-// ── Shared wrapper
 function EmptyWrapper({
   children,
   compact = false,
@@ -42,7 +28,6 @@ function EmptyWrapper({
   );
 }
 
-// ── Shared CTA button
 function EmptyCTA({ action }: { action: Action }) {
   const cls = `
     inline-flex items-center gap-2 mt-6
@@ -95,13 +80,12 @@ function EmptyCTA({ action }: { action: Action }) {
   );
 }
 
-// ══ 1. EMPTY ANALYTICS ══════════════════════════
 export function EmptyAnalytics({ action }: EmptyProps) {
   return (
     <EmptyWrapper>
-      {/* Ghost chart illustration */}
+
       <div className="relative mb-6 h-24 w-48">
-        {/* Ghost bars */}
+
         {[40, 65, 50, 80, 55, 70, 45].map((h, i) => (
           <div
             key={i}
@@ -117,10 +101,8 @@ export function EmptyAnalytics({ action }: EmptyProps) {
           />
         ))}
 
-        {/* Dashed baseline */}
         <div className="absolute right-0 bottom-0 left-0 h-px border-b border-dashed border-gray-300" />
 
-        {/* Floating question mark */}
         <div
           className="absolute -top-2 left-1/2 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full border border-[#e8622a]/20 bg-[#e8622a]/10"
           style={{
@@ -147,7 +129,6 @@ export function EmptyAnalytics({ action }: EmptyProps) {
         here.
       </p>
 
-      {/* Steps hint */}
       <div className="mt-5 flex w-full max-w-[240px] flex-col gap-2">
         {[
           "Copy your LinkFlow URL",
@@ -175,11 +156,10 @@ export function EmptyAnalytics({ action }: EmptyProps) {
   );
 }
 
-// ══ 2. EMPTY LINKS ═══════════════════════════
 export function EmptyLinks({ action }: EmptyProps) {
   return (
     <EmptyWrapper>
-      {/* Chain icon illustration */}
+
       <div
         className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl"
         style={{
@@ -219,11 +199,10 @@ export function EmptyLinks({ action }: EmptyProps) {
   );
 }
 
-// ══ 3. EMPTY ACTIVITY ════════════════════════
 export function EmptyActivity({ action }: EmptyProps) {
   return (
     <EmptyWrapper compact>
-      {/* Ghost activity rows */}
+
       <div className="mb-5 flex w-full max-w-[180px] flex-col gap-2">
         {[100, 80, 90].map((w, i) => (
           <div key={i} className="flex items-center gap-2">
@@ -259,11 +238,10 @@ export function EmptyActivity({ action }: EmptyProps) {
   );
 }
 
-// ══ 4. EMPTY LOCATIONS ═══════════════════════
 export function EmptyLocations({ action }: EmptyProps) {
   return (
     <EmptyWrapper compact>
-      {/* Globe icon */}
+
       <div
         className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl"
         style={{
@@ -301,7 +279,6 @@ export function EmptyLocations({ action }: EmptyProps) {
   );
 }
 
-// ── Global keyframes (injected once)
 export function EmptyStateStyles() {
   return (
     <style>{`

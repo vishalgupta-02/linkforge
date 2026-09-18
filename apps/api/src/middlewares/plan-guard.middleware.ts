@@ -11,7 +11,6 @@ export const requirePlan = (requiredPlan: "PRO" | "BUSINESS" = "PRO") => {
       throw new AppError("Unauthorized", 401);
     }
 
-    // Authoritative check: always read current plan directly from database
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -24,7 +23,6 @@ export const requirePlan = (requiredPlan: "PRO" | "BUSINESS" = "PRO") => {
       throw new AppError("User not found", 404);
     }
 
-    // Attach fresh plan to request user context
     if (req.user) {
       req.user.plan = user.plan;
     }

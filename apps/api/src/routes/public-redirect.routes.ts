@@ -3,7 +3,6 @@ import { publicRedirectController } from "../controllers/redirect/public-redirec
 
 const router: Router = Router();
 
-// GET /r/:publicId
 router.get("/:publicId", publicRedirectController);
 
 export default router;

@@ -12,7 +12,7 @@ type Schema = {
 export const validate = (schema: Schema) => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Validate each part separately
+
       if (schema.body) {
         req.body = schema.body.parse(req.body);
       }

@@ -4,6 +4,8 @@ import { WelcomeEmail } from "../emails/templates/WelcomeEmail.tsx";
 import { ProUpgradeEmail } from "../emails/templates/ProUpgradeEmail.tsx";
 import { ClickMilestoneEmail } from "../emails/templates/ClickMilestoneEmail.tsx";
 import { PasswordResetEmail } from "../emails/templates/PasswordResetEmail.tsx";
+import { VerifyEmail } from "../emails/templates/VerifyEmail.tsx";
+import { FeedbackEmail } from "../emails/templates/FeedbackEmail.tsx";
 import { getMilestoneEmailSubject } from "../utils/milestone.ts";
 import { resend } from "../lib/resend.ts";
 
@@ -347,3 +349,139 @@ export async function sendPasswordResetEmail(
   };
 }
 
+export interface SendVerificationEmailInput {
+  to: string;
+  userName: string;
+  verificationUrl: string;
+}
+
+export interface SendVerificationEmailOutput {
+  id: string;
+}
+
+export async function sendVerificationEmail(
+  input: SendVerificationEmailInput,
+): Promise<SendVerificationEmailOutput> {
+  const { to, userName, verificationUrl } = input;
+
+  const html = await render(
+    React.createElement(VerifyEmail, {
+      userName,
+      verificationUrl,
+    }),
+  );
+
+  const text = await render(
+    React.createElement(VerifyEmail, {
+      userName,
+      verificationUrl,
+    }),
+    {
+      plainText: true,
+    },
+  );
+
+  const { data, error } = await resend.emails.send({
+    from: "LinkFlow <onboarding@resend.dev>",
+    to,
+    subject: "Verify your LinkForge email address 🔒",
+    html,
+    text,
+  });
+
+  if (error) {
+    console.error("❌ Resend error while sending verification email:", error);
+    throw new Error(
+      `Failed to send verification email: ${error.message || "Unknown provider error"}`,
+    );
+  }
+
+  if (!data?.id) {
+    throw new Error("Resend did not return an email id");
+  }
+
+  return {
+    id: data.id,
+  };
+}
+
+export interface SendFeedbackEmailInput {
+  targetEmail?: string;
+  fromEmail?: string;
+  name?: string;
+  category?: "general" | "bug" | "feature" | "billing" | "question" | "other";
+  rating?: number;
+  message: string;
+  userId?: string;
+}
+
+export interface SendFeedbackEmailOutput {
+  id: string;
+}
+
+export async function sendFeedbackEmail(
+  input: SendFeedbackEmailInput,
+): Promise<SendFeedbackEmailOutput> {
+  const {
+    targetEmail = "abhimanyug987@gmail.com",
+    fromEmail,
+    name,
+    category = "general",
+    rating = 5,
+    message,
+    userId,
+  } = input;
+
+  const submittedAt = new Date().toUTCString();
+
+  const html = await render(
+    React.createElement(FeedbackEmail, {
+      fromEmail,
+      name,
+      category,
+      rating,
+      message,
+      userId,
+      submittedAt,
+    }),
+  );
+
+  const text = await render(
+    React.createElement(FeedbackEmail, {
+      fromEmail,
+      name,
+      category,
+      rating,
+      message,
+      userId,
+      submittedAt,
+    }),
+    {
+      plainText: true,
+    },
+  );
+
+  const { data, error } = await resend.emails.send({
+    from: "LinkFlow Feedback <onboarding@resend.dev>",
+    to: targetEmail,
+    ...(fromEmail ? { replyTo: fromEmail } : {}),
+    subject: `[LinkForge Feedback] ${category.toUpperCase()} (${rating}/5★): from ${name || fromEmail || "Anonymous"}`,
+    html,
+    text,
+  });
+
+  if (error) {
+    console.error("❌ Resend error while sending feedback email:", error);
+    throw new Error(
+      `Failed to send feedback email: ${error.message || "Unknown provider error"}`,
+    );
+  }
+
+  if (!data?.id) {
+    throw new Error("Resend did not return an email id");
+  }
+
+  return {
+    id: data.id,
+  };
+}

@@ -6,7 +6,7 @@ export const upload = multer({
   storage,
   limits: {
     files: 1,
-    fileSize: 2 * 1024 * 1024, // 2MB limit
+    fileSize: 2 * 1024 * 1024, 
   },
   fileFilter: (_req, file, cb) => {
     const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -17,4 +17,3 @@ export const upload = multer({
     }
   },
 });
-

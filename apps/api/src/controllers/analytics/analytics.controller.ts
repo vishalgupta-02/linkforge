@@ -3,20 +3,6 @@ import type { Request, Response } from "express";
 import { getDashboardAnalytics } from "../../services/analytics.service.ts";
 import { ApiResponse } from "../../utils/api-response.ts";
 
-// export const dashboardAnalyticsController = async (
-//   req: Request,
-//   res: Response,
-// ) => {
-//   const userId = req?.user.id;
-
-//   const analytics = await getDashboardAnalytics(userId);
-
-//   return res.status(200).json({
-//     success: true,
-//     data: analytics,
-//   });
-// };
-
 export const dashboardAnalyticsController = async (
   req: Request,
   res: Response,
@@ -42,4 +28,3 @@ export const dashboardAnalyticsController = async (
 
   return res.status(response.statusCode).json(response);
 };
-

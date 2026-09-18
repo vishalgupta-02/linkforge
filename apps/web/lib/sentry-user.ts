@@ -7,10 +7,6 @@ export interface SentryUserPayload {
   userName?: string | null;
 }
 
-/**
- * Sets Sentry user context on the client-side.
- * Captures user.id (and minimal safe attributes) for error correlation without high-cardinality tags.
- */
 export function setSentryUser(user?: SentryUserPayload | null): void {
   if (!user || !user.id) {
     Sentry.setUser(null);
@@ -23,9 +19,6 @@ export function setSentryUser(user?: SentryUserPayload | null): void {
   });
 }
 
-/**
- * Clears Sentry user context upon logout.
- */
 export function clearSentryUser(): void {
   Sentry.setUser(null);
 }

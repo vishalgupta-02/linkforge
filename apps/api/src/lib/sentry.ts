@@ -15,7 +15,7 @@ if (sentryDsn) {
     profileLifecycle: "trace",
     sendDefaultPii: false,
     beforeSend(event) {
-      // 🛡️ Privacy filter: Strip sensitive headers, cookies, and tokens from request data
+
       if (event.request) {
         if (event.request.headers) {
           const sensitiveHeaders = [

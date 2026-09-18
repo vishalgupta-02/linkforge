@@ -157,7 +157,6 @@ export const getDeletedLinksController = async (
     },
   });
 
-  // add daysLeft (UX)
   const enriched = links.map((link) => {
     const diff = Date.now() - (link.deletedAt?.getTime() ?? 0);
     const daysPassed = Math.floor(diff / (1000 * 60 * 60 * 24));

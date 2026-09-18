@@ -27,4 +27,3 @@ router.get("/deleted", protectedRoute, getDeletedLinksController);
 router.patch("/:id/restore", protectedRoute, restoreLink);
 
 export default router;
-

@@ -7,7 +7,7 @@ export const useLiveVisitors = (username: string, isPro: boolean = false) => {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    // If username is empty or user is not on PRO plan, do NOT connect EventSource
+
     if (!username || !isPro) {
       setConnected(false);
       setVisitors(0);
@@ -54,4 +54,3 @@ export const useLiveVisitors = (username: string, isPro: boolean = false) => {
     connected,
   };
 };
-

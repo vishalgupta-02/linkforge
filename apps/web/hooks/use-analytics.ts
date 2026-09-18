@@ -23,7 +23,7 @@ export function useAnalytics(range: AnalyticsRange = "7d") {
     queryKey: analyticsKeys.range(userId, range),
     queryFn: () => getAnalytics(range),
     enabled: Boolean(userId),
-    staleTime: 30 * 1000, // 30s cache alignment with Redis
+    staleTime: 30 * 1000, 
     placeholderData: keepPreviousData,
   });
 }

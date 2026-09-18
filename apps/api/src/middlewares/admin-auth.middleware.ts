@@ -19,7 +19,7 @@ export const adminAuthMiddleware = async (
   next: NextFunction,
 ) => {
   try {
-    // 1. Check for Bearer token in Authorization header with constant-time comparison
+
     const authHeader = req.headers.authorization;
     const adminSecret = process.env.ADMIN_SECRET_KEY;
 
@@ -33,7 +33,6 @@ export const adminAuthMiddleware = async (
       }
     }
 
-    // 2. Check for authenticated admin user session
     const session = await auth.api.getSession({
       headers: fromNodeHeaders(req.headers),
     });
@@ -64,4 +63,3 @@ export const adminAuthMiddleware = async (
     return next(new AppError("Forbidden: Administrator access required", 403));
   }
 };
-

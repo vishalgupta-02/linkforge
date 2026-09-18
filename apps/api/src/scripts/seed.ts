@@ -4,7 +4,6 @@ import bcrypt from "bcrypt";
 async function seed() {
   console.log("🌱 Starting LinkFlow Database Seeding (10 users, 5 links each)...");
 
-  // Clean existing seed users if desired or append safely
   const hashedPassword = await bcrypt.hash("Password123!", 10);
 
   for (let i = 1; i <= 10; i++) {
@@ -32,12 +31,10 @@ async function seed() {
 
     console.log(`👤 User #${i} ready: ${user.email} (@${user.userName})`);
 
-    // Create 5 links for each user
     for (let j = 1; j <= 5; j++) {
       const linkTitle = `Resource ${j} for ${name}`;
       const linkUrl = `https://example.com/resources/${i}/${j}`;
 
-      // Check if link exists
       const existingLink = await prisma.link.findFirst({
         where: {
           userId: user.id,

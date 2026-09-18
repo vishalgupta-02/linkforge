@@ -9,5 +9,3 @@ initTracing();
 
 // 2. Initialize Sentry error reporting & profiling
 import "./src/lib/sentry.ts";
-
-

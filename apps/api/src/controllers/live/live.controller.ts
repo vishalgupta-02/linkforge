@@ -154,12 +154,10 @@ export const liveVisitorsStream = async (
     throw new AppError("User not found", 404);
   }
 
-  // Verify ownership
   if (user.id !== authenticatedUserId) {
     throw new AppError("Forbidden: You do not own this profile", 403);
   }
 
-  // Verify Pro plan access
   if (!isProPlan(user.plan)) {
     throw new AppError("Live visitors is available on the Pro plan.", 403);
   }

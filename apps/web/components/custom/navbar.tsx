@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MenuIcon, Pentagon } from "lucide-react";
+import { MenuIcon, Pentagon, X } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
 import { AnimatedThemeToggler } from "../ui/animated-theme-toggler";
@@ -38,7 +38,6 @@ export default function Navbar() {
     }
   };
 
-  // Check session on mount and route change
   useEffect(() => {
     const raf = requestAnimationFrame(() => {
       checkSession();
@@ -46,7 +45,6 @@ export default function Navbar() {
     return () => cancelAnimationFrame(raf);
   }, [pathname]);
 
-  // Listen for logout event from localStorage
   useEffect(() => {
     const handleLogout = () => {
       setLoggedIn(false);
@@ -93,6 +91,12 @@ export default function Navbar() {
             className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200"
           >
             FAQ
+          </Link>
+          <Link
+            href="/feedback"
+            className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm font-medium transition-colors duration-200"
+          >
+            Feedback
           </Link>
         </nav>
 
@@ -151,6 +155,14 @@ export default function Navbar() {
                   linkforge
                 </span>
               </Link>
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen(false)}
+                className="text-muted-foreground hover:text-foreground border-border bg-background flex h-9 w-9 items-center justify-center rounded-lg border transition-colors"
+                aria-label="Close menu"
+              >
+                <X size={18} />
+              </button>
             </div>
             <nav className="mt-12 flex flex-col gap-4">
               <Link
@@ -173,6 +185,13 @@ export default function Navbar() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 FAQ
+              </Link>
+              <Link
+                href="/feedback"
+                className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm font-medium transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Feedback & Suggestions
               </Link>
             </nav>
             <div className="mt-auto flex flex-col gap-3">

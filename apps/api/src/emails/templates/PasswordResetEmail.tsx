@@ -32,7 +32,7 @@ export const PasswordResetEmail = ({
       <Preview>{previewText}</Preview>
       <Body style={main}>
         <Container style={container}>
-          {/* Header & Brand with Security Badge */}
+
           <Section style={headerSection}>
             <div style={headerContent}>
               <Text style={brandText}>LinkFlow</Text>
@@ -40,7 +40,6 @@ export const PasswordResetEmail = ({
             </div>
           </Section>
 
-          {/* Main Card Content */}
           <Section style={contentSection}>
             <Heading as="h1" style={heading}>
               Reset your password
@@ -54,14 +53,12 @@ export const PasswordResetEmail = ({
               We received a request to reset the password for your LinkFlow account. Click the button below to set a new password:
             </Text>
 
-            {/* Primary CTA */}
             <Section style={ctaSection}>
               <Button style={button} href={resetUrl}>
                 Reset Password
               </Button>
             </Section>
 
-            {/* Expiration & Security Info Box */}
             <Section style={infoBox}>
               <Text style={infoTextTitle}>Important Security Information:</Text>
               <Text style={infoTextItem}>
@@ -75,7 +72,6 @@ export const PasswordResetEmail = ({
               </Text>
             </Section>
 
-            {/* Fallback URL for restrictive email clients */}
             <Section style={fallbackSection}>
               <Text style={fallbackText}>
                 If the button above does not work, copy and paste this link into your browser:
@@ -87,7 +83,6 @@ export const PasswordResetEmail = ({
 
             <Hr style={hr} />
 
-            {/* Footer */}
             <Section style={footerSection}>
               <Text style={footerText}>
                 You received this security email because a password reset was requested for your account.
@@ -111,7 +106,6 @@ PasswordResetEmail.PreviewProps = {
 
 export default PasswordResetEmail;
 
-// Conservative, email-compatible inline styles
 const main: React.CSSProperties = {
   backgroundColor: "#f4f5f7",
   fontFamily:

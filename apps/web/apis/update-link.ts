@@ -1,4 +1,3 @@
-// apis/update-link.ts
 
 import axios from "axios";
 

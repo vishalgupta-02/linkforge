@@ -24,8 +24,6 @@ export async function sendTestEmailController(
       to: result.data.to,
     });
 
-    // console.log("Email sent", email);
-
     res.status(200).json({
       success: true,
       message: "Test email sent successfully",

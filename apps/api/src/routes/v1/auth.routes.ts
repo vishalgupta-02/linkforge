@@ -10,8 +10,8 @@ import { redis } from "../../lib/redis.ts";
 const passwordResetLimiter = new RateLimiterRedis({
   storeClient: redis,
   keyPrefix: "rl:pwd-reset",
-  points: 5, // 5 requests
-  duration: 15 * 60, // per 15 minutes
+  points: 5, 
+  duration: 15 * 60, 
   inmemoryBlockOnConsumed: 5,
   insuranceLimiter: new RateLimiterMemory({
     points: 5,
@@ -42,18 +42,14 @@ const passwordResetRateLimitMiddleware = async (
 
 const router: Router = Router();
 
-// POST /api/v1/auth/forgot-password (rate limited: 5 attempts per 15 min)
 router.post(
   "/forgot-password",
   passwordResetRateLimitMiddleware,
   forgotPasswordController,
 );
 
-// GET /api/v1/auth/reset-password/verify?token=...
 router.get("/reset-password/verify", verifyResetTokenController);
 
-// POST /api/v1/auth/reset-password
 router.post("/reset-password", resetPasswordController);
 
 export default router;
-

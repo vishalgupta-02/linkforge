@@ -42,7 +42,7 @@ export default function UserDashboard() {
         toast.success("Signed in with Google successfully! Welcome back.", {
           id: "google-auth-success",
         });
-        // Remove the query parameter from URL without page reload
+
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, "", cleanUrl);
       }

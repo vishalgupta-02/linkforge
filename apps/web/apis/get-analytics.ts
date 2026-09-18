@@ -1,64 +1,22 @@
-// apis/get-analytics.ts
-
 import axios from "axios";
+import type {
+  ClicksByDay,
+  CountryData,
+  DeviceData,
+  SourceData,
+  LinkData,
+  AnalyticsResponse,
+  SocialMediaAnalytics,
+} from "@vyrex/types";
 
-export interface ClicksByDay {
-  "7d"?: number;
-  "30d"?: number;
-  "90d"?: number;
-}
-
-export interface CountryData {
-  country?: string;
-  countryCode: string;
-  flag: string;
-  clicks: number;
-  percentage: number | 0;
-  countryName: string;
-  _count?: {
-    countryCode?: number;
-  };
-}
-
-export interface DeviceData {
-  device: string;
-  _count?: {
-    device?: number;
-  };
-}
-
-
-import type { SocialMediaAnalytics } from "@vyrex/types";
-
-export interface SourceData {
-  source: string;
-  clicks: number;
-  percentage: number | 0;
-  relativeWidth: number | 0;
-}
-
-export interface LinkData {
-  linkId: string;
-  title: string;
-  url: string;
-  clicks: number;
-  percentage: number | 0;
-  relativeWidth: number | 0;
-}
-
-export interface AnalyticsResponse {
-  totalClicks: number;
-  clicksByDay: ClicksByDay;
-  clicksByDayArray?: Array<{
-    date: string;
-    clicks: number;
-  }>;
-  clicksByCountry: CountryData[];
-  clicksByDevice: DeviceData[];
-  clicksByLink: LinkData[];
-  clicksBySource: SourceData[];
-  socialAnalytics?: SocialMediaAnalytics;
-}
+export type {
+  ClicksByDay,
+  CountryData,
+  DeviceData,
+  SourceData,
+  LinkData,
+  AnalyticsResponse,
+};
 
 export type AnalyticsRange = "7d" | "30d" | "90d";
 
@@ -73,9 +31,7 @@ export async function getAnalytics(
     throw new Error("Failed to fetch analytics");
   }
 
-  // API returns { success, message, data: {...}, statusCode }
   const analyticsData = res.data.data !== undefined ? res.data.data : res.data;
 
   return analyticsData as AnalyticsResponse;
 }
-

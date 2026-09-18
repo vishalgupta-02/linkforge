@@ -21,7 +21,3 @@ export const changeUsernameController = async (req: Request, res: Response) => {
 
   return res.status(200).json(ApiResponse(result, "Username updated"));
 };
-
-// const getUsernameController = () => {
-//   const userId;
-// };

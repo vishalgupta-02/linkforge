@@ -1,14 +1,7 @@
-export type ThemeKey =
-  | "default"
-  | "dark"
-  | "light"
-  | "violet"
-  | "ocean"
-  | "sunset"
-  | "forest"
-  | "midnight";
+import type { ThemeKey } from "@vyrex/types";
 
-// Base background and text colors for the page
+export type { ThemeKey };
+
 export const THEMES: Record<ThemeKey, string> = {
   default: "bg-zinc-50 text-zinc-950",
   dark: "bg-[#0a0a0a] text-zinc-50",
@@ -16,11 +9,10 @@ export const THEMES: Record<ThemeKey, string> = {
   violet: "bg-zinc-950 text-violet-50",
   ocean: "bg-slate-950 text-cyan-50",
   sunset: "bg-orange-50 text-orange-950",
-  forest: "bg-[#f0fdf4] text-green-950", // soft green
+  forest: "bg-[#f0fdf4] text-green-950", 
   midnight: "bg-[#050505] text-zinc-300",
 };
 
-// Specific styles for the link buttons
 export const THEME_BUTTONS: Record<ThemeKey, string> = {
   default:
     "bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-100 hover:-translate-y-0.5 shadow-sm",

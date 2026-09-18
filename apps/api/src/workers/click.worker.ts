@@ -1,50 +1,3 @@
-// import { Worker } from "bullmq";
-// import geoip from "geoip-lite";
-
-// import { prisma } from "../db/client.ts";
-// import { redis } from "../lib/redis.ts";
-
-// import { parseUserAgent } from "../utils/device-parser.ts";
-// import { parseReferrerSource } from "../utils/referrer.ts";
-
-// export const clickWorker = new Worker(
-//   "click-tracking",
-
-//   async (job) => {
-//     console.log(`📦 Processing job ${job.id}`);
-
-//     const { linkId, userId, ipAddress, userAgent, referrer } = job.data;
-
-//     const { device, browser } = parseUserAgent(userAgent);
-
-//     const source = parseReferrerSource(referrer);
-
-//     const geo = geoip.lookup(ipAddress);
-
-//     const country = geo?.country || "unknown";
-
-//     await prisma.clickEvent.create({
-//       data: {
-//         linkId,
-//         userId,
-
-//         device,
-//         browser,
-//         source,
-//         country,
-
-//         ipAddress,
-//         userAgent,
-//       },
-//     });
-
-//     console.log(`✅ Job ${job.id} completed`);
-//   },
-
-//   {
-//     connection: redis,
-//   },
-// );
 
 import crypto from "crypto";
 import { Worker } from "bullmq";
@@ -60,53 +13,6 @@ import { enqueueClickMilestoneEmail } from "../queues/email.queue.ts";
 import { recordClickProcessed } from "../lib/metrics.ts";
 import * as Sentry from "@sentry/node";
 import { logger } from "../lib/logger.ts";
-
-// export const clickWorker = new Worker(
-//   "click-tracking",
-
-//   async (job) => {
-//     const { linkId, userId, rawReferrer, userAgent, ipAddress } = job.data;
-
-//     // 🔥 Parse source
-//     const source = parseReferrerSource(rawReferrer);
-
-//     const referrer = rawReferrer || "direct";
-
-//     // 🔥 Parse browser/device
-//     const { device, browser } = parseUserAgent(userAgent);
-
-//     // 🔥 Geo lookup
-//     const geo = geoip.lookup(ipAddress);
-
-//     const country = geo?.country || "unknown";
-
-//     // 🔥 Persist
-//     await prisma.clickEvent.create({
-//       data: {
-//         linkId,
-//         userId,
-
-//         source,
-//         referrer,
-
-//         device,
-//         browser,
-//         country,
-
-//         ipAddress,
-//         userAgent,
-//       },
-//     });
-
-//     console.log(`✅ Click tracked for ${linkId}`);
-//   },
-
-//   {
-//     connection: redis,
-//   },
-// );
-
-// ================================== Refactored with enhanced logging and graceful shutdown ==================================
 
 export const clickWorker = new Worker(
   "click-tracking",
@@ -133,7 +39,6 @@ export const clickWorker = new Worker(
           const geo = geoip.lookup(ipAddress);
           const country = geo?.country || "unknown";
 
-          // Anonymize IP to avoid persisting raw PII
           const anonymizedIp = ipAddress
             ? crypto
                 .createHash("sha256")
@@ -157,7 +62,6 @@ export const clickWorker = new Worker(
             },
           });
 
-          // 📊 Record business metric for successfully processed click
           recordClickProcessed();
 
           logger.info("Click tracking job completed", {
@@ -168,9 +72,6 @@ export const clickWorker = new Worker(
             socialLinkId,
           });
 
-          // -----------------------------------------------------------------
-          // 🏆 CLICK MILESTONES DETECTION & NOTIFICATION LOGIC
-          // -----------------------------------------------------------------
           try {
             const totalClicks = await prisma.clickEvent.count({
               where: { userId },
@@ -272,7 +173,6 @@ export const clickWorker = new Worker(
   },
 );
 
-// 🔥 Worker events
 clickWorker.on("completed", (job) => {
   logger.info("BullMQ click job completed", {
     event: "queue.job.completed",
@@ -289,13 +189,11 @@ clickWorker.on("failed", (job, error) => {
   }, error);
 });
 
-// 🔥 Graceful shutdown
 const shutdown = async () => {
   logger.info("Closing click worker gracefully", { event: "worker.shutdown.started", queue: "click-tracking" });
 
   try {
-    // stop taking new jobs
-    // wait for active jobs
+
     await clickWorker.close();
 
     logger.info("Click worker closed gracefully", { event: "worker.shutdown.completed", queue: "click-tracking" });
@@ -308,7 +206,6 @@ const shutdown = async () => {
   }
 };
 
-// 🔥 Handle termination signals
 process.on("SIGTERM", shutdown);
 
 process.on("SIGINT", shutdown);

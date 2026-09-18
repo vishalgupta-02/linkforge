@@ -7,4 +7,3 @@ const rawBackendUrl =
 export const authClient = createAuthClient({
   baseURL: rawBackendUrl.trim().replace(/\/+$/, ""),
 })
-

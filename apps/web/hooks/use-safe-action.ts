@@ -1,4 +1,4 @@
-// hooks/useSafeAction.ts
+
 import { useState, useRef, useCallback } from "react";
 
 interface SafeActionOptions {
@@ -16,7 +16,7 @@ export function useSafeAction<T, Args extends any[]>(
 
   const execute = useCallback(
     async (...args: Args) => {
-      // 🚫 Strict double-submit guard
+
       if (isExecuting.current) return;
 
       isExecuting.current = true;

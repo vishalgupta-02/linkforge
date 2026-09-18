@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import {
   Sparkles,
@@ -14,35 +14,52 @@ import {
   ShoppingBag,
   Mail,
   MessageCircle,
+  CheckCircle2,
+  RotateCw,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signInFormSchema } from "@/schemas/login-schema";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { toast } from "sonner";
 import { userLogin } from "@/apis/user-login";
 import { googleSignIn } from "@/apis/google-signin";
+import { authClient } from "@/lib/auth-client";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 
 type SignInFormData = z.infer<typeof signInFormSchema>;
 
-export default function FloatingIdentityLogin() {
+function LoginForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
+  const [isResending, setIsResending] = useState<boolean>(false);
+  const [resendCooldown, setResendCooldown] = useState<number>(0);
   const [error, setError] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
 
+  const searchParams = useSearchParams();
+  const isVerifiedParam = searchParams.get("verified") === "true";
+  const authErrorParam = searchParams.get("error");
   const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCooldown > 0) {
+      timer = setTimeout(() => setResendCooldown((prev) => prev - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
   const {
     handleSubmit,
     register,
+    getValues,
     formState: { errors },
   } = useForm<SignInFormData>({
     defaultValues: {
@@ -51,6 +68,29 @@ export default function FloatingIdentityLogin() {
     },
     resolver: zodResolver(signInFormSchema),
   });
+
+  const handleResendVerification = async () => {
+    const currentEmail = getValues("email")?.trim();
+    if (!currentEmail) {
+      toast.error("Please enter your email address in the field above.");
+      return;
+    }
+    if (resendCooldown > 0 || isResending) return;
+
+    setIsResending(true);
+    try {
+      await authClient.sendVerificationEmail({
+        email: currentEmail,
+        callbackURL: "/signin?verified=true",
+      });
+      setResendCooldown(60);
+      toast.success("Verification link sent! Please check your inbox.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send verification link.");
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleLogin = async (formData: SignInFormData) => {
     setIsLoading(true);
@@ -65,12 +105,22 @@ export default function FloatingIdentityLogin() {
         );
       }
       console.log("Login successful:", result);
-      toast.success("Login successful");
+      toast.success("Login successful! Welcome back.");
 
       router.push("/dashboard");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login failed:", err);
-      setError("That didn't match. Try again or reset your password.");
+      const msg = err?.message || "";
+      if (
+        msg.toLowerCase().includes("verified") ||
+        msg.toLowerCase().includes("verification")
+      ) {
+        setError(
+          "Your email is not verified yet. Please check your inbox or click below to resend the verification link.",
+        );
+      } else {
+        setError(msg || "That didn't match. Try again or reset your password.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -81,7 +131,7 @@ export default function FloatingIdentityLogin() {
     try {
       toast.loading("Connecting to Google...", { id: "google-auth" });
       await googleSignIn();
-      // Better Auth redirects to Google OAuth consent screen
+
     } catch (error) {
       toast.error("Google sign-in failed. Please try again.", {
         id: "google-auth",
@@ -94,14 +144,12 @@ export default function FloatingIdentityLogin() {
   if (!mounted) return null;
 
   return (
-    <>
       <div className="relative flex min-h-screen bg-zinc-50 font-sans text-zinc-950 selection:bg-violet-500/30 dark:bg-[#0a0a0a] dark:text-zinc-50">
-        {/* Floating Theme Toggle */}
+
         <div className="absolute top-5 right-5 z-50">
           <AnimatedThemeToggler className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-zinc-200 bg-white/80 text-zinc-600 shadow-sm backdrop-blur-md transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-white/10 dark:bg-[#111]/80 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white" />
         </div>
 
-        {/* Left Visual Identity Panel */}
         <div className="relative hidden w-[45%] flex-col overflow-hidden border-r border-zinc-200 bg-linear-to-b from-zinc-100 via-zinc-50 to-zinc-200/50 p-12 lg:flex dark:border-white/5 dark:from-[#0a0a0a] dark:to-[#111111]">
           <div
             className="pointer-events-none absolute inset-0 opacity-40 mix-blend-overlay dark:opacity-20"
@@ -178,7 +226,6 @@ export default function FloatingIdentityLogin() {
           </div>
         </div>
 
-        {/* Right Form Panel */}
         <div className="relative flex flex-1 flex-col items-center justify-center p-6 md:p-10">
           <div className="animate-fade-in-up w-full max-w-100 delay-100">
             <div className="mb-10 flex items-center gap-2.5 lg:hidden">
@@ -189,6 +236,36 @@ export default function FloatingIdentityLogin() {
                 Linkforge
               </span>
             </div>
+
+            {isVerifiedParam && (
+              <div className="mb-6 animate-fade-in-up">
+                <div className="flex items-start gap-3 rounded-xl border border-emerald-500/20 bg-emerald-50 p-4 text-emerald-900 shadow-xs dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <div>
+                    <h4 className="text-sm font-semibold">Email verified successfully!</h4>
+                    <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">
+                      Your account is active. Enter your credentials below to log in.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {authErrorParam && (
+              <div className="mb-6 animate-fade-in-up">
+                <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-50 p-4 text-amber-900 shadow-xs dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <div>
+                    <h4 className="text-sm font-semibold">Verification Alert</h4>
+                    <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-300">
+                      {authErrorParam === "invalid_token"
+                        ? "This verification link is invalid or has expired."
+                        : "Please verify your email before signing in."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="mb-8 space-y-2">
               <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
@@ -321,11 +398,26 @@ export default function FloatingIdentityLogin() {
               </div>
 
               {error && (
-                <div className="animate-fade-in-up">
+                <div className="animate-fade-in-up space-y-2">
                   <p className="flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-50 p-3 text-[13px] font-medium text-red-600 dark:bg-red-500/10 dark:text-red-400">
                     <AlertCircle size={16} className="mt-0.5 shrink-0" />
                     <span className="leading-snug">{error}</span>
                   </p>
+                  {error.toLowerCase().includes("verified") && (
+                    <button
+                      type="button"
+                      onClick={handleResendVerification}
+                      disabled={isResending || resendCooldown > 0}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 cursor-pointer disabled:opacity-50"
+                    >
+                      <RotateCw className="h-3.5 w-3.5" />
+                      {resendCooldown > 0
+                        ? `Resend link in ${resendCooldown}s`
+                        : isResending
+                          ? "Resending..."
+                          : "Resend verification link"}
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -364,6 +456,19 @@ export default function FloatingIdentityLogin() {
           </div>
         </div>
       </div>
-    </>
+  );
+}
+
+export default function FloatingIdentityLogin() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-[#0a0a0a]">
+          <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

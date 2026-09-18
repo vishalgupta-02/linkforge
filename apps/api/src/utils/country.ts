@@ -1,4 +1,3 @@
-// utils/country.ts
 
 export const countryCodeToFlag = (countryCode: string): string => {
   if (!countryCode || countryCode === "unknown") {

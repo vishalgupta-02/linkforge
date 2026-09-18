@@ -1,19 +1,5 @@
 'use client'
 
-// ─────────────────────────────────────────────
-// LinkFlow — Loading Component
-//
-// Usage:
-//   <Loading />                        full page, default message
-//   <Loading message="Fetching links" />
-//   <Loading size="sm" />              smaller variant (card/section)
-//
-// Props:
-//   message? : string   — optional label under the animation
-//   size?    : "sm" | "md" (default "md")
-//   fullPage?: boolean  (default true) — centers in viewport
-// ─────────────────────────────────────────────
-
 type LoadingProps = {
   message?: string
   size?: 'sm' | 'md'
@@ -98,7 +84,7 @@ export default function Loading({
             alignItems: 'center',
             gap: isSm ? 16 : 24,
           }}>
-          {/* ── Logo + ring stack ── */}
+
           <div
             style={{
               position: 'relative',
@@ -108,7 +94,7 @@ export default function Loading({
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-            {/* Warm glow blob behind everything */}
+
             <div
               className='lf-glow'
               style={{
@@ -121,7 +107,6 @@ export default function Loading({
               }}
             />
 
-            {/* Outer ring — sparse dashes */}
             <svg
               className='lf-ring-outer'
               style={{ position: 'absolute', inset: 0 }}
@@ -140,7 +125,6 @@ export default function Loading({
               />
             </svg>
 
-            {/* Inner ring — solid arc */}
             <svg
               className='lf-ring-inner'
               style={{ position: 'absolute', inset: 8 }}
@@ -167,7 +151,6 @@ export default function Loading({
               />
             </svg>
 
-            {/* Center logo mark */}
             <div
               style={{
                 width: isSm ? 28 : 36,
@@ -195,7 +178,6 @@ export default function Loading({
             </div>
           </div>
 
-          {/* ── Text + dots ── */}
           <div
             className='lf-message'
             style={{
@@ -204,7 +186,7 @@ export default function Loading({
               alignItems: 'center',
               gap: 10,
             }}>
-            {/* Wordmark */}
+
             {!isSm && (
               <span
                 style={{
@@ -217,7 +199,6 @@ export default function Loading({
               </span>
             )}
 
-            {/* Contextual message */}
             {message && (
               <span
                 style={{
@@ -229,7 +210,6 @@ export default function Loading({
               </span>
             )}
 
-            {/* Animated dots */}
             <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
               {[0, 1, 2].map((i) => (
                 <div

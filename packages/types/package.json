@@ -1,13 +1,15 @@
 {
   "name": "@vyrex/types",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.ts",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "description": "Shared TypeScript definitions and interfaces for LinkForge",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "import": "./index.ts",
+      "default": "./index.ts"
+    }
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "private": true
 }

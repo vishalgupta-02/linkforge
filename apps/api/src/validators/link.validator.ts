@@ -3,11 +3,11 @@ import { z } from "zod";
 export const isSafeDestinationUrl = (val: string): boolean => {
   try {
     const parsed = new URL(val);
-    // Explicitly reject executable or non-web protocols
+
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
       return false;
     }
-    // Disallow javascript: data: vbscript: etc
+
     const lower = val.toLowerCase().trim();
     if (
       lower.startsWith("javascript:") ||
@@ -46,5 +46,3 @@ export const updateLinkSchema = z.object({
 export const reorderLinksSchema = z.object({
   linkIds: z.array(z.string().uuid()).min(1),
 });
-
-

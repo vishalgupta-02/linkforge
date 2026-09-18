@@ -42,3 +42,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# never push this to production
+/agents/*
+/reports
+
+/apps/api/dist

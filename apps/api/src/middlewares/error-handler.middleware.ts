@@ -1,11 +1,3 @@
-// It needs:
-// - 4 parameter signature — `err, req, res, next`
-// - Read `NODE_ENV` from your config
-// - In development — include error message and stack trace in response
-// - In production — return only a generic "Something went wrong" message
-// - Always return consistent `ApiResponse` shape
-// - Handle specific error types — what if the error has a status code? What if it is a Prisma error? What if it is a Zod validation error?
-// - HTTP status code — default to 500 but use the error's status code if it has one
 
 import type { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
@@ -28,7 +20,7 @@ export function errorMiddleware(
   err: unknown,
   req: Request,
   res: Response,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   _next: NextFunction,
 ) {
   let statusCode = 500;
@@ -37,7 +29,6 @@ export function errorMiddleware(
   let code: string | undefined = undefined;
   let meta: unknown = undefined;
 
-  // 🔹 1. Custom error with statusCode
   if (err && typeof err === "object" && "statusCode" in err) {
     statusCode = (err as { statusCode: number }).statusCode;
     message = (err as { message?: string }).message || message;
@@ -45,7 +36,6 @@ export function errorMiddleware(
     meta = (err as { meta?: unknown }).meta;
   }
 
-  // 🔹 2. Zod validation error
   else if (err instanceof ZodError) {
     statusCode = 400;
     message = "Validation failed";
@@ -55,7 +45,6 @@ export function errorMiddleware(
     }));
   }
 
-  // 🔹 3. Prisma errors
   else if (err instanceof Prisma.PrismaClientKnownRequestError) {
     statusCode = 400;
 
@@ -68,12 +57,10 @@ export function errorMiddleware(
     }
   }
 
-  // 🔹 4. Fallback generic error
   else if (err instanceof Error) {
     message = err.message || message;
   }
 
-  // 📝 Structured error log via Pino
   logger.error("HTTP request error", {
     event: "api.request.error",
     method: req.method,
@@ -81,14 +68,12 @@ export function errorMiddleware(
     statusCode,
   }, err);
 
-  // 🛡️ Report unexpected server errors (5xx) to Sentry with rich, isolated context
   if (statusCode >= 500 && process.env.SENTRY_DSN) {
     captureSentryWithRichContext(err, req).catch(() => {
-      // Sentry enrichment failure must never impact the API error response
+
     });
   }
 
-  // 🧪 Dev vs Prod behavior
   const response: ApiResponse = {
     success: false,
     message,
@@ -107,4 +92,3 @@ export function errorMiddleware(
 
   return res.status(statusCode).json(response);
 }
-

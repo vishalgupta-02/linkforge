@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       };
     }
   } catch {
-    // Fallback gracefully on scrape error
+
   }
 
   return {
@@ -83,4 +83,3 @@ export default async function PublicProfilePage({ params }: Props) {
     </>
   );
 }
-

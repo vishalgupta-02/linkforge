@@ -25,9 +25,6 @@ const otlpEndpoint =
     ? "http://tempo:4318/v1/traces"
     : "http://localhost:4318/v1/traces");
 
-/**
- * Configure OpenTelemetry trace sampler based on environment variables
- */
 function getSampler() {
   const samplerType = (process.env.OTEL_TRACES_SAMPLER || "").toLowerCase();
   const ratioArg = parseFloat(process.env.OTEL_TRACES_SAMPLER_ARG || "");
@@ -40,7 +37,6 @@ function getSampler() {
     return new AlwaysOnSampler();
   }
 
-  // Default: 100% in development, 10% in production (or configured ratio)
   const ratio = !isNaN(ratioArg)
     ? ratioArg
     : environment === "production"
@@ -51,12 +47,10 @@ function getSampler() {
   });
 }
 
-// Initialize OTLP Trace Exporter
 const traceExporter = new OTLPTraceExporter({
   url: otlpEndpoint,
 });
 
-// Configure NodeSDK with OpenTelemetry resource and auto-instrumentations
 const sdk = new NodeSDK({
   resource: resourceFromAttributes({
     [ATTR_SERVICE_NAME]: serviceName,
@@ -69,7 +63,7 @@ const sdk = new NodeSDK({
     new HttpInstrumentation({
       ignoreIncomingRequestHook: (req) => {
         const url = req.url || "";
-        // Exclude lightweight health and Prometheus scrape endpoints from trace noise
+
         return (
           url.startsWith("/metrics") ||
           url.startsWith("/health") ||
@@ -86,10 +80,6 @@ const sdk = new NodeSDK({
 
 let isInitialized = false;
 
-/**
- * Starts the OpenTelemetry NodeSDK safely.
- * Non-blocking and non-critical — failures will never crash the server.
- */
 export function initTracing(): void {
   if (isInitialized) return;
 
@@ -107,9 +97,6 @@ export function initTracing(): void {
   }
 }
 
-/**
- * Gracefully shuts down OpenTelemetry SDK, flushing pending trace batches.
- */
 export async function shutdownTracing(): Promise<void> {
   if (!isInitialized) return;
 
@@ -122,7 +109,6 @@ export async function shutdownTracing(): Promise<void> {
   }
 }
 
-// Automatically register graceful shutdown hooks
 process.on("SIGTERM", async () => {
   await shutdownTracing();
 });

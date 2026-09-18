@@ -1,4 +1,3 @@
-// apis/google-signin.ts
 
 import { authClient } from "@/lib/auth-client";
 
@@ -12,7 +11,7 @@ export async function googleSignIn(customCallbackUrl?: string) {
 
     const data = await authClient.signIn.social({
       provider: "google",
-      callbackURL: dashboardCallback, // Redirect to dashboard after successful sign-in
+      callbackURL: dashboardCallback, 
     });
 
     return data;
@@ -21,4 +20,3 @@ export async function googleSignIn(customCallbackUrl?: string) {
     throw error;
   }
 }
-

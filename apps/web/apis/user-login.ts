@@ -1,16 +1,15 @@
-// apis/user-login.ts
 
 import { authClient } from "@/lib/auth-client";
 
 export async function userLogin(email: string, password: string) {
   try {
     const { data, error } = await authClient.signIn.email({
-      email: email, // required
-      password: password, // required
+      email: email, 
+      password: password, 
     });
 
     if (error) {
-      throw new Error("Invalid Credentials");
+      throw new Error(error.message || "Invalid Credentials");
     }
 
     console.log("Login successful:", data);

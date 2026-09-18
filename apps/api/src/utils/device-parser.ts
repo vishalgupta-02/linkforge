@@ -1,13 +1,3 @@
-// export function getDeviceType(userAgent: string): string {
-//   if (!userAgent) return "unknown";
-
-//   const ua = userAgent.toLowerCase();
-
-//   if (ua.includes("mobile")) return "mobile";
-//   if (ua.includes("tablet")) return "tablet";
-
-//   return "desktop";
-// }
 
 import { UAParser } from "ua-parser-js";
 
@@ -30,6 +20,6 @@ export const parseUserAgent = (userAgent: string) => {
 
   return {
     device,
-    browser: country, // Using 'country' variable to store browser name for analytics purposes
+    browser: country, 
   };
 };

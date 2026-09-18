@@ -25,6 +25,7 @@ import {
   Earth,
   CodeSquare,
   Users,
+  MessageSquarePlus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -39,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
+import { FeedbackDialog } from "./feedback-dialog";
 
 const menuItems = [
   {
@@ -93,7 +95,7 @@ export function AppSidebar() {
   const logoutHandler = async () => {
     await authClient.signOut();
     await authClient.revokeSessions();
-    // Dispatch logout event for navbar to catch
+
     window.dispatchEvent(new Event("logout-event"));
     toast.success("Logged out successfully");
     router.push("/");
@@ -166,6 +168,16 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/feedback"}>
+                  <Link href="/feedback">
+                    <MessageSquarePlus className="h-4 w-4 text-violet-500" />
+                    <span className="group-data-[state=collapsed]:hidden">
+                      Feedback
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

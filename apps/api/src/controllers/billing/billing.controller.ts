@@ -58,8 +58,6 @@ export const getBillingStatusController = async (
     .json(ApiResponse(data, "Billing status retrieved successfully", 200));
 };
 
-
-
 export const stripeWebhookController = async (
   req: Request,
   res: Response,
