@@ -58,12 +58,11 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="relative flex min-h-screen bg-zinc-50 font-sans text-zinc-950 selection:bg-violet-500/30 dark:bg-[#0a0a0a] dark:text-zinc-50">
-      {/* Floating Theme Toggle */}
+
       <div className="absolute top-5 right-5 z-50">
         <AnimatedThemeToggler className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-zinc-200 bg-white/80 text-zinc-600 shadow-sm backdrop-blur-md transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-white/10 dark:bg-[#111]/80 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white" />
       </div>
 
-      {/* Visual Identity Left Panel */}
       <div className="relative hidden w-[45%] flex-col overflow-hidden border-r border-zinc-200 bg-linear-to-b from-zinc-100 via-zinc-50 to-zinc-200/50 p-12 lg:flex dark:border-white/5 dark:from-[#0a0a0a] dark:to-[#111111]">
         <div
           className="pointer-events-none absolute inset-0 opacity-40 mix-blend-overlay dark:opacity-20"
@@ -125,7 +124,6 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
 
-      {/* Main Right Form Panel */}
       <div className="relative flex flex-1 flex-col items-center justify-center p-6 md:p-10">
         <div className="animate-fade-in-up w-full max-w-100 delay-100">
           <div className="mb-10 flex items-center gap-2.5 lg:hidden">

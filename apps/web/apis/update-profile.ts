@@ -1,10 +1,7 @@
 import axios from "axios";
+import type { UpdateProfilePayload } from "@vyrex/types";
 
-export interface UpdateProfileParams {
-  name?: string;
-  bio?: string;
-  image?: string;
-}
+export type UpdateProfileParams = UpdateProfilePayload;
 
 export async function updateUserProfile(data: UpdateProfileParams) {
   const res = await axios.patch(

@@ -196,7 +196,6 @@ export const getBillingStatus = async (userId: string) => {
     }
   }
 
-  // Fallback nextBillingDate to user's planExpiry if future date is stored and no Stripe date found
   if (
     !nextBillingDate &&
     user.planExpiry &&
@@ -218,12 +217,12 @@ const handleCheckoutSessionCompleted = async (
   eventId: string,
   session: Stripe.Checkout.Session,
 ) => {
-  // Only process subscription checkouts
+
   if (session.mode !== "subscription") {
     console.log(
       `ℹ️ Ignoring non-subscription checkout session: ${session.id} (mode: ${session.mode})`,
     );
-    // Mark event processed so we do not re-evaluate
+
     await prisma.stripeWebhookEvent.create({
       data: {
         eventId,
@@ -300,7 +299,7 @@ const handleCheckoutSessionCompleted = async (
     console.warn(
       `⚠️ Could not find Linkforge user for completed checkout session ${session.id} (userId: ${userId}, customerId: ${customerId})`,
     );
-    // Persist event to avoid endless retries on unknown user
+
     await prisma.stripeWebhookEvent.create({
       data: {
         eventId,
@@ -313,9 +312,8 @@ const handleCheckoutSessionCompleted = async (
   const wasUpgrade = user.plan !== "PRO";
   const planExpiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-  // Atomic database transaction: persist webhook event ID + update user plan + write audit log
   await prisma.$transaction(async (tx) => {
-    // 1. Enforces uniqueness on eventId against duplicate/concurrent deliveries
+
     await tx.stripeWebhookEvent.create({
       data: {
         eventId,
@@ -323,7 +321,6 @@ const handleCheckoutSessionCompleted = async (
       },
     });
 
-    // 2. Upgrade user to PRO and store stripe identifiers
     await tx.user.update({
       where: { id: user.id },
       data: {
@@ -334,7 +331,6 @@ const handleCheckoutSessionCompleted = async (
       },
     });
 
-    // 3. Write audit log
     await tx.auditlog.create({
       data: {
         userId: user.id,
@@ -355,12 +351,10 @@ const handleCheckoutSessionCompleted = async (
     `✅ Successfully upgraded user ${user.id} (${user.userName || "unknown"}) to PRO (eventId=${eventId})`,
   );
 
-  // 📊 Record business metric only if this was an actual plan upgrade from non-PRO
   if (wasUpgrade) {
     recordSubscriptionUpgrade("PRO");
   }
 
-  // 4. Asynchronously enqueue Pro upgrade congratulations email job in BullMQ
   try {
     const frontendUrl = (
       process.env.FRONTEND_URL || "http://localhost:3000"
@@ -442,7 +436,7 @@ const handleSubscriptionDeleted = async (
     console.warn(
       `⚠️ Could not find Linkforge user for deleted subscription ${subscription.id} (customerId: ${customerId})`,
     );
-    // Persist event to avoid endless retries on unknown user
+
     await prisma.stripeWebhookEvent.create({
       data: {
         eventId,
@@ -452,9 +446,8 @@ const handleSubscriptionDeleted = async (
     return;
   }
 
-  // Atomic database transaction: persist webhook event ID + downgrade user + write audit log
   await prisma.$transaction(async (tx) => {
-    // 1. Enforces uniqueness on eventId against duplicate/concurrent deliveries
+
     await tx.stripeWebhookEvent.create({
       data: {
         eventId,
@@ -462,7 +455,6 @@ const handleSubscriptionDeleted = async (
       },
     });
 
-    // 2. Downgrade user to FREE and clear active subscription ID
     await tx.user.update({
       where: { id: user.id },
       data: {
@@ -471,7 +463,6 @@ const handleSubscriptionDeleted = async (
       },
     });
 
-    // 3. Write audit log
     await tx.auditlog.create({
       data: {
         userId: user.id,
@@ -618,7 +609,6 @@ export const handleStripeWebhook = async (
     throw new AppError("Missing Stripe signature header", 400);
   }
 
-  // 1. Verify Stripe signature BEFORE any database or deduplication operations
   let event: Stripe.Event;
 
   try {
@@ -634,7 +624,6 @@ export const handleStripeWebhook = async (
     );
   }
 
-  // 2. Check if this exact Stripe event.id has already been processed in database
   const existingEvent = await prisma.stripeWebhookEvent.findUnique({
     where: { eventId: event.id },
   });
@@ -682,7 +671,7 @@ export const handleStripeWebhook = async (
 
     return { received: true };
   } catch (error: any) {
-    // Handle concurrent duplicate race condition where two identical webhook events arrive at the same time
+
     if (
       error?.code === "P2002" ||
       error?.message?.includes("Unique constraint") ||

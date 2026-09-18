@@ -8,24 +8,6 @@ import { ApiResponse } from "../../utils/api-response.ts";
 import { AppError } from "../../utils/api-error.ts";
 import { updateProfileSchema } from "../../validators/profile.validator.ts";
 
-// export const publicProfile = async (request: Request, response: Response) => {
-//   const username = request.params.username as string;
-
-//   if (!username) {
-//     throw new AppError("Username is required", 400);
-//   }
-
-//   const profile = await getPublicProfile(username);
-
-//   if (!profile) {
-//     throw new AppError("User not found", 404);
-//   }
-
-//   return response.json(
-//     ApiResponse(profile, "Public profile fetched successfully", 200),
-//   );
-// };
-
 export const publicProfileController = async (req: Request, res: Response) => {
   const { username } = req.params;
 
@@ -52,7 +34,6 @@ export const profileUpdateController = async (req: Request, res: Response) => {
   }
 
   const parsed = updateProfileSchema.safeParse(req.body);
-  // console.log("body:", req.body, "parsed:", parsed);
 
   if (!parsed.success) {
     throw new AppError("Invalid input", 400, "VALIDATION_ERROR", parsed.error);

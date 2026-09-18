@@ -12,10 +12,6 @@ import {
 import { ApiResponse } from "../utils/api-response.ts";
 import { AppError } from "../utils/api-error.ts";
 
-/**
- * Handles password reset request (Forgot Password).
- * Returns generic success response to prevent email enumeration.
- */
 export const forgotPasswordController = async (req: Request, res: Response) => {
   const parsed = forgotPasswordSchema.safeParse(req.body);
 
@@ -29,9 +25,6 @@ export const forgotPasswordController = async (req: Request, res: Response) => {
   return res.json(ApiResponse(null, result.message, 200));
 };
 
-/**
- * Handles verification of a reset token before allowing user to change password.
- */
 export const verifyResetTokenController = async (
   req: Request,
   res: Response,
@@ -52,9 +45,6 @@ export const verifyResetTokenController = async (
   return res.json(ApiResponse(result, "Reset token is valid", 200));
 };
 
-/**
- * Handles the actual password reset using a valid token and new password.
- */
 export const resetPasswordController = async (req: Request, res: Response) => {
   const parsed = resetPasswordSchema.safeParse(req.body);
 

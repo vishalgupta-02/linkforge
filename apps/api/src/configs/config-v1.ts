@@ -1,4 +1,3 @@
-// apps/api/src/config.ts
 
 type EnvConfig = {
   NODE_ENV: string;

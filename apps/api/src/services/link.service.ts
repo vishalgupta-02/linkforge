@@ -23,7 +23,6 @@ export const createLink = async (userId: string, data: any) => {
     throw new AppError("User not found", 404);
   }
 
-  // 🔍 Check active links count only for Free plan users
   if (!isProPlan(user.plan)) {
     const activeCount = await prisma.link.count({
       where: {
@@ -45,7 +44,6 @@ export const createLink = async (userId: string, data: any) => {
     }
   }
 
-  // Strip publicId from user input if provided to prevent overriding, and generate a secure one
   const { publicId: _ignored, ...cleanData } = data;
   const publicId = generatePublicId();
 
@@ -57,10 +55,8 @@ export const createLink = async (userId: string, data: any) => {
     },
   });
 
-  // 📊 Record business metric for successfully created link
   recordLinkCreated();
 
-  // 🔥 Invalidate public profile cache
   if (user.userName) {
     await redis.del(CACHE_KEYS.publicProfile(user.userName));
   }
@@ -81,7 +77,7 @@ export const getLinks = async (userId: string) => {
 };
 
 export const updateLink = async (userId: string, linkId: string, data: any) => {
-  // First verify the link exists and belongs to the user
+
   const link = await prisma.link.findUnique({
     where: { id: linkId },
   });
@@ -98,7 +94,6 @@ export const updateLink = async (userId: string, linkId: string, data: any) => {
     throw new AppError("Link has been deleted", 410);
   }
 
-  // Ensure publicId cannot be modified via update payload
   const { publicId: _ignored, ...cleanData } = data;
 
   const updated = await prisma.link.update({
@@ -106,7 +101,6 @@ export const updateLink = async (userId: string, linkId: string, data: any) => {
     data: cleanData,
   });
 
-  // Invalidate redirect cache
   if (link.publicId) {
     await redis.del(CACHE_KEYS.redirect(link.publicId));
   }
@@ -124,7 +118,7 @@ export const updateLink = async (userId: string, linkId: string, data: any) => {
 };
 
 export const deleteLink = async (userId: string, linkId: string) => {
-  // First verify the link exists and belongs to the user
+
   const link = await prisma.link.findUnique({
     where: { id: linkId },
   });
@@ -149,7 +143,6 @@ export const deleteLink = async (userId: string, linkId: string) => {
     },
   });
 
-  // Invalidate redirect cache
   if (link.publicId) {
     await redis.del(CACHE_KEYS.redirect(link.publicId));
   }
@@ -167,7 +160,7 @@ export const deleteLink = async (userId: string, linkId: string) => {
 };
 
 export const reorderLinks = async (userId: string, linkIds: string[]) => {
-  // 🔒 Ensure all links belong to user
+
   const links = await prisma.link.findMany({
     where: {
       id: { in: linkIds },
@@ -181,7 +174,6 @@ export const reorderLinks = async (userId: string, linkIds: string[]) => {
     throw new AppError("Invalid link IDs", 400);
   }
 
-  // 🔥 Transaction for atomic update
   await prisma.$transaction(
     linkIds.map((id, index) =>
       prisma.link.update({
@@ -206,7 +198,6 @@ export const reorderLinks = async (userId: string, linkIds: string[]) => {
 export const getPublicLinks = async (username: string) => {
   const normalized = normalizeUsername(username);
 
-  // 🔍 Step 1: find user
   const user = await prisma.user.findUnique({
     where: { userName_lower: normalized },
     select: { id: true },
@@ -216,7 +207,6 @@ export const getPublicLinks = async (username: string) => {
     throw new AppError("User not found", 404);
   }
 
-  // 🔗 Step 2: fetch links
   return prisma.link.findMany({
     where: {
       userId: user.id,
@@ -275,7 +265,6 @@ export const toggleLink = async (userId: string, linkId: string) => {
     },
   });
 
-  // Invalidate redirect cache
   if (link.publicId) {
     await redis.del(CACHE_KEYS.redirect(link.publicId));
   }
@@ -309,17 +298,15 @@ export const getLinkById = async (id: string) => {
 export const getLinkByPublicId = async (publicId: string) => {
   const cacheKey = CACHE_KEYS.redirect(publicId);
 
-  // 1. Check Redis cache
   try {
     const cached = await redis.get(cacheKey);
     if (cached) {
       return JSON.parse(cached);
     }
   } catch (error) {
-    // Redis fail-open: fallback to database
+
   }
 
-  // 2. Query Database
   const link = await prisma.link.findUnique({
     where: { publicId },
     select: {
@@ -336,7 +323,6 @@ export const getLinkByPublicId = async (publicId: string) => {
     return null;
   }
 
-  // 3. Cache in Redis
   try {
     await redis.set(
       cacheKey,
@@ -345,10 +331,8 @@ export const getLinkByPublicId = async (publicId: string) => {
       REDIRECT_CACHE_TTL,
     );
   } catch (error) {
-    // Redis fail-open
+
   }
 
   return link;
 };
-
-

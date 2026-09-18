@@ -15,7 +15,7 @@ export function useBillingStatus() {
     queryKey: ["billingStatus", userId],
     queryFn: getBillingStatus,
     enabled: !isAuthPending && Boolean(userId),
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000, 
     retry: 1,
   });
 }

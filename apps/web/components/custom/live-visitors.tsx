@@ -73,4 +73,3 @@ export function LiveVisitors({ username, isPro = false }: LiveVisitorsProps) {
 }
 
 export default LiveVisitors;
-

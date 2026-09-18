@@ -6,30 +6,16 @@ import { logger } from "../lib/logger.ts";
 
 const SAFE_REQUEST_ID_REGEX = /^[a-zA-Z0-9_-]{1,128}$/;
 
-/**
- * Validates whether an incoming Request ID header conforms to safety constraints.
- */
 function isValidRequestId(id: unknown): id is string {
   if (typeof id !== "string") return false;
   const trimmed = id.trim();
   return SAFE_REQUEST_ID_REGEX.test(trimmed);
 }
 
-/**
- * Generates a cryptographically secure, unique request identifier.
- */
 function generateRequestId(): string {
   return `req_${crypto.randomUUID()}`;
 }
 
-/**
- * Request Correlation & AsyncLocalStorage Request Context Middleware
- * 
- * 1. Inspects & sanitizes incoming X-Request-ID header (or generates a new secure ID).
- * 2. Echoes X-Request-ID on the response header.
- * 3. Encloses request lifecycle within AsyncLocalStorage request context.
- * 4. Captures monotonic duration on response finish and logs structured request completion.
- */
 export function requestIdMiddleware(
   req: Request,
   res: Response,
@@ -45,7 +31,6 @@ export function requestIdMiddleware(
 
   res.setHeader("X-Request-ID", requestId);
 
-  // Attach to Sentry Request Context
   try {
     Sentry.setTag("requestId", requestId);
     Sentry.setContext("request_correlation", {
@@ -54,15 +39,14 @@ export function requestIdMiddleware(
       path: req.path,
     });
   } catch {
-    // Sentry context tagging failure must never fail the request
+
   }
 
   const startTime = process.hrtime.bigint();
 
-  // Log completion when response finishes
   res.on("finish", () => {
     const durationNs = process.hrtime.bigint() - startTime;
-    const durationMs = Math.round(Number(durationNs) / 1e4) / 100; // 2 decimal places
+    const durationMs = Math.round(Number(durationNs) / 1e4) / 100; 
 
     const normalizedRoute = (req.baseUrl || "") + (req.route?.path || req.path || req.originalUrl?.split("?")[0] || "unknown");
     const isQuietEndpoint = normalizedRoute.startsWith("/health") || normalizedRoute.startsWith("/metrics") || normalizedRoute === "/favicon.ico";
@@ -86,7 +70,6 @@ export function requestIdMiddleware(
     }
   });
 
-  // Execute entire downstream middleware & handler chain inside AsyncLocalStorage
   runWithContext(
     {
       requestId,

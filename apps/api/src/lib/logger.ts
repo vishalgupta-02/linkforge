@@ -41,9 +41,6 @@ const SENSITIVE_KEYS = new Set([
   "creditcard",
 ]);
 
-/**
- * Deeply redacts sensitive keys from log context payloads
- */
 export function scrubSensitiveData(data: unknown): unknown {
   if (data === null || data === undefined) return data;
   if (typeof data !== "object") return data;
@@ -67,10 +64,6 @@ export function scrubSensitiveData(data: unknown): unknown {
   return sanitized;
 }
 
-/**
- * Base Pino Logger Instance configured with custom ISO timestamp,
- * string level labels, message key, and sensitive data redaction.
- */
 export const pinoInstance = pino({
   level: process.env.LOG_LEVEL || (process.env.NODE_ENV === "production" ? "info" : "debug"),
   messageKey: "message",
@@ -104,12 +97,6 @@ export const pinoInstance = pino({
   },
 });
 
-/**
- * Normalizes log context by combining:
- * 1. AsyncLocalStorage request context (requestId, userId)
- * 2. Active OpenTelemetry trace context (traceId, spanId)
- * 3. User-supplied log context and error objects
- */
 function buildEnrichedLogContext(contextInput?: LogContext | unknown, errInput?: unknown): Record<string, unknown> {
   const currentReqId = getRequestId();
   const currentUserId = getUserId();
@@ -123,7 +110,7 @@ function buildEnrichedLogContext(contextInput?: LogContext | unknown, errInput?:
   if (traceCtx.traceId) {
     baseContext.traceId = traceCtx.traceId;
     baseContext.spanId = traceCtx.spanId;
-    // Also include snake_case for OpenTelemetry backwards compatibility
+
     baseContext.trace_id = traceCtx.traceId;
     baseContext.span_id = traceCtx.spanId;
   }
@@ -133,7 +120,6 @@ function buildEnrichedLogContext(contextInput?: LogContext | unknown, errInput?:
     userContext = contextInput as Record<string, unknown>;
   }
 
-  // Handle passed error objects
   const rawError = errInput || userContext.error || userContext.err;
   const errorObj =
     rawError instanceof Error
@@ -157,9 +143,6 @@ function buildEnrichedLogContext(contextInput?: LogContext | unknown, errInput?:
   };
 }
 
-/**
- * Dispatches log through Pino and records Sentry breadcrumb
- */
 function emitPinoLog(
   level: LogLevel,
   message: string,
@@ -168,10 +151,8 @@ function emitPinoLog(
 ): void {
   const enriched = buildEnrichedLogContext(context, error);
 
-  // 1. Emit structured JSON via Pino
   pinoInstance[level](enriched, message);
 
-  // 2. Add Sentry breadcrumb
   try {
     Sentry.addBreadcrumb({
       category: (context?.event as string) || "app.log",
@@ -180,7 +161,7 @@ function emitPinoLog(
       data: enriched,
     });
   } catch {
-    // Sentry failure must never interrupt log emission
+
   }
 }
 

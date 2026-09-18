@@ -1,18 +1,11 @@
 import axios from "axios";
+import type { GenericAuthResponse, ResetPasswordPayload } from "@vyrex/types";
+
+export type { GenericAuthResponse };
 
 const backendUrl =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
-export interface GenericAuthResponse {
-  success: boolean;
-  message: string;
-  data: any;
-  statusCode: number;
-}
-
-/**
- * Request a password reset email
- */
 export async function requestForgotPassword(
   email: string,
 ): Promise<GenericAuthResponse> {
@@ -31,9 +24,6 @@ export async function requestForgotPassword(
   }
 }
 
-/**
- * Verifies if a reset token is valid and not expired
- */
 export async function verifyResetPasswordToken(
   token: string,
 ): Promise<{ valid: boolean; message?: string }> {
@@ -54,14 +44,9 @@ export async function verifyResetPasswordToken(
   }
 }
 
-/**
- * Resets the password using a valid token and new password
- */
-export async function resetPassword(payload: {
-  token: string;
-  password: string;
-  confirmPassword: string;
-}): Promise<GenericAuthResponse> {
+export async function resetPassword(
+  payload: ResetPasswordPayload,
+): Promise<GenericAuthResponse> {
   try {
     const res = await axios.post<GenericAuthResponse>(
       `${backendUrl}/api/v1/auth/reset-password`,
@@ -71,9 +56,7 @@ export async function resetPassword(payload: {
     return res.data;
   } catch (error: any) {
     if (axios.isAxiosError(error) && error.response?.data) {
-      throw new Error(
-        error.response.data.message || "Failed to reset password",
-      );
+      return error.response.data as GenericAuthResponse;
     }
     throw new Error(error.message || "Failed to reset password");
   }

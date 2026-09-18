@@ -14,179 +14,6 @@ type UpdateProfileInput = {
   image?: string | undefined;
 };
 
-// export const getPublicProfile = async (username: string) => {
-//   const normalized = normalizeUsername(username);
-
-//   const user = await prisma.user.findFirst({
-//     where: { userName_lower: normalized },
-//     select: {
-//       id: true,
-//       userName: true,
-//       createdAt: true,
-//       name: true,
-//       links: {
-//         where: {
-//           public: true,
-//         },
-//         select: {
-//           id: true,
-//           title: true,
-//           url: true,
-//           position: true,
-//           sectionId: true,
-//         },
-//         orderBy: { position: "asc" },
-//       },
-//       linkSection: true,
-//     },
-//   });
-
-//   if (!user) {
-//     throw new AppError("User not found", 404);
-//   }
-
-//   const publicData = {
-//     userId: user.id,
-//     name: user.name,
-//     userName: user.userName,
-//     email: user.email,
-//     createdAt: user.createdAt,
-//     links: user.links,
-//     sections: user.linkSection,
-//   };
-
-//   return publicData;
-// };
-
-// export const getPublicProfile = async (username: string) => {
-//   const start = performance.now();
-
-//   // 🔑 Cache key
-//   const cacheKey = `profile:${username}`;
-
-//   // 🔥 1. Check Redis
-//   const cached = await redis.get(cacheKey);
-
-//   if (cached) {
-//     const end = performance.now();
-
-//     console.log(`⚡ Cache HIT: ${(end - start).toFixed(2)}ms`);
-
-//     return JSON.parse(cached);
-//   }
-
-//   // ❌ Cache miss
-//   console.log("❌ Cache MISS");
-
-//   // 🔥 2. Query DB
-//   const profile = await prisma.user.findUnique({
-//     where: {
-//       userName_lower: normalizeUsername(username),
-//     },
-
-//     select: {
-//       id: true,
-//       name: true,
-//       userName: true,
-//       bio: true,
-//       image: true,
-
-//       links: {
-//         where: {
-//           isActive: true,
-//         },
-
-//         orderBy: {
-//           position: "asc",
-//         },
-
-//         select: {
-//           id: true,
-//           title: true,
-//           url: true,
-//         },
-//       },
-//     },
-//   });
-
-//   if (!profile) {
-//     return null;
-//   }
-
-//   // 🔥 3. Store in Redis
-//   await redis.set(
-//     cacheKey,
-//     JSON.stringify(profile),
-
-//     // expire in 5 min
-//     "EX",
-//     60 * 5,
-//   );
-
-//   const end = performance.now();
-
-//   console.log(`🐘 DB Query: ${(end - start).toFixed(2)}ms`);
-
-//   return profile;
-// };
-
-// export const getPublicProfile = async (username: string) => {
-//   const normalized = username.toLowerCase();
-
-//   const cacheKey = CACHE_KEYS.publicProfile(normalized);
-
-//   // 🔥 Redis lookup
-//   const cached = await redis.get(cacheKey);
-
-//   if (cached) {
-//     console.log("⚡ Cache HIT");
-
-//     return JSON.parse(cached);
-//   }
-
-//   console.log("❌ Cache MISS");
-
-//   // 🔥 DB query
-//   const profile = await prisma.user.findUnique({
-//     where: {
-//       userName_lower: normalized,
-//     },
-
-//     select: {
-//       id: true,
-//       name: true,
-//       userName: true,
-//       bio: true,
-//       image: true,
-
-//       links: {
-//         where: {
-//           isActive: true,
-//         },
-
-//         orderBy: {
-//           position: "asc",
-//         },
-
-//         select: {
-//           id: true,
-//           title: true,
-//           url: true,
-//         },
-//       },
-//     },
-//   });
-
-//   if (!profile) {
-//     return null;
-//   }
-
-//   // 🔥 Cache profile
-//   await redis.set(cacheKey, JSON.stringify(profile), "EX", 60 * 5);
-
-//   return profile;
-// };
-
 const CACHE_TTL = 60 * 5;
 
 export const getPublicProfile = async (username: string) => {
@@ -196,28 +23,25 @@ export const getPublicProfile = async (username: string) => {
 
   const lockKey = CACHE_KEYS.profileLock(normalized);
 
-  // 🔥 1. Check cache
   const cached = await redis.get(cacheKey);
 
   if (cached) {
     return JSON.parse(cached);
   }
 
-  // 🔥 2. Try acquiring mutex lock
   const lock = await redis.set(
     lockKey,
     "1",
-    // only set if NOT exists
+
     "NX",
-    // auto-expire lock
+
     "EX",
     5,
   );
 
-  // ✅ THIS request owns lock
   if (lock) {
     try {
-      // 🔥 Query DB
+
       const profile = await prisma.user.findUnique({
         where: {
           userName_lower: normalized,
@@ -272,20 +96,17 @@ export const getPublicProfile = async (username: string) => {
         return null;
       }
 
-      // 🔥 Store in cache
       await redis.set(cacheKey, JSON.stringify(profile), "EX", CACHE_TTL);
 
       return profile;
     } finally {
-      // 🔥 Release lock
+
       await redis.del(lockKey);
     }
   }
 
-  // wait briefly
   await sleep(100);
 
-  // 🔥 Retry cache
   const retry = await redis.get(cacheKey);
 
   if (retry) {
@@ -324,8 +145,6 @@ export const updateProfile = async ({
   return updatedUser;
 };
 
-// For uploading - order must be fetch → destroy → upload → DB write.
-
 export const updateProfileImage = async (
   userId: string,
   fileBuffer: Buffer,
@@ -347,10 +166,8 @@ export const updateProfileImage = async (
       }
     }
 
-    // 2. Upload new image
     const result: any = await uploadImage(fileBuffer);
 
-    // 4. Update DB
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
@@ -359,7 +176,6 @@ export const updateProfileImage = async (
       },
     });
 
-    // 5. Invalidate cache - & if username exists, invalidate public profile cache
     if (updatedUser.userName) {
       await redis.del(CACHE_KEYS.publicProfile(updatedUser.userName));
     }
@@ -394,4 +210,3 @@ export const getPublicProfileByUserId = async (userId: string) => {
     throw new AppError("Error fetching profile", 500);
   }
 };
-

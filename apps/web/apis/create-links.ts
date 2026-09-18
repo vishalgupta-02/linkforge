@@ -1,4 +1,3 @@
-// lib/create-links.ts
 
 import axios from "axios";
 
@@ -36,7 +35,6 @@ export async function createLinks({
       throw new Error("Failed to create link");
     }
 
-    // Extract link data from response
     const linkData = res.data.data || res.data;
     console.log("Link created successfully:", linkData);
 

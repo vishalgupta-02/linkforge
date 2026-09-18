@@ -13,4 +13,3 @@ export const getLiveVisitorKey = (userId: string, sessionId: string) => {
 export const getLiveVisitorPattern = (userId: string) => {
   return CACHE_KEYS.liveVisitorPattern(userId);
 };
-

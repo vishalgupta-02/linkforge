@@ -2,10 +2,6 @@ import { prisma } from "../db/client.ts";
 import { generatePublicId } from "../utils/public-id.ts";
 import { logger } from "../lib/logger.ts";
 
-/**
- * Idempotently backfills unique, cryptographically random public IDs
- * for all existing Link records that do not have one.
- */
 export async function backfillPublicIds(): Promise<{ total: number; updated: number }> {
   const unbackfilledLinks = await prisma.link.findMany({
     where: {
@@ -53,7 +49,7 @@ export async function backfillPublicIds(): Promise<{ total: number; updated: num
         updatedCount++;
       } catch (err: any) {
         if (err?.code === "P2002" && attempts < maxAttempts) {
-          // Uniqueness collision (extremely rare with 96-bit entropy) - retry with new ID
+
           logger.warn("Public ID collision encountered during backfill, retrying...", {
             event: "backfill.public_ids.collision_retry",
             linkId: link.id,
@@ -79,7 +75,6 @@ export async function backfillPublicIds(): Promise<{ total: number; updated: num
   return { total, updated: updatedCount };
 }
 
-// Run directly when executed as a script
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith("backfill-public-ids.ts")) {
   backfillPublicIds()
     .then((result) => {

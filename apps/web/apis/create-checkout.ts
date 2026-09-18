@@ -1,9 +1,7 @@
-// apis/create-checkout.ts
 import axios from "axios";
+import type { CreateCheckoutResponse } from "@vyrex/types";
 
-export interface CheckoutResponse {
-  url: string;
-}
+export type CheckoutResponse = CreateCheckoutResponse;
 
 export async function createCheckoutSession(): Promise<CheckoutResponse> {
   try {

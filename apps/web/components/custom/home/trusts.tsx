@@ -11,7 +11,7 @@ const Trusts = () => {
           Trusted by 1M+ creators worldwide
         </p>
         <AvatarCircles
-          numPeople={9928}
+
           avatarUrls={[
             {
               imageUrl: "https://avatars.githubusercontent.com/u/101015515",

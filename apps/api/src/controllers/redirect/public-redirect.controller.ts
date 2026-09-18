@@ -6,22 +6,15 @@ import { isValidPublicId } from "../../utils/public-id.ts";
 import { isSafeDestinationUrl } from "../../validators/link.validator.ts";
 import { logger } from "../../lib/logger.ts";
 
-/**
- * Public Redirect Controller: GET /r/:publicId
- * Resolves the destination URL from a cryptographically secure public ID (Link or SocialLink),
- * queues an asynchronous click event, and issues an immediate HTTP 302 redirect.
- */
 export const publicRedirectController = async (req: Request, res: Response) => {
   const { publicId } = req.params;
 
-  // 1. Boundary validation of route parameter format
   if (!publicId || !isValidPublicId(publicId)) {
     return res.status(400).json({
       message: "Invalid redirect identifier",
     });
   }
 
-  // 2. Resolve link from cache or database (standard link first, then social link)
   const link = await getLinkByPublicId(publicId);
 
   if (link && link.isActive && link.deletedAt === null) {
@@ -44,7 +37,6 @@ export const publicRedirectController = async (req: Request, res: Response) => {
     return res.redirect(302, link.url);
   }
 
-  // Check if it's a social link
   const social = await getSocialLinkByPublicId(publicId);
 
   if (social && social.isActive && social.deletedAt === null) {

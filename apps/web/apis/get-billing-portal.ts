@@ -1,9 +1,7 @@
-// apis/get-billing-portal.ts
 import axios from "axios";
+import type { BillingPortalResponse } from "@vyrex/types";
 
-export interface BillingPortalResponse {
-  url: string;
-}
+export type { BillingPortalResponse };
 
 export async function getBillingPortalSession(): Promise<BillingPortalResponse> {
   try {

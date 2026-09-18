@@ -102,14 +102,12 @@ export default function CreatorDashboardProfile() {
       const trimmedBio = bio.trim();
       const trimmedUserName = userName.trim().toLowerCase();
 
-      // Update name & bio
       await updateUserProfile({
         name: trimmedName,
         bio: trimmedBio,
         ...(avatarUrl ? { image: avatarUrl } : {}),
       });
 
-      // Update username if changed
       if (
         trimmedUserName &&
         trimmedUserName !== userProfile?.data?.userName?.toLowerCase()

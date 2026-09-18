@@ -1,22 +1,9 @@
 'use client'
 
-// ─────────────────────────────────────────────
-// LinkFlow — Onboarding Flow
-// Route: app/onboarding/page.tsx
-//
-// Steps:
-//   1. Set username + display name
-//   2. Add first link
-//   3. Share your page
-//
-// On completion → router.push("/dashboard")
-// ─────────────────────────────────────────────
-
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler'
 
-// ── Types
 type Step = 1 | 2 | 3
 
 type OnboardingState = {
@@ -27,14 +14,13 @@ type OnboardingState = {
   linkUrl: string
 }
 
-// ── Progress bar
 function ProgressBar({ step }: { step: Step }) {
   const pct = ((step - 1) / 2) * 100
   const labels = ['Your profile', 'First link', 'Share']
 
   return (
     <div className='w-full max-w-sm mx-auto'>
-      {/* Step labels */}
+
       <div className='flex justify-between mb-3'>
         {labels.map((label, i) => {
           const s = (i + 1) as Step
@@ -83,7 +69,6 @@ function ProgressBar({ step }: { step: Step }) {
         })}
       </div>
 
-      {/* Track */}
       <div className='relative h-1 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden -mt-8 mx-3.5'>
         <div
           className='absolute left-0 top-0 h-full rounded-full transition-all duration-500 ease-out'
@@ -98,7 +83,6 @@ function ProgressBar({ step }: { step: Step }) {
   )
 }
 
-// ── Shared input
 function Field({
   label,
   hint,
@@ -146,7 +130,6 @@ const standaloneInputCls = `
   transition-all
 `
 
-// ── Step 1: Profile
 function StepProfile({
   state,
   onChange,
@@ -156,7 +139,7 @@ function StepProfile({
 }) {
   return (
     <div className='flex flex-col gap-5'>
-      {/* Avatar picker */}
+
       <div className='flex flex-col items-center gap-3 mb-2'>
         <div
           className='w-20 h-20 rounded-full flex items-center justify-center text-3xl cursor-pointer relative group text-white font-semibold'
@@ -227,7 +210,6 @@ function StepProfile({
   )
 }
 
-// ── Step 2: First link
 function StepFirstLink({
   state,
   onChange,
@@ -251,7 +233,6 @@ function StepFirstLink({
         dashboard.
       </p>
 
-      {/* Quick suggestions */}
       <div>
         <p className='text-[11px] text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.12em] font-medium mb-3'>
           Quick add
@@ -309,7 +290,6 @@ function StepFirstLink({
   )
 }
 
-// ── Step 3: Share
 function StepShare({ state }: { state: OnboardingState }) {
   const [copied, setCopied] = useState(false)
   const [celebrating, setCelebrating] = useState(false)
@@ -347,7 +327,7 @@ function StepShare({ state }: { state: OnboardingState }) {
 
   return (
     <div className='flex flex-col gap-6'>
-      {/* Celebration header */}
+
       <div className='flex flex-col items-center text-center gap-2 py-2'>
         <div
           className='text-4xl mb-1 transition-all duration-500'
@@ -373,10 +353,9 @@ function StepShare({ state }: { state: OnboardingState }) {
         </p>
       </div>
 
-      {/* URL preview card */}
       <div className='rounded-xl border border-zinc-200 bg-zinc-50 p-4 flex flex-col gap-3 dark:border-white/10 dark:bg-zinc-900/60'>
         <div className='flex items-center gap-3'>
-          {/* Mini avatar */}
+
           <div
             className='w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-white'
             style={{ background: 'linear-gradient(135deg, #e8622a, #f0924a)' }}>
@@ -390,7 +369,6 @@ function StepShare({ state }: { state: OnboardingState }) {
           </div>
         </div>
 
-        {/* Copy bar */}
         <div className='flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-zinc-200 dark:bg-zinc-800/80 dark:border-zinc-700'>
           <div
             className='w-1.5 h-1.5 rounded-full bg-[#4caf7d] flex-shrink-0'
@@ -445,7 +423,6 @@ function StepShare({ state }: { state: OnboardingState }) {
         </div>
       </div>
 
-      {/* Share buttons */}
       <div className='flex flex-col gap-2'>
         <p className='text-[11px] text-zinc-500 dark:text-zinc-400 uppercase tracking-[0.12em] font-medium'>
           Share on
@@ -468,7 +445,6 @@ function StepShare({ state }: { state: OnboardingState }) {
   )
 }
 
-// ══ MAIN ONBOARDING PAGE ══════════════════════
 export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
@@ -532,7 +508,7 @@ export default function OnboardingPage() {
       `}</style>
 
       <div className='min-h-screen bg-[#faf8f5] dark:bg-[#0a0a0a] text-zinc-900 dark:text-zinc-50 flex flex-col'>
-        {/* ── Top progress strip (ultra-thin, full width) */}
+
         <div className='h-0.5 w-full bg-black/[0.04] dark:bg-white/[0.04]'>
           <div
             className='h-full transition-all duration-500 ease-out'
@@ -544,7 +520,6 @@ export default function OnboardingPage() {
           />
         </div>
 
-        {/* ── Navbar */}
         <nav className='flex items-center justify-between px-6 h-14 border-b border-black/[0.05] dark:border-white/10 bg-white/60 dark:bg-[#0a0a0a]/60 backdrop-blur-md'>
           <div className='flex items-center gap-2.5'>
             <div className='w-6 h-6 rounded-full border border-black/20 dark:border-white/20 flex items-center justify-center'>
@@ -573,15 +548,13 @@ export default function OnboardingPage() {
           </div>
         </nav>
 
-        {/* ── Main */}
         <div className='flex-1 flex items-start justify-center px-4 py-10 overflow-y-auto'>
           <div className='w-full max-w-sm flex flex-col gap-8'>
-            {/* Progress tracker */}
+
             <ProgressBar step={step} />
 
-            {/* Card */}
             <div className='bg-white border border-black/[0.07] dark:bg-[#111111] dark:border-white/10 rounded-2xl overflow-hidden shadow-sm'>
-              {/* Card header */}
+
               <div className='px-6 py-5 border-b border-black/[0.05] dark:border-white/10'>
                 <div className='flex items-center gap-2 mb-1'>
                   <span className='text-[10px] font-semibold text-[#e8622a]/70 uppercase tracking-[0.15em]'>
@@ -598,7 +571,6 @@ export default function OnboardingPage() {
                 </p>
               </div>
 
-              {/* Card body */}
               <div className='p-6 step-panel' key={step}>
                 {step === 1 && (
                   <StepProfile state={state} onChange={onChange} />
@@ -609,7 +581,6 @@ export default function OnboardingPage() {
                 {step === 3 && <StepShare state={state} />}
               </div>
 
-              {/* Card footer — actions */}
               <div className='px-6 py-4 border-t border-black/[0.05] dark:border-white/10 flex items-center gap-3 bg-zinc-50/50 dark:bg-[#151515]/50'>
                 {step > 1 && (
                   <button
@@ -632,7 +603,6 @@ export default function OnboardingPage() {
                   </button>
                 )}
 
-                {/* Skip — only on step 2 */}
                 {step === 2 && (
                   <button
                     onClick={handleSkip}
@@ -674,7 +644,6 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            {/* Bottom hint */}
             <p className='text-center text-[11.5px] text-zinc-500 dark:text-zinc-400 leading-relaxed'>
               You can change everything later from your dashboard settings.
             </p>

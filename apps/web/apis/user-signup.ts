@@ -1,4 +1,3 @@
-// apis/user-signup.ts
 
 import { authClient } from "@/lib/auth-client";
 
@@ -12,6 +11,7 @@ export async function userSignup(
       email,
       password,
       name,
+      callbackURL: "/signin?verified=true",
     });
 
     if (error) {

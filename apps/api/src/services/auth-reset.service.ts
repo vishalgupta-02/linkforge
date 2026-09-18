@@ -10,10 +10,6 @@ const appBaseUrl =
   process.env.APP_URL ||
   "http://localhost:3000";
 
-/**
- * Initiates the password reset flow.
- * Returns a generic success response to prevent user enumeration.
- */
 export async function requestPasswordReset(email: string, _ipAddress?: string) {
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -22,7 +18,7 @@ export async function requestPasswordReset(email: string, _ipAddress?: string) {
   });
 
   if (!user) {
-    // Constant-time simulation to mitigate timing attacks / user enumeration
+
     const dummyToken = generateSecureToken(32);
     hashToken(dummyToken);
     console.log(`🔒 [PasswordReset] Reset requested for non-existent email: ${normalizedEmail}`);
@@ -32,7 +28,6 @@ export async function requestPasswordReset(email: string, _ipAddress?: string) {
     };
   }
 
-  // Invalidate any existing active/unused reset tokens for this user
   await prisma.passwordResetToken.updateMany({
     where: {
       userId: user.id,
@@ -44,12 +39,10 @@ export async function requestPasswordReset(email: string, _ipAddress?: string) {
     },
   });
 
-  // Generate a cryptographically secure 32-byte token
   const rawToken = generateSecureToken(32);
   const tokenHash = hashToken(rawToken);
-  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiration
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); 
 
-  // Persist only the token hash in the database
   await prisma.passwordResetToken.create({
     data: {
       userId: user.id,
@@ -58,10 +51,8 @@ export async function requestPasswordReset(email: string, _ipAddress?: string) {
     },
   });
 
-  // Construct secure frontend reset URL
   const resetUrl = `${appBaseUrl.replace(/\/$/, "")}/reset-password?token=${rawToken}`;
 
-  // Asynchronously enqueue BullMQ password-reset email job
   try {
     const resolvedUserName = user.userName || user.name || "Creator";
     await enqueuePasswordResetEmail({
@@ -82,10 +73,6 @@ export async function requestPasswordReset(email: string, _ipAddress?: string) {
   };
 }
 
-/**
- * Validates a password reset token.
- * Returns valid status or throws a safe generic error.
- */
 export async function verifyPasswordResetToken(rawToken: string) {
   if (!rawToken || typeof rawToken !== "string") {
     throw new AppError(
@@ -116,10 +103,6 @@ export async function verifyPasswordResetToken(rawToken: string) {
   return { valid: true };
 }
 
-/**
- * Atomically consumes a reset token and updates the user's password.
- * Invalidates old sessions and prevents race conditions / token reuse.
- */
 export async function resetPasswordWithToken(
   rawToken: string,
   newPassword: string,
@@ -136,9 +119,8 @@ export async function resetPasswordWithToken(
   const tokenHash = hashToken(rawToken.trim());
   const now = new Date();
 
-  // Execute inside an atomic transaction
   return await prisma.$transaction(async (tx) => {
-    // 1. Conditional atomic claim of the token
+
     const updateResult = await tx.passwordResetToken.updateMany({
       where: {
         tokenHash,
@@ -172,10 +154,8 @@ export async function resetPasswordWithToken(
 
     const userId = tokenRecord.userId;
 
-    // 2. Hash password using Better Auth's standard password hasher
     const hashedPassword = await hashPassword(newPassword);
 
-    // 3. Update credential account password or create if not present
     const existingAccounts = await tx.account.findMany({
       where: { userId },
     });
@@ -205,7 +185,6 @@ export async function resetPasswordWithToken(
       });
     }
 
-    // Also update User.password
     await tx.user.update({
       where: { id: userId },
       data: {
@@ -213,12 +192,10 @@ export async function resetPasswordWithToken(
       },
     });
 
-    // 4. Invalidate all active sessions for this user
     await tx.session.deleteMany({
       where: { userId },
     });
 
-    // 5. Invalidate any other active reset tokens for this user
     await tx.passwordResetToken.updateMany({
       where: {
         userId,
@@ -229,7 +206,6 @@ export async function resetPasswordWithToken(
       },
     });
 
-    // 6. Record audit log
     await tx.auditlog.create({
       data: {
         userId,

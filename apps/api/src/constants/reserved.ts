@@ -1,4 +1,3 @@
-// constants/reserved.ts
 
 export const RESERVED_USERNAMES = new Set([
   "admin",

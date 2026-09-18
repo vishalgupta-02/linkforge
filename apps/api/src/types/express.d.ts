@@ -1,4 +1,4 @@
-// src/types/express.d.ts
+
 declare module "express-serve-static-core" {
   interface Request {
     id?: string;
@@ -15,4 +15,3 @@ export interface AuthUser {
   userName?: string | null;
   username?: string | null;
 }
-

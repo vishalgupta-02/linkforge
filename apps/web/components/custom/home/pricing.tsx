@@ -39,7 +39,7 @@ const Pricing = () => {
         </div>
 
         <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 md:grid-cols-2">
-          {/* FREE PLAN */}
+
           <div className="animate-fade-in-up flex flex-col rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm transition-all delay-100 hover:shadow-md dark:border-white/10 dark:bg-[#111]">
             <div className="mb-6">
               <h3 className="text-xl font-bold text-zinc-950 dark:text-white">
@@ -87,7 +87,6 @@ const Pricing = () => {
             )}
           </div>
 
-          {/* PRO PLAN */}
           <div className="animate-fade-in-up border-primary dark:border-primary relative flex flex-col overflow-hidden rounded-3xl border-2 bg-white p-8 shadow-xl transition-all delay-200 hover:shadow-2xl dark:bg-[#111] dark:shadow-[0_20px_40px_rgba(124,58,237,0.1)]">
             <div className="bg-primary absolute top-0 right-0 rounded-bl-xl px-4 py-1.5 text-[11px] font-bold tracking-wider text-white uppercase">
               Most Popular
@@ -151,5 +150,3 @@ const Pricing = () => {
 };
 
 export default Pricing;
-
-

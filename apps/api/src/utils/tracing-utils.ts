@@ -8,9 +8,6 @@ export interface TraceContextInfo {
   traceFlags?: number;
 }
 
-/**
- * Extracts active OpenTelemetry trace and span IDs from the current execution context.
- */
 export function getTraceContext(): TraceContextInfo {
   const activeSpan = trace.getActiveSpan();
   if (!activeSpan) return {};
@@ -25,9 +22,6 @@ export function getTraceContext(): TraceContextInfo {
   };
 }
 
-/**
- * Helper to wrap custom business operations in an OpenTelemetry active span.
- */
 export async function createTraceSpan<T>(
   name: string,
   fn: (span: Span) => Promise<T> | T,

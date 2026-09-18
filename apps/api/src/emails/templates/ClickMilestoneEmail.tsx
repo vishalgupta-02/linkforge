@@ -38,7 +38,7 @@ export const ClickMilestoneEmail = ({
       <Preview>{previewText}</Preview>
       <Body style={main}>
         <Container style={container}>
-          {/* Header & Brand with Milestone Badge */}
+
           <Section style={headerSection}>
             <div style={headerContent}>
               <Text style={brandText}>LinkFlow</Text>
@@ -46,7 +46,6 @@ export const ClickMilestoneEmail = ({
             </div>
           </Section>
 
-          {/* Main Card Content */}
           <Section style={contentSection}>
             <Heading as="h1" style={heading}>
               Your links just hit {formattedMilestone} clicks, {userName}! 🎯
@@ -57,7 +56,6 @@ export const ClickMilestoneEmail = ({
               and you have officially reached a new traffic milestone.
             </Text>
 
-            {/* Milestone Stats Card */}
             <Section style={statsBox}>
               <div style={statRow}>
                 <span style={statLabel}>Milestone Reached:</span>
@@ -77,14 +75,12 @@ export const ClickMilestoneEmail = ({
               </div>
             </Section>
 
-            {/* Primary CTA */}
             <Section style={ctaSection}>
               <Button style={button} href={dashboardUrl}>
                 View your analytics
               </Button>
             </Section>
 
-            {/* Fallback URL for restrictive email clients */}
             <Section style={fallbackSection}>
               <Text style={fallbackText}>
                 If the button above does not work, copy and paste this link into your browser:
@@ -96,7 +92,6 @@ export const ClickMilestoneEmail = ({
 
             <Hr style={hr} />
 
-            {/* Footer */}
             <Section style={footerSection}>
               <Text style={footerText}>
                 You received this email because your links crossed a traffic threshold on LinkFlow.
@@ -121,7 +116,6 @@ ClickMilestoneEmail.PreviewProps = {
 
 export default ClickMilestoneEmail;
 
-// Conservative, email-compatible inline styles
 const main: React.CSSProperties = {
   backgroundColor: "#f4f5f7",
   fontFamily:

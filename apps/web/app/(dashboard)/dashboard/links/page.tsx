@@ -19,7 +19,6 @@ import { getMe } from "@/apis/get-user-profile";
 
 import { SocialMediaManager } from "@/components/custom/social-media-manager";
 
-// --- Types ---
 interface LinkItem extends Link {
   featured?: boolean;
   isNew?: boolean;
@@ -36,18 +35,15 @@ export default function CreatorLinkManagement() {
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
 
-  // UI States
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  // Load links on mount
   useEffect(() => {
     const loadLinks = async () => {
       try {
         setLoading(true);
         const fetchedLinks = await getLinks();
 
-        // Ensure fetchedLinks is an array and sorted by position
         if (Array.isArray(fetchedLinks)) {
           const sorted = [...fetchedLinks].sort(
             (a, b) => (a.position ?? 0) - (b.position ?? 0),
@@ -70,12 +66,11 @@ export default function CreatorLinkManagement() {
   }, []);
 
   useEffect(() => {
-    // avoid synchronous state update inside effect to prevent cascading renders
+
     const raf = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // --- Actions ---
   const handleAddLink = () => {
     const newLink: LinkItem = {
       id: `temp-${Date.now()}`,
@@ -117,7 +112,6 @@ export default function CreatorLinkManagement() {
 
     if (!link.title || !link.url) return;
 
-    // Don't auto-save temp links (new duplicates)
     if (link.isNew && linkId.startsWith("temp-")) {
       return;
     }
@@ -259,7 +253,7 @@ export default function CreatorLinkManagement() {
         await reorderLinksApi(persistedLinkIds);
       } catch (error) {
         console.error("Failed to reorder links via batch API:", error);
-        // Fallback to individual position updates
+
         for (const link of updatedLinks) {
           if (
             link.title &&
@@ -289,10 +283,9 @@ export default function CreatorLinkManagement() {
         const username = await getMe(session?.user?.id || "");
 
         if (!username) {
-          // User doesn't have a username (likely from social signin)
+
           setError("Please set up your username to view your public profile");
           setLoading(false);
-          // Redirect to settings/profile page to complete username setup
 
           setTimeout(() => {
             router.push("/dashboard/settings");
@@ -301,7 +294,6 @@ export default function CreatorLinkManagement() {
           return;
         }
 
-        // Fetch public profile using the public API
         const data = await getPublicProfile(username.data.userName);
 
         setUsername(data.data);
@@ -344,7 +336,7 @@ export default function CreatorLinkManagement() {
 
         <main className="custom-scrollbar w-full flex-1 overflow-y-auto">
           <div className="mx-auto flex h-full w-full max-w-7xl flex-col space-y-8 px-8 py-10 lg:px-12">
-            {/* Header Area */}
+
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-white">
@@ -393,7 +385,6 @@ export default function CreatorLinkManagement() {
               </div>
             )}
 
-            {/* 🔗 Draggable Links List */}
             {!loading && Array.isArray(links) && (
               <DragDropProvider onDragEnd={handleDragEnd}>
                 <ul className="space-y-3">

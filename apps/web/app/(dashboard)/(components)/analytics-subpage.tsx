@@ -56,8 +56,6 @@ export default function AnalyticsDashboard() {
     [analytics?.clicksByDayArray],
   );
 
-  // const ranges: AnalyticsRange[] = ["7d", "30d", "90d"];
-
   const ranges = [
     { value: "7d", label: "Last 7 days" },
     { value: "30d", label: "Last 30 days" },
@@ -289,7 +287,6 @@ export default function AnalyticsDashboard() {
                 </div>
               </div>
 
-              {/* 🌟 Social Media Performance Analytics (Tiered: Top for Free, Detailed for Pro) */}
               <div className="border-border bg-background rounded-2xl border p-6 shadow-sm">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                   <div className="flex items-center gap-2.5">
@@ -349,7 +346,7 @@ export default function AnalyticsDashboard() {
                   </div>
                 ) : (
                   <div className="mt-6 space-y-6">
-                    {/* Top Social Highlight (Shown to both Free & Pro) */}
+
                     {analytics.socialAnalytics.topSocial && (() => {
                       const top = analytics.socialAnalytics.topSocial;
                       const platformConfig = getPlatformConfig(top.platform);
@@ -399,9 +396,8 @@ export default function AnalyticsDashboard() {
                       );
                     })()}
 
-                    {/* Tier-Based Display */}
                     {!isPro ? (
-                      /* Free Tier: Locked preview with Upgrade Banner */
+
                       <div className="relative overflow-hidden rounded-xl border border-dashed border-violet-500/30 bg-gradient-to-br from-violet-500/5 via-fuchsia-500/5 to-transparent p-6 text-center">
                         <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 mb-3">
                           <Lock size={20} />
@@ -420,7 +416,7 @@ export default function AnalyticsDashboard() {
                         </button>
                       </div>
                     ) : (
-                      /* Pro Tier: Complete Detailed Breakdown Table / List */
+
                       <div className="space-y-3">
                         <div className="flex items-center justify-between px-1">
                           <h4 className="text-foreground text-xs font-bold uppercase tracking-wider">

@@ -30,12 +30,11 @@ export const WelcomeEmail = ({
       <Preview>{previewText}</Preview>
       <Body style={main}>
         <Container style={container}>
-          {/* Header & Brand */}
+
           <Section style={headerSection}>
             <Text style={brandText}>LinkFlow</Text>
           </Section>
 
-          {/* Main Card Content */}
           <Section style={contentSection}>
             <Heading as="h1" style={heading}>
               Welcome to LinkFlow, {userName}.
@@ -46,14 +45,12 @@ export const WelcomeEmail = ({
               adding your favorite links, and sharing your unified page with your audience.
             </Text>
 
-            {/* Primary CTA */}
             <Section style={ctaSection}>
               <Button style={button} href={dashboardUrl}>
                 Go to your dashboard
               </Button>
             </Section>
 
-            {/* Fallback URL for restrictive email clients */}
             <Section style={fallbackSection}>
               <Text style={fallbackText}>
                 If the button above does not work, copy and paste this link into your browser:
@@ -65,7 +62,6 @@ export const WelcomeEmail = ({
 
             <Hr style={hr} />
 
-            {/* Footer */}
             <Section style={footerSection}>
               <Text style={footerText}>
                 You received this email because you created an account on LinkFlow.
@@ -88,7 +84,6 @@ WelcomeEmail.PreviewProps = {
 
 export default WelcomeEmail;
 
-// Conservative, email-compatible inline styles
 const main: React.CSSProperties = {
   backgroundColor: "#f4f5f7",
   fontFamily:

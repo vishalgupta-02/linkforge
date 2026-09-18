@@ -1,4 +1,3 @@
-// api/get-public-profile.ts
 
 import axios from "axios";
 

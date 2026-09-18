@@ -3,7 +3,7 @@ import { isSafeDestinationUrl } from "./link.validator.ts";
 
 const safeUrlSchema = z.string().min(1).refine(
   (val) => {
-    // Allow standard URL or auto-prefix if needed
+
     const formatted = val.startsWith("http://") || val.startsWith("https://") || val.startsWith("mailto:")
       ? val
       : `https://${val}`;

@@ -61,14 +61,6 @@ export default function UltimateCreatorLanding() {
           <FAQ />
           <CallToAction />
         </main>
-
-        {/* <div
-          className={`fixed right-6 bottom-6 z-50 transform transition-all duration-300 ${showStickyCTA ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-10 opacity-0"}`}
-        >
-          <button className="flex h-12 items-center gap-2 rounded-full bg-zinc-950 px-6 text-sm font-semibold text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all hover:scale-[1.03] active:scale-[0.97] dark:bg-white dark:text-black dark:shadow-[0_8px_30px_rgba(255,255,255,0.1)]">
-            Claim link <ArrowRight size={16} />
-          </button>
-        </div> */}
       </div>
     </div>
   );

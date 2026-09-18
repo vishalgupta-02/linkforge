@@ -28,13 +28,12 @@ function ThemeInitializer() {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000, // 1 minute cache
-      refetchOnWindowFocus: false, // Prevent storming API on window focus
-      retry: 1, // Max 1 retry on network error
+      staleTime: 60 * 1000, 
+      refetchOnWindowFocus: false, 
+      retry: 1, 
     },
   },
 });
-
 
 export function Providers({ children }: { children: ReactNode }) {
   return (

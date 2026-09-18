@@ -1,4 +1,3 @@
-// apps/api/src/configs
 
 import { getEnvVariable } from "../utils/helper.ts";
 
@@ -11,7 +10,7 @@ export const baseConfig = {
   BETTER_AUTH_SECRET: getEnvVariable("BETTER_AUTH_SECRET"),
   BETTER_AUTH_URL: getEnvVariable("BETTER_AUTH_URL"),
   REDIS_URL: getEnvVariable("REDIS_URL"),
-  // CORS_ORIGIN: getEnvVariable("CORS_ORIGIN"),
+
   GOOGLE_OAUTH_CLIENT_ID:
     process.env.GOOGLE_OAUTH_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || "",
   GOOGLE_OAUTH_CLIENT_SECRET:

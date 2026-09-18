@@ -1,23 +1,7 @@
-// api/get-user-profile.ts
-
 import axios from "axios";
+import type { UserProfileData, UserProfileResponse } from "@vyrex/types";
 
-export interface UserProfileData {
-  id: string;
-  name?: string;
-  userName: string;
-  bio?: string | null;
-  image?: string | null;
-  email?: string | null;
-  plan: "FREE" | "PRO" | "BUSINESS";
-}
-
-export interface UserProfileResponse {
-  success: boolean;
-  message: string;
-  data: UserProfileData;
-  statusCode: number;
-}
+export type { UserProfileData, UserProfileResponse };
 
 export async function getMe(
   userId: string,
@@ -42,4 +26,3 @@ export async function getMe(
     return null;
   }
 }
-

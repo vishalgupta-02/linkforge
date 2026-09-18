@@ -28,18 +28,16 @@ export const protectedRoute = async (
     userName: (session.user as any)?.userName || (session.user as any)?.username || null,
   };
 
-  // 🛡️ Attach request-isolated user context to Sentry & AsyncLocalStorage
   try {
     Sentry.setUser({
       id: session.user.id,
     });
     Sentry.setTag("plan", plan);
   } catch {
-    // Sentry context enrichment must never fail request processing
+
   }
 
   updateUserContext(session.user.id);
 
   next();
 };
-

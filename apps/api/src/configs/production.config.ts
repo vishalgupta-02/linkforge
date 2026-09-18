@@ -1,4 +1,3 @@
-// apps/api/src/configs
 
 export const productionConfig = {
   LOG_LEVEL: "error",

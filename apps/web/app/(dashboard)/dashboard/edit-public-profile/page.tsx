@@ -23,7 +23,6 @@ import {
 import Link from "next/dist/client/link";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 
-// --- Types & Mock Data ---
 type Theme = "minimal" | "midnight" | "vibrant";
 interface ProfileLink {
   id: string;
@@ -42,10 +41,8 @@ export default function SplitViewEditor() {
     "mobile",
   );
 
-  // Simulated Auto-Save State
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving">("saved");
 
-  // --- Real-time Page State ---
   const [theme, setTheme] = useState<Theme>("midnight");
   const [profile, setProfile] = useState({
     name: "Sarah Creative",
@@ -83,7 +80,6 @@ export default function SplitViewEditor() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Simulate Auto-Save trigger when state changes
   useEffect(() => {
     if (!mounted) return;
     setSaveStatus("saving");
@@ -93,7 +89,6 @@ export default function SplitViewEditor() {
 
   if (!mounted) return null;
 
-  // Theme styling maps for the live preview
   const themeStyles = {
     minimal: {
       bg: "bg-[#fafafa]",
@@ -118,9 +113,9 @@ export default function SplitViewEditor() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-50 font-sans text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
-      {/* 🛠️ LEFT SIDE: EDITOR CONTROLS (35%) */}
+
       <aside className="z-20 flex w-[400px] shrink-0 flex-col border-r border-zinc-200 bg-white shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:border-white/10 dark:bg-zinc-900 dark:shadow-[4px_0_24px_rgba(0,0,0,0.3)]">
-        {/* Editor Header */}
+
         <div className="flex h-14 shrink-0 items-center border-b border-zinc-200 bg-white px-6 dark:border-white/10 dark:bg-zinc-900">
           <div className="flex w-full items-center justify-between gap-2">
             <Link
@@ -144,7 +139,6 @@ export default function SplitViewEditor() {
           </div>
         </div>
 
-        {/* Tab Navigation */}
         <div className="flex shrink-0 gap-6 border-b border-zinc-100 px-6 pt-4 dark:border-white/5">
           <TabButton
             icon={<User size={14} />}
@@ -166,9 +160,8 @@ export default function SplitViewEditor() {
           />
         </div>
 
-        {/* Dynamic Controls Content */}
         <div className="custom-scrollbar flex-1 overflow-y-auto p-6">
-          {/* PROFILE TAB */}
+
           {activeTab === "profile" && (
             <div className="animate-in fade-in space-y-8 duration-300">
               <div className="flex items-center gap-6">
@@ -181,10 +174,7 @@ export default function SplitViewEditor() {
                     />
                     <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100">
                       <Camera size={16} />
-                      {/* <input
-                        type="file"
-                        className="absolute inset-0 cursor-pointer opacity-0"
-                      /> */}
+
                     </div>
                   </div>
                 </div>
@@ -231,7 +221,6 @@ export default function SplitViewEditor() {
                 </div>
               </div>
 
-              {/* Social Links Section */}
               <div className="space-y-4 border-t border-zinc-200 pt-6 dark:border-white/10">
                 <h3 className="text-sm font-semibold tracking-wider text-zinc-900 uppercase dark:text-zinc-100">
                   Social Links
@@ -306,7 +295,6 @@ export default function SplitViewEditor() {
             </div>
           )}
 
-          {/* LINKS TAB */}
           {activeTab === "links" && (
             <div className="animate-in fade-in space-y-6 duration-300">
               <button className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 text-sm font-bold text-white shadow-sm transition-all hover:bg-violet-700 active:scale-[0.98] dark:bg-violet-700 dark:hover:bg-violet-600">
@@ -363,13 +351,12 @@ export default function SplitViewEditor() {
             </div>
           )}
 
-          {/* APPEARANCE TAB */}
           {activeTab === "appearance" && (
             <div className="animate-in fade-in space-y-6 duration-300">
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-zinc-900">Themes</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Minimal Theme Option */}
+
                   <button
                     onClick={() => setTheme("minimal")}
                     className={`flex flex-col items-center gap-2 rounded-xl border-2 p-2 transition-all ${theme === "minimal" ? "border-zinc-900 dark:border-zinc-100" : "border-transparent hover:bg-zinc-50 dark:hover:bg-white/5"}`}
@@ -383,7 +370,6 @@ export default function SplitViewEditor() {
                     </span>
                   </button>
 
-                  {/* Midnight Theme Option */}
                   <button
                     onClick={() => setTheme("midnight")}
                     className={`flex flex-col items-center gap-2 rounded-xl border-2 p-2 transition-all ${theme === "midnight" ? "border-zinc-900 dark:border-zinc-100" : "border-transparent hover:bg-zinc-50 dark:hover:bg-white/5"}`}
@@ -397,7 +383,6 @@ export default function SplitViewEditor() {
                     </span>
                   </button>
 
-                  {/* Vibrant Theme Option */}
                   <button
                     onClick={() => setTheme("vibrant")}
                     className={`flex flex-col items-center gap-2 rounded-xl border-2 p-2 transition-all ${theme === "vibrant" ? "border-zinc-900 dark:border-zinc-100" : "border-transparent hover:bg-zinc-50 dark:hover:bg-white/5"}`}
@@ -417,9 +402,8 @@ export default function SplitViewEditor() {
         </div>
       </aside>
 
-      {/* 📱 RIGHT SIDE: LIVE PREVIEW (65%) */}
       <main className="relative flex flex-1 flex-col overflow-hidden bg-zinc-100/80 dark:bg-zinc-900/80">
-        {/* Preview Action Bar */}
+
         <div className="absolute inset-x-8 top-4 z-10 flex items-center justify-between">
           <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white/80 px-3 py-1.5 text-xs font-medium text-zinc-600 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-zinc-800/80 dark:text-zinc-300">
             {saveStatus === "saving" ? (
@@ -459,9 +443,8 @@ export default function SplitViewEditor() {
           </div>
         </div>
 
-        {/* Canvas Area */}
         <div className="flex flex-1 items-center justify-center overflow-y-auto p-8">
-          {/* THE DEVICE MOCKUP */}
+
           <div
             className={`relative overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               previewMode === "mobile"
@@ -469,14 +452,13 @@ export default function SplitViewEditor() {
                 : "h-[80%] w-full max-w-3xl rounded-2xl border border-zinc-200 shadow-2xl"
             } ${currentTheme.bg}`}
           >
-            {/* Notch (Mobile Only) */}
+
             {previewMode === "mobile" && (
               <div className="absolute inset-x-0 top-0 z-20 mx-16 h-6 rounded-b-xl bg-zinc-900" />
             )}
 
-            {/* LIVE REACTIVE CONTENT (Matches the public profile design exactly) */}
             <div className="custom-scrollbar animate-in fade-in relative z-10 flex h-full w-full flex-col items-center overflow-y-auto px-6 pt-16 pb-12 duration-500">
-              {/* Profile Hero */}
+
               <div className="mb-4 h-20 w-20 rounded-full bg-gradient-to-br from-zinc-200 to-zinc-400 p-1 shadow-sm dark:from-zinc-700 dark:to-zinc-800">
                 <img
                   src={profile.avatar}
@@ -497,7 +479,6 @@ export default function SplitViewEditor() {
                 {profile.bio || "Your bio goes here."}
               </p>
 
-              {/* Reactive Links Array */}
               <div className="w-full space-y-3">
                 {links
                   .filter((l) => l.enabled)
@@ -519,7 +500,6 @@ export default function SplitViewEditor() {
                   ))}
               </div>
 
-              {/* Watermark */}
               <div className="mt-12 flex items-center gap-1.5 opacity-50">
                 <LinkIcon size={10} className={currentTheme.text} />
                 <span
@@ -536,7 +516,6 @@ export default function SplitViewEditor() {
   );
 }
 
-// --- Atomic Helpers ---
 const TabButton = ({
   icon,
   label,
@@ -582,7 +561,6 @@ const Switch = ({
   </button>
 );
 
-// Globe icon fallback for UI
 const Globe = ({ size, className }: any) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

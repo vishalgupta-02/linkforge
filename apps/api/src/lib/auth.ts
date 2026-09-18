@@ -8,7 +8,10 @@ import {
   isReservedUsername,
 } from "../utils/username.ts";
 import { isUsernameAvailable } from "../services/username.service.ts";
-import { enqueueWelcomeEmail } from "../queues/email.queue.ts";
+import {
+  enqueueWelcomeEmail,
+  enqueueVerificationEmail,
+} from "../queues/email.queue.ts";
 import { recordUserSignup } from "./metrics.ts";
 
 import {
@@ -60,14 +63,35 @@ export const auth = betterAuth({
   advanced: {
     defaultCookieAttributes: {
       secure: process.env.NODE_ENV === "production",
-      // In production cross-site context (vercel.app -> railway.app), SameSite MUST be 'none'
+
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7, 
     },
   },
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: false,
+    sendVerificationEmail: async ({ user, url, token }, _request) => {
+      const verificationUrl = `${backendApiOrigin}/api/auth/verify-email?token=${token}&callbackURL=${encodeURIComponent(`${frontendBaseUrl}/signin?verified=true`)}`;
+      try {
+        await enqueueVerificationEmail({
+          userId: user.id,
+          userName: user.name || "Creator",
+          email: user.email,
+          verificationUrl,
+        });
+        console.log(
+          `🔒 [AUTH] Enqueued verification email for user ${user.id} (${user.email})`,
+        );
+      } catch (err) {
+        console.error("❌ [AUTH] Failed to enqueue verification email:", err);
+      }
+    },
   },
   session: {
     disableSessionRefresh: true,
@@ -128,7 +152,7 @@ export const auth = betterAuth({
                 `✅ [BEFORE CREATE] Requested username is valid and available: ${generatedOne}`,
               );
             } else {
-              // Generate username from user's name (works for both email/password and social signin)
+
               generatedOne = generateUsername(
                 data.name || data.email || "user",
               );
@@ -190,7 +214,6 @@ export const auth = betterAuth({
         after: async (user) => {
           let resolvedUsername = user.userName;
 
-          // Backup: if username is still NULL after creation, generate it
           if (!resolvedUsername) {
             console.warn(
               `⚠️ [AFTER CREATE] User ${user.id} has NULL username, generating now...`,
@@ -229,7 +252,6 @@ export const auth = betterAuth({
 
           recordUserSignup();
 
-          // 📬 Asynchronously enqueue welcome email job into BullMQ
           try {
             const finalUserName = resolvedUsername || user.name || "Creator";
             await enqueueWelcomeEmail({

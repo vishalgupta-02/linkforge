@@ -1,10 +1,6 @@
-// middleware/cors.ts
+
 import cors from "cors";
 
-/**
- * Clean and normalize origin strings by trimming whitespace,
- * stripping surrounding quotes, and removing trailing slashes.
- */
 export const sanitizeOrigin = (url?: string): string =>
   url
     ?.trim()
@@ -121,4 +117,3 @@ export const corsMiddleware = cors({
   maxAge: 86400,
   optionsSuccessStatus: 204,
 });
-

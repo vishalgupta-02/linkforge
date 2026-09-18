@@ -62,5 +62,4 @@ router.get(
   liveVisitorsStream,
 );
 
-
 export default router;
