@@ -14,11 +14,17 @@ export const redis = process.env.REDIS_URL
     });
 
 redis.on("connect", () => {
-  logger.info("Redis connected successfully", { event: "redis.connect.success" });
+  logger.info("Redis connected successfully", {
+    event: "redis.connect.success",
+  });
 });
 
 redis.on("error", (error) => {
-  logger.error("Redis connection error", { event: "redis.connection.error" }, error);
+  logger.error(
+    "Redis connection error",
+    { event: "redis.connection.error" },
+    error,
+  );
   if (process.env.NODE_ENV === "production") {
     Sentry.captureException(error);
   }
