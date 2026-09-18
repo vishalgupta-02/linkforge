@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   Pentagon,
 } from "lucide-react";
-import { FeedbackDialog } from "./feedback-dialog";
 
 const HIDDEN_FOOTER_ROUTES = [
   "/signin",

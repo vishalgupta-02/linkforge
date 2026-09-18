@@ -40,7 +40,6 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
-import { FeedbackDialog } from "./feedback-dialog";
 
 const menuItems = [
   {

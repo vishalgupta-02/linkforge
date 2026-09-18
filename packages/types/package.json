@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Shared TypeScript definitions and interfaces for LinkForge",
   "main": "./index.ts",
+  "type": "module",
   "types": "./index.ts",
   "exports": {
     ".": {
