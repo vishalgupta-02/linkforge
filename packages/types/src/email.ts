@@ -1,4 +1,4 @@
-import { FeedbackCategory } from "./feedback.ts";
+import type { FeedbackCategory } from "./feedback";
 
 export type EmailJobType =
   | "welcome-email"
