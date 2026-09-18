@@ -1,0 +1,110 @@
+# syntax=docker/dockerfile:1
+
+# ============================================================
+# Base
+# ============================================================
+FROM node:22-slim AS base
+
+RUN apt-get update -y \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g pnpm@11.21.0
+
+RUN pnpm config set registry https://registry.npmjs.org/
+
+ENV HUSKY=0
+ENV CI=true
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+
+WORKDIR /app
+
+
+# ============================================================
+# Dependencies
+# ============================================================
+FROM base AS deps
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+
+COPY apps/api/package.json ./apps/api/package.json
+COPY packages/types/package.json ./packages/types/package.json
+
+RUN --mount=type=cache,id=linkforge-pnpm-store,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --filter=api...
+
+
+# ============================================================
+# Builder
+# ============================================================
+FROM deps AS builder
+
+# Prisma schema
+COPY apps/api/prisma ./apps/api/prisma
+
+# Generate Prisma Client
+RUN pnpm --filter=api exec prisma generate
+
+# Shared workspace package
+COPY packages/types ./packages/types
+
+# API source
+COPY apps/api/src ./apps/api/src
+
+# Required build entrypoints/config
+COPY apps/api/main.ts ./apps/api/main.ts
+COPY apps/api/server.ts ./apps/api/server.ts
+COPY apps/api/instrument.ts ./apps/api/instrument.ts
+COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
+
+# Build server + worker + instrumentation
+RUN pnpm --filter=api build
+
+
+# ============================================================
+# Production dependencies
+# ============================================================
+FROM deps AS prod-deps
+
+RUN pnpm --filter=api --prod deploy --legacy /prod/app
+
+
+# ============================================================
+# Worker runtime
+# ============================================================
+FROM node:22-slim AS runner
+
+WORKDIR /app
+
+RUN apt-get update -y \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV NODE_ENV=production
+
+# Keep the worker within the free instance memory budget.
+# This can be removed if memory pressure appears in testing.
+# ENV NODE_OPTIONS=--max-old-space-size=192
+
+COPY --from=prod-deps --chown=node:node \
+    /prod/app/node_modules ./node_modules
+
+COPY --from=prod-deps --chown=node:node \
+    /prod/app/package.json ./package.json
+
+COPY --from=builder --chown=node:node \
+    /app/apps/api/generated ./generated
+
+COPY --from=builder --chown=node:node \
+    /app/apps/api/dist ./dist
+
+USER node
+
+# No EXPOSE.
+# The BullMQ worker has no inbound HTTP server.
+#
+# No HTTP HEALTHCHECK.
+# The worker does not expose /health.
+
+CMD ["node", "--import", "./dist/instrument.js", "dist/src/worker.js"]
