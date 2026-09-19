@@ -23,16 +23,21 @@ import {
 const frontendBaseUrl =
   sanitizeOrigin(process.env.FRONTEND_URL) ||
   sanitizeOrigin(process.env.NEXT_PUBLIC_APP_URL) ||
-  sanitizeOrigin(process.env.APP_URL) ||
   "http://localhost:3000";
 
 const rawBackendAuthUrl =
-  process.env.BETTER_AUTH_URL ||
-  process.env.BACKEND_URL ||
-  process.env.NEXT_PUBLIC_BACKEND_URL ||
-  "http://localhost:5000";
+  process.env.BETTER_AUTH_URL || process.env.BACKEND_URL;
+
+if (!rawBackendAuthUrl) {
+  throw new Error("BETTER_AUTH_URL or BACKEND_URL must be configured");
+}
 
 const backendBaseUrl = sanitizeOrigin(rawBackendAuthUrl);
+
+if (!backendBaseUrl) {
+  throw new Error("Invalid Better Auth backend URL");
+}
+
 const backendApiOrigin = backendBaseUrl.replace(/\/api\/auth\/?$/, "");
 
 const dashboardUrl = `${frontendBaseUrl}/dashboard`;
@@ -43,29 +48,33 @@ export const auth = betterAuth({
     usePlural: false,
   }),
   baseURL: backendBaseUrl,
-  trustedOrigins: async (request) => {
-    const origins = [
-      ...getAllowedOrigins(),
-      frontendBaseUrl,
-      backendApiOrigin,
-      "https://*.vercel.app",
-      "http://localhost:*",
-      "http://127.0.0.1:*",
-    ];
-    const origin = request?.headers?.get("origin");
-    if (origin && isOriginAllowed(origin)) {
-      origins.push(sanitizeOrigin(origin));
-    }
-    return Array.from(new Set(origins));
-  },
-  advanced: {
-    defaultCookieAttributes: {
-      secure: process.env.NODE_ENV === "production",
+  // trustedOrigins: async (request) => {
+  //   const origins = [
+  //     ...getAllowedOrigins(),
+  //     frontendBaseUrl,
+  //     backendApiOrigin,
+  //     "https://*.vercel.app",
+  //     "http://localhost:*",
+  //     "http://127.0.0.1:*",
+  //   ];
 
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 7, 
-    },
+  //   const origin = request?.headers?.get("origin");
+
+  //   if (origin && isOriginAllowed(origin)) {
+  //     origins.push(sanitizeOrigin(origin));
+  //   }
+
+  //   return Array.from(new Set(origins));
+  // },
+  trustedOrigins: [
+    frontendBaseUrl,
+    backendApiOrigin,
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "https://*.vercel.app",
+  ],
+  advanced: {
+    useSecureCookies: true,
   },
   emailAndPassword: {
     enabled: true,
@@ -150,7 +159,6 @@ export const auth = betterAuth({
                 `✅ [BEFORE CREATE] Requested username is valid and available: ${generatedOne}`,
               );
             } else {
-
               generatedOne = generateUsername(
                 data.name || data.email || "user",
               );
@@ -210,8 +218,16 @@ export const auth = betterAuth({
           }
         },
         after: async (user) => {
-          const authUser = user as { id: string; email: string; userName?: string; name?: string };
-          let resolvedUsername = typeof authUser.userName === "string" ? authUser.userName : undefined;
+          const authUser = user as {
+            id: string;
+            email: string;
+            userName?: string;
+            name?: string;
+          };
+          let resolvedUsername =
+            typeof authUser.userName === "string"
+              ? authUser.userName
+              : undefined;
 
           if (!resolvedUsername) {
             console.warn(
@@ -252,7 +268,8 @@ export const auth = betterAuth({
           recordUserSignup();
 
           try {
-            const finalUserName = resolvedUsername || authUser.name || "Creator";
+            const finalUserName =
+              resolvedUsername || authUser.name || "Creator";
             await enqueueWelcomeEmail({
               userId: authUser.id,
               userName: String(finalUserName),
