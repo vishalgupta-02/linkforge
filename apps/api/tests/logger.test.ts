@@ -104,8 +104,9 @@ async function runLoggerTestSuite() {
 
     stopLogCapture();
 
-    assert.strictEqual(capturedLogs.length, 3, "Expected 3 logs inside async flow");
-    for (const log of capturedLogs) {
+    const testLogs = capturedLogs.filter((l) => l.requestId === testReqId);
+    assert.strictEqual(testLogs.length, 3, "Expected 3 logs inside async flow");
+    for (const log of testLogs) {
       assert.strictEqual(log.requestId, testReqId, "requestId must propagate across all async boundaries");
       assert.strictEqual(log.userId, testUserId, "userId must propagate across all async boundaries");
     }
@@ -130,11 +131,12 @@ async function runLoggerTestSuite() {
 
     stopLogCapture();
 
-    assert.strictEqual(capturedLogs.length, 2);
-    assert.strictEqual(capturedLogs[0].requestId, "req_auth_flow_456");
-    assert.strictEqual(capturedLogs[0].userId, null, "Initial log should have userId: null");
-    assert.strictEqual(capturedLogs[1].requestId, "req_auth_flow_456");
-    assert.strictEqual(capturedLogs[1].userId, "usr_authenticated_777", "Subsequent log should contain enriched userId");
+    const authLogs = capturedLogs.filter((l) => l.requestId === "req_auth_flow_456");
+    assert.strictEqual(authLogs.length, 2);
+    assert.strictEqual(authLogs[0].requestId, "req_auth_flow_456");
+    assert.strictEqual(authLogs[0].userId, null, "Initial log should have userId: null");
+    assert.strictEqual(authLogs[1].requestId, "req_auth_flow_456");
+    assert.strictEqual(authLogs[1].userId, "usr_authenticated_777", "Subsequent log should contain enriched userId");
 
     console.log("✅ updateUserContext() safely updates active request context with authenticated user ID");
 
@@ -162,9 +164,10 @@ async function runLoggerTestSuite() {
 
     stopLogCapture();
 
-    assert.strictEqual(capturedLogs.length, 9, "Should have 3 logs per concurrent request (total 9)");
+    const concurrentLogs = capturedLogs.filter((l) => typeof l.requestId === "string" && (l.requestId as string).startsWith("req_CONCURRENT_"));
+    assert.strictEqual(concurrentLogs.length, 9, "Should have 3 logs per concurrent request (total 9)");
 
-    for (const log of capturedLogs) {
+    for (const log of concurrentLogs) {
       if (log.requestId === "req_CONCURRENT_A") {
         assert.strictEqual(log.userId, "usr_A");
       } else if (log.requestId === "req_CONCURRENT_B") {
@@ -316,7 +319,7 @@ async function runLoggerTestSuite() {
 
       console.log("✅ End-to-end HTTP request completes with X-Request-ID and structured completion log");
     } finally {
-      server.close();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
     }
 
     console.log("\n🎉 ALL 10 PINO LOGGING & REQUEST CONTEXT TESTS PASSED SUCCESSFULLY! 🚀\n");
@@ -326,9 +329,7 @@ async function runLoggerTestSuite() {
   }
 }
 
-runLoggerTestSuite().then(() => {
-  process.exit(0);
-}).catch((err) => {
+runLoggerTestSuite().catch((err) => {
   console.error("❌ Logger Test Suite Failed:", err);
   process.exit(1);
 });

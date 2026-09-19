@@ -10,6 +10,7 @@ import {
   Loader2,
   Pentagon,
 } from "lucide-react";
+import Link from "next/link";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -221,7 +222,7 @@ export default function CreatorPublicProfile() {
             className="animate-fade-in-up mt-16 flex justify-center"
             style={{ animationDelay: "500ms" }}
           >
-            <a
+            <Link
               href="/"
               className="group flex items-center gap-2 text-zinc-400 transition-colors hover:text-zinc-950 dark:hover:text-white"
             >
@@ -233,9 +234,9 @@ export default function CreatorPublicProfile() {
                 />
               </div>
               <span className="text-[11px] font-bold tracking-wider uppercase">
-                Powered by Linkforge
+                Claim your link with LinkForge
               </span>
-            </a>
+            </Link>
           </div>
         </main>
       </div>

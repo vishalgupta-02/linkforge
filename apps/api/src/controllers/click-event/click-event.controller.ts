@@ -6,7 +6,8 @@ import { isSafeDestinationUrl } from "../../validators/link.validator.ts";
 import { logger } from "../../lib/logger.ts";
 
 export const redirectController = async (req: Request, res: Response) => {
-  const { linkId } = req.params;
+  const rawLinkId = req.params.linkId;
+  const linkId = Array.isArray(rawLinkId) ? rawLinkId[0] : rawLinkId;
 
   if (!linkId) {
     return res.status(400).json({

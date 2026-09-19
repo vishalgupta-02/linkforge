@@ -27,8 +27,8 @@
     "build": "prisma generate && esbuild server.ts src/worker.ts --bundle --platform=node --format=esm --packages=external --outdir=dist && esbuild instrument.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/instrument.js",
     "start": "node --import ./dist/instrument.js dist/server.js",
     "start:worker": "node --import ./dist/instrument.js dist/src/worker.js",
-    "lint": "eslint . --ext .ts,.tsx",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write ."
   },
   "keywords": [],
@@ -54,7 +54,8 @@
     "react-email": "^6.9.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.59.2"
+    "typescript-eslint": "^8.59.2",
+    "vitest": "^5.0.1"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.6.9",

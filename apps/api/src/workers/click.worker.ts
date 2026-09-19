@@ -188,24 +188,3 @@ clickWorker.on("failed", (job, error) => {
     jobId: job ? String(job.id) : undefined,
   }, error);
 });
-
-const shutdown = async () => {
-  logger.info("Closing click worker gracefully", { event: "worker.shutdown.started", queue: "click-tracking" });
-
-  try {
-
-    await clickWorker.close();
-
-    logger.info("Click worker closed gracefully", { event: "worker.shutdown.completed", queue: "click-tracking" });
-
-    process.exit(0);
-  } catch (error) {
-    logger.error("Error during click worker shutdown", { event: "worker.shutdown.error", queue: "click-tracking" }, error);
-
-    process.exit(1);
-  }
-};
-
-process.on("SIGTERM", shutdown);
-
-process.on("SIGINT", shutdown);

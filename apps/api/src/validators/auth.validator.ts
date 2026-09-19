@@ -3,8 +3,7 @@ import { z } from "zod";
 export const forgotPasswordSchema = z.object({
   email: z
     .string({
-      required_error: "Email is required",
-      invalid_type_error: "Email must be a string",
+      message: "Email is required",
     })
     .trim()
     .toLowerCase()
@@ -15,8 +14,7 @@ export const forgotPasswordSchema = z.object({
 export const verifyResetTokenSchema = z.object({
   token: z
     .string({
-      required_error: "Reset token is required",
-      invalid_type_error: "Token must be a string",
+      message: "Reset token is required",
     })
     .trim()
     .min(1, "Reset token cannot be empty"),
@@ -26,20 +24,19 @@ export const resetPasswordSchema = z
   .object({
     token: z
       .string({
-        required_error: "Reset token is required",
-        invalid_type_error: "Token must be a string",
+        message: "Reset token is required",
       })
       .trim()
       .min(1, "Reset token is required"),
     password: z
       .string({
-        required_error: "Password is required",
+        message: "Password is required",
       })
       .min(8, "Password must be at least 8 characters long")
       .max(128, "Password is too long"),
     confirmPassword: z
       .string({
-        required_error: "Please confirm your password",
+        message: "Please confirm your password",
       })
       .min(1, "Please confirm your password"),
   })

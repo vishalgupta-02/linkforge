@@ -340,16 +340,3 @@ emailWorker.on("failed", (job, error) => {
     error,
   );
 });
-
-const shutdownEmailWorker = async () => {
-  logger.info("Closing email worker gracefully", { event: "worker.shutdown.started", queue: EMAIL_QUEUE_NAME });
-  try {
-    await emailWorker.close();
-    logger.info("Email worker closed gracefully", { event: "worker.shutdown.completed", queue: EMAIL_QUEUE_NAME });
-  } catch (error) {
-    logger.error("Error during email worker shutdown", { event: "worker.shutdown.error", queue: EMAIL_QUEUE_NAME }, error);
-  }
-};
-
-process.on("SIGTERM", shutdownEmailWorker);
-process.on("SIGINT", shutdownEmailWorker);

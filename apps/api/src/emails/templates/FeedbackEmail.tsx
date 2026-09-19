@@ -15,13 +15,13 @@ import {
 import type { FeedbackCategory } from "@vyrex/types";
 
 export interface FeedbackEmailProps {
-  fromEmail?: string;
-  name?: string;
-  category?: FeedbackCategory;
-  rating?: number;
+  fromEmail?: string | undefined;
+  name?: string | undefined;
+  category?: FeedbackCategory | undefined;
+  rating?: number | undefined;
   message: string;
-  userId?: string;
-  submittedAt?: string;
+  userId?: string | undefined;
+  submittedAt?: string | undefined;
 }
 
 const categoryLabels: Record<string, string> = {

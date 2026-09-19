@@ -25,7 +25,8 @@ export const generateUsername = (name: string): string => {
   let suffix = "";
   const randomBytes_val = randomBytes(3);
   for (let i = 0; i < 4; i++) {
-    suffix += characters[randomBytes_val[i % 3] % characters.length];
+    const byte = randomBytes_val[i % 3] ?? 0;
+    suffix += characters.charAt(byte % characters.length);
   }
 
   return `${safeBase}_${suffix}`;

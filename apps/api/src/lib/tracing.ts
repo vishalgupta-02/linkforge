@@ -17,13 +17,33 @@ import { IORedisInstrumentation } from "@opentelemetry/instrumentation-ioredis";
 import { PgInstrumentation } from "@opentelemetry/instrumentation-pg";
 import { PrismaInstrumentation } from "@prisma/instrumentation";
 
-const serviceName = process.env.OTEL_SERVICE_NAME || "linkforge-api";
+const defaultServiceName = process.argv.some((arg) => arg.includes("worker"))
+  ? "linkforge-worker"
+  : "linkforge-api";
+
+const serviceName = process.env.OTEL_SERVICE_NAME || defaultServiceName;
 const environment = process.env.NODE_ENV || "development";
+
 const otlpEndpoint =
-  process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
-  (environment === "production"
-    ? "http://tempo:4318/v1/traces"
-    : "http://localhost:4318/v1/traces");
+  process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ||
+  (process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+    ? `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT.replace(/\/+$/, "")}/v1/traces`
+    : environment === "production"
+      ? "http://tempo:4318/v1/traces"
+      : "http://localhost:4318/v1/traces");
+
+function sanitizeOtelEndpoint(rawUrl: string): string {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.password || parsed.username) {
+      parsed.username = "[REDACTED]";
+      parsed.password = "[REDACTED]";
+    }
+    return parsed.toString();
+  } catch {
+    return rawUrl.replace(/:\/\/.*@/, "://[REDACTED]@");
+  }
+}
 
 function getSampler() {
   const samplerType = (process.env.OTEL_TRACES_SAMPLER || "").toLowerCase();
@@ -63,7 +83,6 @@ const sdk = new NodeSDK({
     new HttpInstrumentation({
       ignoreIncomingRequestHook: (req) => {
         const url = req.url || "";
-
         return (
           url.startsWith("/metrics") ||
           url.startsWith("/health") ||
@@ -86,8 +105,9 @@ export function initTracing(): void {
   try {
     sdk.start();
     isInitialized = true;
+    const safeEndpoint = sanitizeOtelEndpoint(otlpEndpoint);
     console.log(
-      `📡 [OpenTelemetry] Tracing initialized (Service: ${serviceName}, Endpoint: ${otlpEndpoint})`,
+      `📡 [OpenTelemetry] Tracing initialized (Service: ${serviceName}, Environment: ${environment}, Endpoint: ${safeEndpoint})`,
     );
   } catch (error) {
     console.error(

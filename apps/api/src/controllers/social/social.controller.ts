@@ -42,7 +42,7 @@ export const getSocialsController = async (req: Request, res: Response) => {
 
 export const updateSocialController = async (req: Request, res: Response) => {
   const userId = req.user?.id;
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   if (!userId) throw new AppError("Unauthorized", 401);
   if (!id) throw new AppError("Social link ID is required", 400);
@@ -60,7 +60,7 @@ export const updateSocialController = async (req: Request, res: Response) => {
 
 export const deleteSocialController = async (req: Request, res: Response) => {
   const userId = req.user?.id;
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   if (!userId) throw new AppError("Unauthorized", 401);
   if (!id) throw new AppError("Social link ID is required", 400);

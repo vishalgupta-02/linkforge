@@ -406,13 +406,13 @@ export async function sendVerificationEmail(
 }
 
 export interface SendFeedbackEmailInput {
-  targetEmail?: string;
-  fromEmail?: string;
-  name?: string;
-  category?: "general" | "bug" | "feature" | "billing" | "question" | "other";
-  rating?: number;
+  targetEmail?: string | undefined;
+  fromEmail?: string | undefined;
+  name?: string | undefined;
+  category?: "general" | "bug" | "feature" | "billing" | "question" | "other" | undefined;
+  rating?: number | undefined;
   message: string;
-  userId?: string;
+  userId?: string | undefined;
 }
 
 export interface SendFeedbackEmailOutput {

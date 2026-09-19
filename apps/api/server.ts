@@ -37,16 +37,4 @@ app.listen(PORT || "0.0.0.0", () => {
     environment: config.NODE_ENV,
     url: `http://0.0.0.0:${PORT}`,
   });
-
-  if (process.env.RUN_WORKER !== "false") {
-    import("./src/worker.ts")
-      .then(() => {
-        logger.info("Embedded BullMQ queue workers started successfully", {
-          event: "worker.embedded.started",
-        });
-      })
-      .catch((err) => {
-        logger.error("Failed to start embedded workers", { error: err });
-      });
-  }
 });

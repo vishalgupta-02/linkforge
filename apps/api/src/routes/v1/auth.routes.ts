@@ -12,7 +12,7 @@ const passwordResetLimiter = new RateLimiterRedis({
   keyPrefix: "rl:pwd-reset",
   points: 5, 
   duration: 15 * 60, 
-  inmemoryBlockOnConsumed: 5,
+  inMemoryBlockOnConsumed: 5,
   insuranceLimiter: new RateLimiterMemory({
     points: 5,
     duration: 15 * 60,

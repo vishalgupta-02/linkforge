@@ -26,8 +26,8 @@ export function requestIdMiddleware(
 
   const requestId = isValidRequestId(rawId) ? rawId.trim() : generateRequestId();
 
-  req.id = requestId;
-  req.requestId = requestId;
+  (req as any).id = requestId;
+  (req as any).requestId = requestId;
 
   res.setHeader("X-Request-ID", requestId);
 
