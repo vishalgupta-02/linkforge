@@ -29,7 +29,6 @@ app.set("trust proxy", 1);
 app.disable("x-powered-by");
 
 startCleanupJob();
-startBusinessMetricsRefresher();
 
 // 🆔 Attach and propagate unique Request IDs
 app.use(requestIdMiddleware);

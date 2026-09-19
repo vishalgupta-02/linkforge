@@ -15,7 +15,8 @@ export const joinLiveVisitors = async (
   request: Request,
   response: Response,
 ) => {
-  const { username } = request.params;
+  const rawUsername = request.params.username;
+  const username = Array.isArray(rawUsername) ? rawUsername[0] : rawUsername;
   const { sessionId } = request.body;
 
   if (!username) {
@@ -57,7 +58,8 @@ export const heartbeatLiveVisitor = async (
   request: Request,
   response: Response,
 ) => {
-  const { username } = request.params;
+  const rawUsername = request.params.username;
+  const username = Array.isArray(rawUsername) ? rawUsername[0] : rawUsername;
   const { sessionId } = request.body;
 
   if (!username) {
@@ -92,7 +94,8 @@ export const leaveLiveVisitor = async (
   request: Request,
   response: Response,
 ) => {
-  const { username } = request.params;
+  const rawUsername = request.params.username;
+  const username = Array.isArray(rawUsername) ? rawUsername[0] : rawUsername;
   const { sessionId } = request.body;
 
   if (!username) {
@@ -127,7 +130,8 @@ export const liveVisitorsStream = async (
   request: Request,
   response: Response,
 ) => {
-  const { username } = request.params;
+  const rawUsername = request.params.username;
+  const username = Array.isArray(rawUsername) ? rawUsername[0] : rawUsername;
   const authenticatedUserId = request.user?.id;
 
   if (!authenticatedUserId) {

@@ -49,8 +49,6 @@ export const auth = betterAuth({
       frontendBaseUrl,
       backendApiOrigin,
       "https://*.vercel.app",
-      "https://*.railway.app",
-      "https://*.up.railway.app",
       "http://localhost:*",
       "http://127.0.0.1:*",
     ];
@@ -212,21 +210,22 @@ export const auth = betterAuth({
           }
         },
         after: async (user) => {
-          let resolvedUsername = user.userName;
+          const authUser = user as { id: string; email: string; userName?: string; name?: string };
+          let resolvedUsername = typeof authUser.userName === "string" ? authUser.userName : undefined;
 
           if (!resolvedUsername) {
             console.warn(
-              `⚠️ [AFTER CREATE] User ${user.id} has NULL username, generating now...`,
+              `⚠️ [AFTER CREATE] User ${authUser.id} has NULL username, generating now...`,
             );
 
             let generatedOne = generateUsername(
-              user.name || user.email || "user",
+              authUser.name || authUser.email || "user",
             );
             let attempts = 0;
 
             while (!(await isUsernameAvailable(generatedOne)) && attempts < 5) {
               generatedOne = generateUsername(
-                user.name || user.email || "user",
+                authUser.name || authUser.email || "user",
               );
               attempts++;
             }
@@ -236,13 +235,13 @@ export const auth = betterAuth({
             }
 
             console.log(
-              `✅ [AFTER CREATE] Generated username for ${user.email}: ${generatedOne}`,
+              `✅ [AFTER CREATE] Generated username for ${authUser.email}: ${generatedOne}`,
             );
 
             resolvedUsername = generatedOne;
 
             await prisma.user.update({
-              where: { id: user.id },
+              where: { id: authUser.id },
               data: {
                 userName: generatedOne,
                 userName_lower: normalizeUsername(generatedOne),
@@ -253,11 +252,11 @@ export const auth = betterAuth({
           recordUserSignup();
 
           try {
-            const finalUserName = resolvedUsername || user.name || "Creator";
+            const finalUserName = resolvedUsername || authUser.name || "Creator";
             await enqueueWelcomeEmail({
-              userId: user.id,
-              userName: finalUserName,
-              email: user.email,
+              userId: authUser.id,
+              userName: String(finalUserName),
+              email: authUser.email,
               dashboardUrl,
             });
             console.log(

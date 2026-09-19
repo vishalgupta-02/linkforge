@@ -18,14 +18,6 @@ import {
 } from "../../validators/link.validator.ts";
 import { prisma } from "../../db/client.ts";
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: { id: string };
-    }
-  }
-}
-
 export const createLinkController = async (req: Request, res: Response) => {
   const userId = req.user?.id;
 
@@ -54,9 +46,10 @@ export const getLinksController = async (req: Request, res: Response) => {
 
 export const updateLinkController = async (req: Request, res: Response) => {
   const userId = req.user?.id;
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   if (!userId) throw new AppError("Unauthorized", 401);
+  if (!id) throw new AppError("Link ID is required", 400);
 
   const parsed = updateLinkSchema.safeParse(req.body);
 
@@ -64,26 +57,19 @@ export const updateLinkController = async (req: Request, res: Response) => {
     throw new AppError("Invalid input", 400);
   }
 
-  const result = await updateLink(userId, id, parsed.data);
-
-  if (result.count === 0) {
-    throw new AppError("Link not found", 404);
-  }
+  await updateLink(userId, id, parsed.data);
 
   return res.json(ApiResponse(null, "Link updated", 200));
 };
 
 export const deleteLinkController = async (req: Request, res: Response) => {
   const userId = req.user?.id;
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   if (!userId) throw new AppError("Unauthorized", 401);
+  if (!id) throw new AppError("Link ID is required", 400);
 
-  const result = await deleteLink(userId, id);
-
-  if (result.count === 0) {
-    throw new AppError("Link not found", 404);
-  }
+  await deleteLink(userId, id);
 
   return res.json(ApiResponse(null, "Link deleted", 200));
 };
@@ -106,9 +92,10 @@ export const reorderLinksController = async (req: Request, res: Response) => {
 
 export const toggleLinkController = async (req: Request, res: Response) => {
   const userId = req.user?.id;
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   if (!userId) throw new AppError("Unauthorized", 401);
+  if (!id) throw new AppError("Link ID is required", 400);
 
   const result = await toggleLink(userId, id);
 
@@ -172,7 +159,10 @@ export const getDeletedLinksController = async (
 
 export const restoreLink = async (req: Request, res: Response) => {
   const userId = req.user?.id;
-  const { id } = req.params;
+  const id = req.params.id as string;
+
+  if (!userId) throw new AppError("Unauthorized", 401);
+  if (!id) throw new AppError("Link ID is required", 400);
 
   const link = await prisma.link.findFirst({
     where: { id, userId },
@@ -200,10 +190,11 @@ export const restoreLink = async (req: Request, res: Response) => {
 };
 
 export const deleteLinkPermanently = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const userId = req.user?.id;
 
   if (!userId) throw new AppError("Unauthorized", 401);
+  if (!id) throw new AppError("Link ID is required", 400);
 
   const result = await prisma.link.deleteMany({
     where: { id, userId },

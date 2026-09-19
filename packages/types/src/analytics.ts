@@ -1,4 +1,4 @@
-import type { SocialMediaAnalytics } from "./social";
+import type { SocialMediaAnalytics } from "./social.ts";
 
 export interface ClicksByDay {
   "7d"?: number;

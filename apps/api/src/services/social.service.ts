@@ -15,8 +15,8 @@ const formatDestinationUrl = (url: string): string => {
 export const createSocialLink = async (userId: string, data: {
   platform: string;
   url: string;
-  position?: number;
-  isActive?: boolean;
+  position?: number | undefined;
+  isActive?: boolean | undefined;
 }) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -72,10 +72,10 @@ export const updateSocialLink = async (
   userId: string,
   socialId: string,
   data: {
-    platform?: string;
-    url?: string;
-    position?: number;
-    isActive?: boolean;
+    platform?: string | undefined;
+    url?: string | undefined;
+    position?: number | undefined;
+    isActive?: boolean | undefined;
   },
 ) => {
   const social = await prisma.socialLink.findUnique({

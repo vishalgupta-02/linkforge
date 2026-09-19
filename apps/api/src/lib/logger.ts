@@ -64,38 +64,41 @@ export function scrubSensitiveData(data: unknown): unknown {
   return sanitized;
 }
 
-export const pinoInstance = pino({
-  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === "production" ? "info" : "debug"),
-  messageKey: "message",
-  timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
-  formatters: {
-    level: (label) => ({ level: label }),
+export const pinoInstance = pino(
+  {
+    level: process.env.LOG_LEVEL || (process.env.NODE_ENV === "production" ? "info" : "debug"),
+    messageKey: "message",
+    timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
+    formatters: {
+      level: (label) => ({ level: label }),
+    },
+    redact: {
+      paths: [
+        "password",
+        "*.password",
+        "token",
+        "*.token",
+        "accessToken",
+        "*.accessToken",
+        "refreshToken",
+        "*.refreshToken",
+        "authorization",
+        "*.authorization",
+        "cookie",
+        "*.cookie",
+        "secret",
+        "*.secret",
+        "apiKey",
+        "*.apiKey",
+        "stripe-signature",
+        "creditCard",
+        "cvv",
+      ],
+      censor: "[REDACTED]",
+    },
   },
-  redact: {
-    paths: [
-      "password",
-      "*.password",
-      "token",
-      "*.token",
-      "accessToken",
-      "*.accessToken",
-      "refreshToken",
-      "*.refreshToken",
-      "authorization",
-      "*.authorization",
-      "cookie",
-      "*.cookie",
-      "secret",
-      "*.secret",
-      "apiKey",
-      "*.apiKey",
-      "stripe-signature",
-      "creditCard",
-      "cvv",
-    ],
-    censor: "[REDACTED]",
-  },
-});
+  process.stdout,
+);
 
 function buildEnrichedLogContext(contextInput?: LogContext | unknown, errInput?: unknown): Record<string, unknown> {
   const currentReqId = getRequestId();

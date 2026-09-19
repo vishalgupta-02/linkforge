@@ -203,6 +203,7 @@ export function stopBusinessMetricsRefresher(): void {
 }
 
 export async function getMetrics(): Promise<string> {
+  await refreshAllBusinessMetrics().catch(() => {});
   return register.metrics();
 }
 

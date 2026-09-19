@@ -115,11 +115,8 @@ export const getDashboardAnalytics = async (
   const cached = await redis.get(cacheKey);
 
   if (cached) {
-
     return JSON.parse(cached);
   }
-
-  const start = performance.now();
 
   const { days90, days30, days7 } = getDateRanges();
 
@@ -224,10 +221,11 @@ export const getDashboardAnalytics = async (
     shouldFetch90d
       ? getClicksByDayForRange(userId, days90, 90)
       : Promise.resolve([]),
-
   ]);
 
-  const linkIds = clicksByLink.map((item) => item.linkId).filter(Boolean) as string[];
+  const linkIds = clicksByLink
+    .map((item) => item.linkId)
+    .filter(Boolean) as string[];
   const links = await prisma.link.findMany({
     where: {
       id: {
@@ -246,23 +244,17 @@ export const getDashboardAnalytics = async (
   const enrichedClicksByLink = clicksByLink
     .map((item) => {
       const link = links.find((l) => l.id === item.linkId);
-
       const clicks = item._count.linkId;
 
       return {
         linkId: item.linkId,
-
         title: link?.title || "Untitled",
-
         url: link?.url || "",
-
         clicks,
-
         percentage:
           totalClicks > 0
             ? Number(((clicks / totalClicks) * 100).toFixed(1))
             : 0,
-
         relativeWidth: (clicks / maxClicks) * 100,
       };
     })
@@ -325,7 +317,7 @@ export const getDashboardAnalytics = async (
   if (shouldFetch30d) clicksByDay["30d"] = clicks30d;
   if (shouldFetch90d) clicksByDay["90d"] = clicks90d;
 
-  let clicksByDayArray: Array<{ date: string; clicks: number }> = [];
+  let clicksByDayArray: Array<{ date: string; clicks: number }>;
 
   if (range === "7d") {
     clicksByDayArray = clicksByDayArray7d;
@@ -334,23 +326,18 @@ export const getDashboardAnalytics = async (
   } else if (range === "90d") {
     clicksByDayArray = clicksByDayArray90d;
   } else {
-
     clicksByDayArray = clicksByDayArray30d;
   }
 
   const enrichedCountries = clicksByCountry
     .map((item) => {
-      const clicks = item._count.countryCode; 
+      const clicks = item._count.countryCode;
 
       return {
         countryCode: item.countryCode,
-
         countryName: item.countryName,
-
         flag: countryCodeToFlag(item.countryCode),
-
         clicks,
-
         percentage:
           totalClicks > 0
             ? Number(((clicks / totalClicks) * 100).toFixed(1))
@@ -368,14 +355,11 @@ export const getDashboardAnalytics = async (
 
       return {
         source: normalizeSourceLabel(item.source),
-
         clicks,
-
         percentage:
           totalClicks > 0
             ? Number(((clicks / totalClicks) * 100).toFixed(1))
             : 0,
-
         relativeWidth: (clicks / maxSourceClicks) * 100,
       };
     })

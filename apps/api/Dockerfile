@@ -1,95 +1,97 @@
-# ==============================================================================
-# Base Stage: Setup Node runtime, OpenSSL (for Prisma), and pnpm
-# ==============================================================================
-FROM node:20-slim AS base
+# syntax=docker/dockerfile:1
 
-# Install OpenSSL for Prisma engine compatibility on Debian slim
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+FROM node:22-slim AS base
 
-# Install matching pnpm version directly for fast & reliable builds
+RUN apt-get update -y \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN npm install -g pnpm@11.21.0
+RUN pnpm config set registry https://registry.npmjs.org/
 
-# Disable Husky during Docker build
 ENV HUSKY=0
 ENV CI=true
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
 
 WORKDIR /app
 
-# ==============================================================================
-# Builder Stage: Install full dependencies, generate Prisma client, and compile TS
-# ==============================================================================
-FROM base AS builder
 
-# Copy all monorepo package manifests so pnpm workspace resolves cleanly with frozen lockfile
+# ============================================================
+# Dependencies
+# ============================================================
+FROM base AS deps
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
-COPY apps/api/package.json ./apps/api/
-COPY apps/web/package.json ./apps/web/
-COPY packages/types/package.json ./packages/types/
+COPY apps/api/package.json ./apps/api/package.json
+COPY packages/types/package.json ./packages/types/package.json
 
-# Install full workspace dependencies (including TypeScript, esbuild, and Prisma)
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=linkforge-pnpm-store,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --filter=api...
 
-# Copy Prisma schema and generate Prisma Client
+
+# ============================================================
+# Builder
+# ============================================================
+FROM deps AS builder
+
 COPY apps/api/prisma ./apps/api/prisma
-RUN pnpm --filter api exec prisma generate
 
-# Copy workspace packages and API application source code
+RUN pnpm --filter=api exec prisma generate
+
 COPY packages/types ./packages/types
 COPY apps/api/src ./apps/api/src
-COPY apps/api/main.ts apps/api/server.ts apps/api/tsconfig.json ./apps/api/
+COPY apps/api/main.ts ./apps/api/main.ts
+COPY apps/api/instrument.ts ./apps/api/instrument.ts
+COPY apps/api/server.ts ./apps/api/server.ts
+COPY apps/api/tsconfig.json ./apps/api/tsconfig.json
 
-# Compile TypeScript into self-contained ESM JavaScript bundles in apps/api/dist
-RUN pnpm --filter api build
+RUN pnpm --filter=api build
 
-# ==============================================================================
-# Prod-Deps Stage: Isolate production dependencies without dev tooling
-# ==============================================================================
-FROM base AS prod-deps
 
-# Copy workspace manifests
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
-COPY apps/api/package.json ./apps/api/
-COPY apps/web/package.json ./apps/web/
-COPY packages/types/package.json ./packages/types/
+# ============================================================
+# Production dependencies
+# ============================================================
+FROM deps AS prod-deps
 
-# Deploy isolated production workspace for apps/api
-RUN pnpm --filter=api --prod deploy /prod/app
+RUN pnpm --filter=api --prod deploy --legacy /prod/app
 
-# Copy Prisma schema and generate Prisma Client in the isolated production environment
-COPY apps/api/prisma /prod/app/prisma
-WORKDIR /prod/app
-RUN npx prisma generate
 
-# ==============================================================================
-# Runner Stage: Minimal production image
-# ==============================================================================
-FROM node:20-slim AS runner
+# ============================================================
+# Runner
+# ============================================================
+FROM node:22-slim AS runner
 
 WORKDIR /app
 
-# Install OpenSSL required by Prisma engine runtime
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y \
+    && apt-get install -y --no-install-recommends openssl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set production environment variables
 ENV NODE_ENV=production
 ENV PORT=5000
 
-# Copy isolated production dependencies, generated Prisma client, and compiled JS
-COPY --from=prod-deps --chown=node:node /prod/app/node_modules ./node_modules
-COPY --from=prod-deps --chown=node:node /prod/app/package.json ./package.json
-COPY --from=prod-deps --chown=node:node /prod/app/prisma ./prisma
-COPY --from=prod-deps --chown=node:node /prod/app/generated ./generated
-COPY --from=builder --chown=node:node /app/apps/api/dist ./dist
+COPY --from=prod-deps --chown=node:node \
+    /prod/app/node_modules ./node_modules
 
-# Run as non-root user (node)
+COPY --from=prod-deps --chown=node:node \
+    /prod/app/package.json ./package.json
+
+COPY --from=builder --chown=node:node \
+    /app/apps/api/generated ./generated
+
+COPY --from=builder --chown=node:node \
+    /app/apps/api/dist ./dist
+
 USER node
 
-# Expose API runtime port
 EXPOSE 5000
 
-# Health check using native Node 20+ fetch against the existing /health endpoint
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD node -e "fetch('http://localhost:' + (process.env.PORT || 5000) + '/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"
+HEALTHCHECK \
+    --interval=30s \
+    --timeout=5s \
+    --start-period=15s \
+    --retries=3 \
+    CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || 5000) + '/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"
 
-# Start the API server using compiled JavaScript
-CMD ["node", "dist/server.js"]
+CMD ["node", "--import", "./dist/instrument.js", "dist/server.js"]

@@ -32,11 +32,9 @@ export const getPublicProfile = async (username: string) => {
   const lock = await redis.set(
     lockKey,
     "1",
-
-    "NX",
-
     "EX",
     5,
+    "NX",
   );
 
   if (lock) {

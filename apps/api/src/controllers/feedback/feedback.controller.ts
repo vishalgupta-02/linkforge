@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { FeedbackEmailJobData } from "@vyrex/types";
 import { feedbackSchema } from "../../validators/feedback.validator.ts";
 import { enqueueFeedbackEmail } from "../../queues/email.queue.ts";
 import { ApiResponse } from "../../utils/api-response.ts";
@@ -19,25 +20,34 @@ export const submitFeedbackController = async (req: Request, res: Response) => {
 
   const { name, email, category, rating, message } = parsed.data;
   const userId = req.user?.id;
+  const resolvedFromEmail = email || req.user?.email || "anonymous@linkforge.app";
 
   logger.info("Enqueuing user feedback job", {
     event: "feedback.submitted",
-    fromEmail: email,
+    fromEmail: resolvedFromEmail,
     category,
     rating,
-    userId,
+    userId: userId ?? null,
     targetEmail: "abhimanyug987@gmail.com",
   });
 
-  const job = await enqueueFeedbackEmail({
+  const feedbackData: FeedbackEmailJobData = {
     targetEmail: "abhimanyug987@gmail.com",
-    fromEmail: email,
-    name: name || (req.user as any)?.name || undefined,
+    fromEmail: resolvedFromEmail,
     category,
-    rating,
+    rating: rating ?? 5,
     message,
-    userId,
-  });
+  };
+
+  const resolvedName = name || (req.user as { name?: string } | undefined)?.name;
+  if (resolvedName) {
+    feedbackData.name = resolvedName;
+  }
+  if (userId) {
+    feedbackData.userId = userId;
+  }
+
+  const job = await enqueueFeedbackEmail(feedbackData);
 
   return res.status(200).json(
     ApiResponse(

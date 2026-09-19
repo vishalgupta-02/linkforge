@@ -30,7 +30,7 @@ export default function ProfileError({
         </h1>
 
         <p className="mb-8 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-          We couldn't retrieve this creator's information. Please try again in a
+          We couldn&apos;t retrieve this creator&apos;s information. Please try again in a
           moment.
         </p>
 

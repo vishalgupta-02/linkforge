@@ -40,9 +40,10 @@ export async function captureSentryWithRichContext(
     return undefined;
   }
 
-  let userId: string | undefined = req.user?.id;
-  let username: string | null = req.user?.userName || req.user?.username || null;
-  let plan: string | null = req.user?.plan ? formatPlan(req.user.plan) : null;
+  const userId: string | undefined = req.user?.id;
+  const rawUser = req.user as { userName?: string; username?: string; plan?: string } | undefined;
+  let username: string | null = rawUser?.userName || rawUser?.username || null;
+  let plan: string | null = rawUser?.plan ? formatPlan(rawUser.plan) : null;
 
   if (userId && (!username || !plan)) {
     try {
@@ -61,6 +62,7 @@ export async function captureSentryWithRichContext(
 
   const endpoint = getRoutePattern(req);
   const httpMethod = req.method;
+  const requestId = ((req as any).id || (req as any).requestId) as string | undefined;
 
   let eventId: string | undefined;
 
@@ -78,8 +80,8 @@ export async function captureSentryWithRichContext(
     scope.setTag("endpoint", endpoint);
     scope.setTag("method", httpMethod);
 
-    if (req.id || req.requestId) {
-      scope.setTag("requestId", (req.id || req.requestId)!);
+    if (requestId) {
+      scope.setTag("requestId", requestId);
     }
 
     if (plan && userId) {
@@ -90,7 +92,7 @@ export async function captureSentryWithRichContext(
       method: httpMethod,
       endpoint,
       path: req.path,
-      requestId: req.id || req.requestId,
+      ...(requestId ? { requestId } : {}),
     });
 
     eventId = Sentry.captureException(err);
