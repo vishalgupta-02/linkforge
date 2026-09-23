@@ -8,11 +8,18 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
+    # Strictly limit to 1 open PR/branch at a time; no new PRs/branches created until you merge or close it
+    open-pull-requests-limit: 1
+    # Prevents Dependabot from automatically pushing rebase commits/changes to the branch
+    rebase-strategy: "disabled"
     labels:
       - "dependencies"
     commit-message:
       prefix: "chore(deps)"
+    ignore:
+      # Block all major (breaking) updates across dependencies
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       sentry:
         patterns:
@@ -52,12 +59,19 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
+    # Strictly limit to 1 open PR/branch at a time
+    open-pull-requests-limit: 1
+    # Prevents Dependabot from automatically pushing rebase commits/changes to the branch
+    rebase-strategy: "disabled"
     labels:
       - "ci"
       - "dependencies"
     commit-message:
       prefix: "ci(actions)"
+    ignore:
+      # Block major version upgrades for GitHub Actions workflows
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       actions:
         patterns:
@@ -71,7 +85,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 1
+    rebase-strategy: "disabled"
     labels:
       - "docker"
       - "dependencies"
@@ -83,7 +98,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 1
+    rebase-strategy: "disabled"
     labels:
       - "docker"
       - "dependencies"
