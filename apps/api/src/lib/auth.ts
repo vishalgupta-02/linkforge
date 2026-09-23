@@ -74,7 +74,12 @@ export const auth = betterAuth({
     "https://*.vercel.app",
   ],
   advanced: {
-    useSecureCookies: true,
+    useSecureCookies: process.env.NODE_ENV === "production",
+    defaultCookieAttributes: {
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+    },
   },
   emailAndPassword: {
     enabled: true,
@@ -93,10 +98,36 @@ export const auth = betterAuth({
           verificationUrl,
         });
         console.log(
-          `🔒 [AUTH] Enqueued verification email for user ${user.id} (${user.email})`,
+          `[AUTH] Enqueued verification email for user ${user.id} (${user.email})`,
         );
       } catch (err) {
-        console.error("❌ [AUTH] Failed to enqueue verification email:", err);
+        console.error("[AUTH] Failed to enqueue verification email:", err);
+      }
+    },
+    afterEmailVerification: async (user, _request) => {
+      const authUser = user as {
+        id: string;
+        email: string;
+        userName?: string;
+        name?: string;
+      };
+      try {
+        const finalUserName =
+          authUser.userName || authUser.name || "Creator";
+        await enqueueWelcomeEmail({
+          userId: authUser.id,
+          userName: String(finalUserName),
+          email: authUser.email,
+          dashboardUrl,
+        });
+        console.log(
+          `[VERIFICATION] Enqueued welcome email job after verification for user ${authUser.id} (${authUser.email})`,
+        );
+      } catch (queueError) {
+        console.error(
+          `[VERIFICATION] Failed to enqueue welcome email job for user ${authUser.id}:`,
+          queueError,
+        );
       }
     },
   },
@@ -139,7 +170,7 @@ export const auth = betterAuth({
       create: {
         before: async (data, _context) => {
           try {
-            console.log("🔍 [BEFORE CREATE] User data:", {
+            console.log("[BEFORE CREATE] User data:", {
               name: data.name,
               email: data.email,
               provider: data.emailVerified ? "email" : "unknown",
@@ -156,14 +187,14 @@ export const auth = betterAuth({
             ) {
               generatedOne = candidateName;
               console.log(
-                `✅ [BEFORE CREATE] Requested username is valid and available: ${generatedOne}`,
+                `[BEFORE CREATE] Requested username is valid and available: ${generatedOne}`,
               );
             } else {
               generatedOne = generateUsername(
                 data.name || data.email || "user",
               );
 
-              console.log(`📝 Generated initial username: ${generatedOne}`);
+              console.log(`Generated initial username: ${generatedOne}`);
 
               let attempts = 0;
               const maxAttempts = 5;
@@ -173,7 +204,7 @@ export const auth = betterAuth({
                 attempts < maxAttempts
               ) {
                 console.log(
-                  `⚠️ Username ${generatedOne} taken, attempt ${attempts + 1}/${maxAttempts}`,
+                  `Username ${generatedOne} taken, attempt ${attempts + 1}/${maxAttempts}`,
                 );
                 generatedOne = generateUsername(
                   data.name || data.email || "user",
@@ -184,13 +215,13 @@ export const auth = betterAuth({
               if (attempts === maxAttempts) {
                 generatedOne = `user_${Date.now()}`;
                 console.log(
-                  `⚠️ Max attempts reached, using fallback: ${generatedOne}`,
+                  `Max attempts reached, using fallback: ${generatedOne}`,
                 );
               }
             }
 
             console.log(
-              `✅ [BEFORE CREATE] Assigned username: ${generatedOne}`,
+              `[BEFORE CREATE] Assigned username: ${generatedOne}`,
             );
 
             return {
@@ -202,10 +233,10 @@ export const auth = betterAuth({
               },
             };
           } catch (error) {
-            console.error("❌ [BEFORE CREATE] Error:", error);
+            console.error("[BEFORE CREATE] Error:", error);
 
             const fallback = `user_${Date.now()}`;
-            console.log(`🆘 Using fallback username: ${fallback}`);
+            console.log(`Using fallback username: ${fallback}`);
 
             return {
               data: {
@@ -231,7 +262,7 @@ export const auth = betterAuth({
 
           if (!resolvedUsername) {
             console.warn(
-              `⚠️ [AFTER CREATE] User ${authUser.id} has NULL username, generating now...`,
+              `[AFTER CREATE] User ${authUser.id} has NULL username, generating now...`,
             );
 
             let generatedOne = generateUsername(
@@ -251,7 +282,7 @@ export const auth = betterAuth({
             }
 
             console.log(
-              `✅ [AFTER CREATE] Generated username for ${authUser.email}: ${generatedOne}`,
+              `[AFTER CREATE] Generated username for ${authUser.email}: ${generatedOne}`,
             );
 
             resolvedUsername = generatedOne;
@@ -267,23 +298,27 @@ export const auth = betterAuth({
 
           recordUserSignup();
 
-          try {
-            const finalUserName =
-              resolvedUsername || authUser.name || "Creator";
-            await enqueueWelcomeEmail({
-              userId: authUser.id,
-              userName: String(finalUserName),
-              email: authUser.email,
-              dashboardUrl,
-            });
-            console.log(
-              `📬 [AFTER CREATE] Enqueued welcome email job for user ${user.id} (${user.email})`,
-            );
-          } catch (queueError) {
-            console.error(
-              `❌ [AFTER CREATE] Failed to enqueue welcome email job for user ${user.id}:`,
-              queueError,
-            );
+          // Only enqueue welcome email at creation time if the user is already verified (e.g. Google OAuth signup).
+          // For unverified email/password signups, welcome email is enqueued in emailVerification.afterEmailVerification.
+          if ((authUser as any).emailVerified) {
+            try {
+              const finalUserName =
+                resolvedUsername || authUser.name || "Creator";
+              await enqueueWelcomeEmail({
+                userId: authUser.id,
+                userName: String(finalUserName),
+                email: authUser.email,
+                dashboardUrl,
+              });
+              console.log(
+                `[AFTER CREATE] Enqueued welcome email for pre-verified user ${user.id} (${user.email})`,
+              );
+            } catch (queueError) {
+              console.error(
+                `[AFTER CREATE] Failed to enqueue welcome email job for user ${user.id}:`,
+                queueError,
+              );
+            }
           }
         },
       },

@@ -18,7 +18,7 @@ import {
 import { prisma } from "../src/db/client.ts";
 
 async function runClickMilestoneEmailTests() {
-  console.log("🚀 Starting Click Milestone Email Test Suite...\n");
+  console.log("Starting Click Milestone Email Test Suite...\n");
 
   const originalSend = resend.emails.send;
 
@@ -34,11 +34,11 @@ async function runClickMilestoneEmailTests() {
     assert.strictEqual(getNextMilestone(1000), 10000);
     assert.strictEqual(getNextMilestone(10000), null);
 
-    assert.strictEqual(getMilestoneEmailSubject(100), "Your links just hit 100 clicks! 🚀");
-    assert.strictEqual(getMilestoneEmailSubject(500), "Your links just hit 500 clicks! 🚀");
-    assert.strictEqual(getMilestoneEmailSubject(1000), "Your links just hit 1,000 clicks! 🚀");
-    assert.strictEqual(getMilestoneEmailSubject(10000), "Your links just hit 10,000 clicks! 🚀");
-    console.log("✅ Test 1 Passed: Milestones, next targets, and dynamic subjects are correct.\n");
+    assert.strictEqual(getMilestoneEmailSubject(100), "Your links just hit 100 clicks! ");
+    assert.strictEqual(getMilestoneEmailSubject(500), "Your links just hit 500 clicks! ");
+    assert.strictEqual(getMilestoneEmailSubject(1000), "Your links just hit 1,000 clicks! ");
+    assert.strictEqual(getMilestoneEmailSubject(10000), "Your links just hit 10,000 clicks! ");
+    console.log("Test 1 Passed: Milestones, next targets, and dynamic subjects are correct.\n");
 
     // -------------------------------------------------------------
     // Test 2: sendClickMilestoneEmail renders template and calls Resend
@@ -67,14 +67,14 @@ async function runClickMilestoneEmailTests() {
     assert.strictEqual(sendResult.id, "resend_test_milestone_1000");
     assert.strictEqual(capturedResendPayload.to, "creator@example.com");
     assert.strictEqual(capturedResendPayload.from, "LinkFlow <onboarding@resend.dev>");
-    assert.strictEqual(capturedResendPayload.subject, "Your links just hit 1,000 clicks! 🚀");
+    assert.strictEqual(capturedResendPayload.subject, "Your links just hit 1,000 clicks! ");
 
     // Verify template rendering
-    assert.ok(capturedResendPayload.html.includes("Your links just hit 1,000 clicks, Sam! 🎯"));
+    assert.ok(capturedResendPayload.html.includes("Your links just hit 1,000 clicks, Sam! "));
     assert.ok(capturedResendPayload.html.includes("1,042"));
     assert.ok(capturedResendPayload.html.includes("10,000 clicks"));
     assert.ok(capturedResendPayload.html.includes("http://localhost:3000/dashboard"));
-    console.log("✅ Test 2 Passed: Template rendered with accurate milestone, totals, and next target.\n");
+    console.log("Test 2 Passed: Template rendered with accurate milestone, totals, and next target.\n");
 
     // -------------------------------------------------------------
     // Test 3: Top-tier (10,000) milestone handles no next milestone
@@ -89,8 +89,8 @@ async function runClickMilestoneEmailTests() {
     };
 
     await sendClickMilestoneEmail(topTierInput);
-    assert.ok(capturedResendPayload.html.includes("Top tier reached! 🏆"));
-    console.log("✅ Test 3 Passed: 10,000 top-tier milestone handles no-next-milestone cleanly.\n");
+    assert.ok(capturedResendPayload.html.includes("Top tier reached! "));
+    console.log("Test 3 Passed: 10,000 top-tier milestone handles no-next-milestone cleanly.\n");
 
     // -------------------------------------------------------------
     // Test 4: enqueueClickMilestoneEmail creates job with deterministic deduplication
@@ -116,7 +116,7 @@ async function runClickMilestoneEmailTests() {
     // Test duplicate enqueue
     const duplicateJob = await enqueueClickMilestoneEmail(jobData);
     assert.strictEqual(duplicateJob.id, job.id);
-    console.log("✅ Test 4 Passed: Queue deduplication verified.\n");
+    console.log("Test 4 Passed: Queue deduplication verified.\n");
 
     await job.remove().catch(() => {});
 
@@ -162,7 +162,7 @@ async function runClickMilestoneEmailTests() {
         }
       }
       assert.strictEqual(duplicateCaught, true);
-      console.log("✅ Test 5 Passed: Atomic unique constraint prevents duplicate milestone claim.\n");
+      console.log("Test 5 Passed: Atomic unique constraint prevents duplicate milestone claim.\n");
     } finally {
       await prisma.user.delete({ where: { id: testDbUser } }).catch(() => {});
     }
@@ -174,7 +174,7 @@ async function runClickMilestoneEmailTests() {
     const simulatedClicks = 550;
     const reached = CLICK_MILESTONES.filter((m) => simulatedClicks >= m);
     assert.deepStrictEqual(reached, [100, 500]);
-    console.log("✅ Test 6 Passed: Threshold skips accurately detect all reached milestones ([100, 500]).\n");
+    console.log("Test 6 Passed: Threshold skips accurately detect all reached milestones ([100, 500]).\n");
 
     // -------------------------------------------------------------
     // Test 7: Resend Provider Error Propagation for Retries
@@ -195,7 +195,7 @@ async function runClickMilestoneEmailTests() {
       assert.ok(err.message.includes("Failed to send click milestone email"));
     }
     assert.strictEqual(threwProviderError, true);
-    console.log("✅ Test 7 Passed: Resend failure bubbles up for BullMQ retries.\n");
+    console.log("Test 7 Passed: Resend failure bubbles up for BullMQ retries.\n");
 
     // -------------------------------------------------------------
     // Test 8: Payload Validation
@@ -219,9 +219,9 @@ async function runClickMilestoneEmailTests() {
       );
       assert.strictEqual(isValid, false);
     }
-    console.log("✅ Test 8 Passed: Malformed milestone payloads safely rejected.\n");
+    console.log("Test 8 Passed: Malformed milestone payloads safely rejected.\n");
 
-    console.log("🎉 ALL CLICK MILESTONE EMAIL TESTS COMPLETED SUCCESSFULLY!\n");
+    console.log("ALL CLICK MILESTONE EMAIL TESTS COMPLETED SUCCESSFULLY!\n");
   } finally {
     resend.emails.send = originalSend;
     await emailQueue.close().catch(() => {});
@@ -229,6 +229,6 @@ async function runClickMilestoneEmailTests() {
 }
 
 runClickMilestoneEmailTests().catch((err) => {
-  console.error("❌ Click milestone email test suite failed:", err);
+  console.error("Click milestone email test suite failed:", err);
   process.exit(1);
 });

@@ -51,6 +51,8 @@ export function metricsMiddleware(
   let recorded = false;
 
   const recordMetrics = () => {
+    res.removeListener("finish", recordMetrics);
+    res.removeListener("close", recordMetrics);
     if (recorded) return;
     recorded = true;
 

@@ -21,7 +21,7 @@ export async function requestPasswordReset(email: string, _ipAddress?: string) {
 
     const dummyToken = generateSecureToken(32);
     hashToken(dummyToken);
-    console.log(`🔒 [PasswordReset] Reset requested for non-existent email: ${normalizedEmail}`);
+    console.log(`[PasswordReset] Reset requested for non-existent email: ${normalizedEmail}`);
     return {
       message:
         "If an account exists for this email, a password reset link has been sent.",
@@ -62,9 +62,9 @@ export async function requestPasswordReset(email: string, _ipAddress?: string) {
       resetUrl,
       expiresInMinutes: 60,
     });
-    console.log(`✉️ [PasswordReset] Enqueued password reset email for user ${user.id}`);
+    console.log(`[PasswordReset] Enqueued password reset email for user ${user.id}`);
   } catch (error) {
-    console.error(`❌ [PasswordReset] Failed to enqueue reset email for user ${user.id}:`, error);
+    console.error(`[PasswordReset] Failed to enqueue reset email for user ${user.id}:`, error);
   }
 
   return {
@@ -218,7 +218,7 @@ export async function resetPasswordWithToken(
       },
     });
 
-    console.log(`✅ [PasswordReset] Password reset successfully for user ${userId}`);
+    console.log(`[PasswordReset] Password reset successfully for user ${userId}`);
 
     return {
       success: true,

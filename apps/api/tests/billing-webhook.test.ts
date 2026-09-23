@@ -5,7 +5,7 @@ import { stripe } from "../src/lib/stripe.ts";
 import { handleStripeWebhook } from "../src/services/billing.service.ts";
 
 async function runBillingWebhookTests() {
-  console.log("🚀 Starting Stripe Webhook Idempotency Test Suite...");
+  console.log("Starting Stripe Webhook Idempotency Test Suite...");
 
   const webhookSecret =
     process.env.STRIPE_WEBHOOK_SECRET || "whsec_test_secret";
@@ -44,7 +44,7 @@ async function runBillingWebhookTests() {
       },
     });
     assert.strictEqual(user.plan, "FREE");
-    console.log("✅ Test user created");
+    console.log("Test user created");
 
     // 2. Test Missing Signature (Must return 400 AppError, NO event saved)
     console.log("2. Testing missing signature...");
@@ -56,7 +56,7 @@ async function runBillingWebhookTests() {
       missingSigErrorCaught = true;
     }
     assert.strictEqual(missingSigErrorCaught, true);
-    console.log("✅ Missing signature correctly rejected with 400");
+    console.log("Missing signature correctly rejected with 400");
 
     // 3. Test Invalid Signature (Must return 400 AppError, NO event saved)
     console.log("3. Testing invalid signature...");
@@ -77,7 +77,7 @@ async function runBillingWebhookTests() {
       where: { eventId: invalidEventId },
     });
     assert.strictEqual(invalidDbRecord, null);
-    console.log("✅ Invalid signature correctly rejected with 400 and no DB record created");
+    console.log("Invalid signature correctly rejected with 400 and no DB record created");
 
     // 4. Test checkout.session.completed (FREE -> PRO upgrade)
     console.log("4. Testing first delivery of checkout.session.completed...");
@@ -124,7 +124,7 @@ async function runBillingWebhookTests() {
     });
     assert.notStrictEqual(checkoutDbRecord, null);
     assert.strictEqual(checkoutDbRecord?.eventId, checkoutEventId);
-    console.log("✅ First delivery upgraded user to PRO and persisted event record");
+    console.log("First delivery upgraded user to PRO and persisted event record");
 
     // 5. Test Duplicate checkout.session.completed (Idempotency)
     console.log("5. Testing duplicate delivery of checkout.session.completed...");
@@ -148,7 +148,7 @@ async function runBillingWebhookTests() {
       where: { eventId: checkoutEventId },
     });
     assert.strictEqual(eventCount, 1);
-    console.log("✅ Duplicate delivery returned duplicate=true and did not re-execute business logic");
+    console.log("Duplicate delivery returned duplicate=true and did not re-execute business logic");
 
     // 6. Test Concurrent Duplicate Delivery
     console.log("6. Testing concurrent duplicate delivery...");
@@ -192,7 +192,7 @@ async function runBillingWebhookTests() {
       where: { eventId: concurrentEventId },
     });
     assert.strictEqual(concurrentDbCount, 1);
-    console.log("✅ Concurrent duplicate deliveries safely handled via UNIQUE constraint");
+    console.log("Concurrent duplicate deliveries safely handled via UNIQUE constraint");
 
     // 7. Test customer.subscription.deleted (PRO -> FREE downgrade)
     console.log("7. Testing first delivery of customer.subscription.deleted...");
@@ -229,7 +229,7 @@ async function runBillingWebhookTests() {
     assert.strictEqual(downgradedUser?.plan, "FREE");
     assert.strictEqual(downgradedUser?.stripeSubscriptionId, null);
     assert.strictEqual(downgradedUser?.stripeCustomerId, testCustomerId);
-    console.log("✅ customer.subscription.deleted downgraded user to FREE");
+    console.log("customer.subscription.deleted downgraded user to FREE");
 
     // 8. Test Duplicate customer.subscription.deleted
     console.log("8. Testing duplicate customer.subscription.deleted...");
@@ -244,9 +244,9 @@ async function runBillingWebhookTests() {
       where: { id: testUserId },
     });
     assert.strictEqual(finalUser?.plan, "FREE");
-    console.log("✅ Duplicate downgrade ignored and returned duplicate=true");
+    console.log("Duplicate downgrade ignored and returned duplicate=true");
 
-    console.log("\n🎉 ALL STRIPE WEBHOOK IDEMPOTENCY TESTS PASSED SUCCESSFULLY!\n");
+    console.log("\nALL STRIPE WEBHOOK IDEMPOTENCY TESTS PASSED SUCCESSFULLY!\n");
   } finally {
     // Cleanup test data
     try {
@@ -257,7 +257,7 @@ async function runBillingWebhookTests() {
       }
       await prisma.auditlog.deleteMany({ where: { userId: testUserId } });
       await prisma.user.delete({ where: { id: testUserId } });
-      console.log("🧹 Test records cleaned up successfully");
+      console.log("Test records cleaned up successfully");
     } catch {
       // ignore cleanup errors
     }
@@ -265,6 +265,6 @@ async function runBillingWebhookTests() {
 }
 
 runBillingWebhookTests().catch((err) => {
-  console.error("❌ Test suite failed:", err);
+  console.error("Test suite failed:", err);
   process.exit(1);
 });

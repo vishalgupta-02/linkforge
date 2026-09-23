@@ -30,7 +30,7 @@ export const ClickMilestoneEmail = ({
   const nextMilestone = getNextMilestone(milestone);
   const formattedMilestone = milestone.toLocaleString();
   const formattedTotalClicks = totalClicks.toLocaleString();
-  const previewText = `Your LinkFlow links just reached ${formattedMilestone} total clicks! 🎯`;
+  const previewText = `Your LinkFlow links just reached ${formattedMilestone} total clicks!`;
 
   return (
     <Html lang="en">
@@ -48,7 +48,7 @@ export const ClickMilestoneEmail = ({
 
           <Section style={contentSection}>
             <Heading as="h1" style={heading}>
-              Your links just hit {formattedMilestone} clicks, {userName}! 🎯
+              Your links just hit {formattedMilestone} clicks, {userName}!
             </Heading>
 
             <Text style={paragraph}>
@@ -70,7 +70,7 @@ export const ClickMilestoneEmail = ({
                 <span style={statValueNext}>
                   {nextMilestone
                     ? `${nextMilestone.toLocaleString()} clicks`
-                    : "Top tier reached! 🏆"}
+                    : "Top tier reached!"}
                 </span>
               </div>
             </Section>

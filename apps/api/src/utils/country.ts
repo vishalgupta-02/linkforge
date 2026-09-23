@@ -1,7 +1,7 @@
 
 export const countryCodeToFlag = (countryCode: string): string => {
   if (!countryCode || countryCode === "unknown") {
-    return "🌍";
+    return "";
   }
 
   return countryCode

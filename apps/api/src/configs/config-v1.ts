@@ -1,3 +1,4 @@
+import "dotenv/config";
 
 type EnvConfig = {
   NODE_ENV: string;
@@ -11,7 +12,7 @@ function getEnvVariable(name: string): string {
 
   if (!value) {
     throw new Error(
-      `❌ Missing required environment variable: ${name}
+      `Missing required environment variable: ${name}
       Add it to your .env file before starting the server.`,
     );
   }

@@ -18,7 +18,7 @@ import { isSafeDestinationUrl } from "../src/validators/link.validator.ts";
 import { publicRedirectController } from "../src/controllers/redirect/public-redirect.controller.ts";
 
 async function runPublicRedirectTestSuite() {
-  console.log("🚀 Starting Public Redirect & Internal ID Decoupling Test Suite...\n");
+  console.log("Starting Public Redirect & Internal ID Decoupling Test Suite...\n");
 
   const timestamp = Date.now();
   const userId = `test-redirect-user-${timestamp}`;
@@ -38,7 +38,7 @@ async function runPublicRedirectTestSuite() {
         plan: "PRO",
       },
     });
-    console.log("✅ Test user created successfully");
+    console.log("Test user created successfully");
 
     // 2. Test Public ID Generator & Validator
     console.log("2. Testing public ID generation and format validation...");
@@ -50,7 +50,7 @@ async function runPublicRedirectTestSuite() {
     assert.strictEqual(isValidPublicId("invalid id with spaces"), false, "Spaces must be invalid");
     assert.strictEqual(isValidPublicId("<script>alert(1)</script>"), false, "Script injection must be invalid");
     assert.strictEqual(isValidPublicId("abc"), false, "Too short ID must be invalid (<8 chars)");
-    console.log("✅ Public ID generator & format validator verified");
+    console.log("Public ID generator & format validator verified");
 
     // 3. Test Link Creation Generates Decoupled Public ID
     console.log("3. Testing link creation generates publicId decoupled from database ID...");
@@ -67,7 +67,7 @@ async function runPublicRedirectTestSuite() {
     assert.notStrictEqual(link1.id, link1.publicId, "publicId must NOT equal internal database ID");
     assert.strictEqual(link1.publicId.includes(userId), false, "publicId must not contain userId");
     assert.strictEqual(isValidPublicId(link1.publicId), true, "publicId must match valid format");
-    console.log(`✅ Link created with internal ID: ${link1.id} and publicId: ${link1.publicId}`);
+    console.log(`Link created with internal ID: ${link1.id} and publicId: ${link1.publicId}`);
 
     // 4. Test publicId Immutability (cannot be altered by client payload)
     console.log("4. Testing that publicId cannot be changed via update payload...");
@@ -79,7 +79,7 @@ async function runPublicRedirectTestSuite() {
     const refreshedLink = await prisma.link.findUnique({ where: { id: link1.id } });
     assert.strictEqual(refreshedLink?.publicId, originalPublicId, "publicId must remain unchanged after update");
     assert.strictEqual(refreshedLink?.title, "My Updated Portfolio", "Title should update successfully");
-    console.log("✅ publicId is protected against client manipulation");
+    console.log("publicId is protected against client manipulation");
 
     // 5. Test Redis Caching for Link Resolution
     console.log("5. Testing Redis caching for getLinkByPublicId (cache miss then hit)...");
@@ -100,7 +100,7 @@ async function runPublicRedirectTestSuite() {
     // 5b. Cache hit -> reads directly from Redis
     const resolvedFromCache = await getLinkByPublicId(originalPublicId!);
     assert.deepStrictEqual(resolvedFromCache, parsedCache, "Cache hit must return parsed link");
-    console.log("✅ Redis caching & database fallback working accurately");
+    console.log("Redis caching & database fallback working accurately");
 
     // 6. Test Cache Invalidation on Link Mutation (Toggle, Update, Delete)
     console.log("6. Testing cache invalidation on link updates, toggle, and soft-delete...");
@@ -123,7 +123,7 @@ async function runPublicRedirectTestSuite() {
 
     const deletedResolved = await getLinkByPublicId(originalPublicId!);
     assert.strictEqual(deletedResolved, null, "Deleted link must return null from getLinkByPublicId");
-    console.log("✅ Cache invalidation and inactive/deleted link guard functioning correctly");
+    console.log("Cache invalidation and inactive/deleted link guard functioning correctly");
 
     // 7. Test Idempotent Backfill Script
     console.log("7. Testing idempotent backfill script on legacy links without publicId...");
@@ -161,7 +161,7 @@ async function runPublicRedirectTestSuite() {
     const backfillResult2 = await backfillPublicIds();
     assert.strictEqual(backfillResult2.total, 0, "Second backfill must find 0 unbackfilled links");
     assert.strictEqual(backfillResult2.updated, 0);
-    console.log("✅ Backfill script successfully and idempotently populated public IDs");
+    console.log("Backfill script successfully and idempotently populated public IDs");
 
     // 8. Test Public Profile & Public Links DTO (Internal DB IDs NOT Leaked)
     console.log("8. Testing public profile DTO does NOT expose internal link database IDs...");
@@ -192,7 +192,7 @@ async function runPublicRedirectTestSuite() {
     const firstDirectLink = directPublicLinks[0] as any;
     assert.ok(firstDirectLink.publicId, "getPublicLinks must expose publicId");
     assert.strictEqual(firstDirectLink.id, undefined, "getPublicLinks MUST NOT expose internal database id");
-    console.log("✅ Public DTO and public link endpoints strictly exclude internal database IDs");
+    console.log("Public DTO and public link endpoints strictly exclude internal database IDs");
 
     // 9. Test Destination URL Protocol Safety Validation
     console.log("9. Testing destination URL protocol safety (rejecting dangerous schemes)...");
@@ -202,7 +202,7 @@ async function runPublicRedirectTestSuite() {
     assert.strictEqual(isSafeDestinationUrl("data:text/html,<script>alert(1)</script>"), false);
     assert.strictEqual(isSafeDestinationUrl("vbscript:msgbox(1)"), false);
     assert.strictEqual(isSafeDestinationUrl("//malicious.com/phish"), false);
-    console.log("✅ Destination URL protocol safety checks validated");
+    console.log("Destination URL protocol safety checks validated");
 
     // 10. Test Public Redirect Controller End-to-End Simulation
     console.log("10. Testing public redirect controller responses (302, 400, 404)...");
@@ -267,9 +267,9 @@ async function runPublicRedirectTestSuite() {
     await publicRedirectController(mockReqNotFound, mockResNotFound);
     assert.strictEqual(errorStatus, 404, "Nonexistent publicId must return 404");
     assert.strictEqual(errorMessage, "Link not found");
-    console.log("✅ Public redirect controller behavior verified (302, 400, 404)");
+    console.log("Public redirect controller behavior verified (302, 400, 404)");
 
-    console.log("\n🎉 ALL PUBLIC REDIRECT & ID DECOUPLING TESTS PASSED SUCCESSFULLY! 🚀\n");
+    console.log("\nALL PUBLIC REDIRECT & ID DECOUPLING TESTS PASSED SUCCESSFULLY! \n");
   } finally {
     // Cleanup test data
     try {
@@ -296,6 +296,6 @@ runPublicRedirectTestSuite()
     process.exit(0);
   })
   .catch((err) => {
-    console.error("❌ Public Redirect Test Suite Failed:", err);
+    console.error("Public Redirect Test Suite Failed:", err);
     process.exit(1);
   });

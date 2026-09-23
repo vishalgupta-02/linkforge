@@ -85,7 +85,7 @@ export const createProCheckoutSession = async (userId: string) => {
     if (error instanceof AppError) {
       throw error;
     }
-    console.error("❌ Stripe checkout session error:", error);
+    console.error("Stripe checkout session error:", error);
     throw new AppError(
       error?.message || "Failed to create Stripe checkout session",
       500,
@@ -146,7 +146,7 @@ export const createCustomerPortalSession = async (userId: string) => {
     if (error instanceof AppError) {
       throw error;
     }
-    console.error("❌ Stripe Customer Portal session error:", error);
+    console.error("Stripe Customer Portal session error:", error);
     throw new AppError(
       error?.message || "Failed to create Stripe Customer Portal session",
       500,
@@ -190,7 +190,7 @@ export const getBillingStatus = async (userId: string) => {
       }
     } catch (err) {
       console.warn(
-        `⚠️ Could not fetch Stripe subscription ${user.stripeSubscriptionId}:`,
+        `Could not fetch Stripe subscription ${user.stripeSubscriptionId}:`,
         err,
       );
     }
@@ -297,7 +297,7 @@ const handleCheckoutSessionCompleted = async (
 
   if (!user) {
     console.warn(
-      `⚠️ Could not find Linkforge user for completed checkout session ${session.id} (userId: ${userId}, customerId: ${customerId})`,
+      `Could not find Linkforge user for completed checkout session ${session.id} (userId: ${userId}, customerId: ${customerId})`,
     );
 
     await prisma.stripeWebhookEvent.create({
@@ -348,7 +348,7 @@ const handleCheckoutSessionCompleted = async (
   });
 
   console.log(
-    `✅ Successfully upgraded user ${user.id} (${user.userName || "unknown"}) to PRO (eventId=${eventId})`,
+    `Successfully upgraded user ${user.id} (${user.userName || "unknown"}) to PRO (eventId=${eventId})`,
   );
 
   if (wasUpgrade) {
@@ -359,7 +359,7 @@ const handleCheckoutSessionCompleted = async (
     const frontendUrl = (
       process.env.FRONTEND_URL || "http://localhost:3000"
     ).replace(/\/$/, "");
-    const dashboardUrl = `${frontendUrl}/dashboard/settings`;
+    const dashboardUrl = `${frontendUrl}/dashboard`;
     await enqueueProUpgradeEmail(
       {
         userId: user.id,
@@ -370,11 +370,11 @@ const handleCheckoutSessionCompleted = async (
       eventId,
     );
     console.log(
-      `📬 Enqueued Pro upgrade congratulations email for user ${user.id} (${user.email})`,
+      `Enqueued Pro upgrade congratulations email for user ${user.id} (${user.email})`,
     );
   } catch (emailQueueError) {
     console.error(
-      `❌ Failed to enqueue Pro upgrade email for user ${user.id}:`,
+      `Failed to enqueue Pro upgrade email for user ${user.id}:`,
       emailQueueError,
     );
   }
@@ -434,7 +434,7 @@ const handleSubscriptionDeleted = async (
 
   if (!user) {
     console.warn(
-      `⚠️ Could not find Linkforge user for deleted subscription ${subscription.id} (customerId: ${customerId})`,
+      `Could not find Linkforge user for deleted subscription ${subscription.id} (customerId: ${customerId})`,
     );
 
     await prisma.stripeWebhookEvent.create({
@@ -479,7 +479,7 @@ const handleSubscriptionDeleted = async (
   });
 
   console.log(
-    `✅ Successfully downgraded user ${user.id} (${user.userName || "unknown"}) to FREE (eventId=${eventId})`,
+    `Successfully downgraded user ${user.id} (${user.userName || "unknown"}) to FREE (eventId=${eventId})`,
   );
 };
 
@@ -598,7 +598,7 @@ export const handleStripeWebhook = async (
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    console.error("❌ Missing STRIPE_WEBHOOK_SECRET in environment variables");
+    console.error("Missing STRIPE_WEBHOOK_SECRET in environment variables");
     throw new AppError(
       "Stripe webhook secret is not configured on server",
       500,
@@ -615,7 +615,7 @@ export const handleStripeWebhook = async (
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (err: any) {
     console.error(
-      "❌ Stripe webhook signature verification failed:",
+      "Stripe webhook signature verification failed:",
       err?.message,
     );
     throw new AppError(
@@ -684,7 +684,7 @@ export const handleStripeWebhook = async (
     }
 
     console.error(
-      `❌ Stripe webhook processing failed: eventId=${event.id} (${event.type}):`,
+      `Stripe webhook processing failed: eventId=${event.id} (${event.type}):`,
       error,
     );
     throw error;

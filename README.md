@@ -30,7 +30,7 @@
 
 ---
 
-## 📖 Overview
+## Overview
 
 **LinkForge** is an open-source, full-stack, multi-tenant link-in-bio platform engineered for creators, professionals, and digital brands. It consolidates fragmented social links, portfolios, and external destinations into a single fast, mobile-optimized landing page while capturing real-time visitor intelligence (geography, device types, browser clients, and referral sources) with sub-second redirect throughput.
 
@@ -38,18 +38,18 @@ Unlike conventional link hubs that execute synchronous database writes during re
 
 ---
 
-## ⚡ Key Features
+## Key Features
 
-- **📱 Dynamic Link Management**: Add, edit, soft-delete, toggle visibility, and reorder links seamlessly with `@dnd-kit` touch-friendly drag-and-drop.
-- **🌐 Social Media Profiles & Separate Tracking**: Add and reorder social icons (Instagram, GitHub, X/Twitter, LinkedIn, YouTube, Discord, etc.) with dedicated click tracking per platform.
-- **📊 Tiered Creator Analytics**:
+- **Dynamic Link Management**: Add, edit, soft-delete, toggle visibility, and reorder links seamlessly with `@dnd-kit` touch-friendly drag-and-drop.
+- **Social Media Profiles & Separate Tracking**: Add and reorder social icons (Instagram, GitHub, X/Twitter, LinkedIn, YouTube, Discord, etc.) with dedicated click tracking per platform.
+- **Tiered Creator Analytics**:
   - **Free Tier**: Real-time total clicks, traffic trends, and top-performing social platform highlight.
   - **Pro Tier**: Granular multi-platform click breakdowns with percentage shares, geographic country distribution with flags, device distribution (Desktop/Mobile/Tablet), and referral source breakdown.
-- **⚡ Ultra-Low Latency Redirection (`/r/:publicId`)**: Immediate `302 Found` redirects while dispatching asynchronous click jobs to BullMQ queues.
-- **🔐 Robust Multi-Provider Authentication**: Email/password authentication, session management, and Google/GitHub OAuth via Better-Auth.
-- **💳 Monetization & Subscriptions**: Stripe Checkout and Customer Portal integration with automated webhook synchronization and PlanGuard RBAC middleware (`FREE`, `PRO`, `BUSINESS`).
-- **📧 Transactional Email Engine**: React Email JSX templates delivered via Resend and BullMQ queues (Welcome, Milestone Alerts, Pro Upgrades, Password Resets).
-- **🔭 End-to-End Observability**:
+- **Ultra-Low Latency Redirection (`/r/:publicId`)**: Immediate `302 Found` redirects while dispatching asynchronous click jobs to BullMQ queues.
+- **Robust Multi-Provider Authentication**: Email/password authentication, session management, and Google/GitHub OAuth via Better-Auth.
+- **Monetization & Subscriptions**: Stripe Checkout and Customer Portal integration with automated webhook synchronization and PlanGuard RBAC middleware (`FREE`, `PRO`, `BUSINESS`).
+- **Transactional Email Engine**: React Email JSX templates delivered via Resend and BullMQ queues (Welcome, Milestone Alerts, Pro Upgrades, Password Resets).
+- **End-to-End Observability**:
   - **OpenTelemetry SDK**: Distributed tracing auto-instrumenting Express, HTTP, pg, and ioredis, exported to Grafana Tempo.
   - **Prometheus & Alertmanager**: Live metric collection at `/metrics` with custom business metrics (`user_signups`, `clicks_processed`).
   - **Sentry SDK**: Error reporting and performance profiling across frontend and backend.
@@ -57,7 +57,7 @@ Unlike conventional link hubs that execute synchronous database writes during re
 
 ---
 
-## 🏛️ System Architecture
+## ️ System Architecture
 
 ```mermaid
 flowchart TD
@@ -104,7 +104,7 @@ flowchart TD
 
 ---
 
-## 🛠️ Tech Stack
+## ️ Tech Stack
 
 | Layer | Technologies |
 |---|---|
@@ -117,7 +117,7 @@ flowchart TD
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```text
 linkforge/
@@ -170,7 +170,7 @@ linkforge/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -241,7 +241,7 @@ pnpm email:dev
 
 ---
 
-## ⚙️ Environment Configuration
+## ️ Environment Configuration
 
 | Variable | Required | Default / Example | Purpose |
 |---|---|---|---|
@@ -265,7 +265,7 @@ pnpm email:dev
 
 ---
 
-## 📡 Key API Routes
+## Key API Routes
 
 All REST endpoints follow standard JSON envelopes (`{ success, message, data, statusCode }`).
 
@@ -292,7 +292,7 @@ All REST endpoints follow standard JSON envelopes (`{ success, message, data, st
 
 ---
 
-## 🧪 Testing & Quality
+## Testing & Quality
 
 LinkForge enforces automated linting, type-checking, and test suites across the monorepo:
 
@@ -317,7 +317,7 @@ pnpm build
 
 ---
 
-## 🔭 Observability & Operations
+## Observability & Operations
 
 - **Health Check**: `GET /health` (returns `200 OK` and status message)
 - **Prometheus Metrics**: `GET /metrics` (scrapes HTTP latency histograms, memory usage, and business counters)
@@ -326,18 +326,18 @@ pnpm build
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, development workflow, and commit message conventions ([Conventional Commits](https://www.conventionalcommits.org/)).
 
 ---
 
-## 🔒 Security
+## Security
 
 For security vulnerability disclosures, please review our [Security Policy](SECURITY.md). Do not file public GitHub issues for security vulnerabilities.
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the **MIT-0 License** — see the [LICENSE](LICENSE) file for details.

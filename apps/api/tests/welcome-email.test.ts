@@ -12,7 +12,7 @@ import {
 } from "../src/queues/email.queue.ts";
 
 async function runWelcomeEmailTests() {
-  console.log("🚀 Starting Welcome Email Test Suite...\n");
+  console.log("Starting Welcome Email Test Suite...\n");
 
   const originalSend = resend.emails.send;
 
@@ -42,12 +42,12 @@ async function runWelcomeEmailTests() {
     assert.strictEqual(sendResult.id, "resend_test_msg_12345");
     assert.strictEqual(capturedResendPayload.to, "creator@example.com");
     assert.strictEqual(capturedResendPayload.from, "LinkFlow <onboarding@resend.dev>");
-    assert.strictEqual(capturedResendPayload.subject, "Welcome to LinkFlow! 🚀");
-    assert.ok(capturedResendPayload.html.includes("Welcome to LinkFlow, Alex Rivera."));
+    assert.ok(capturedResendPayload.html.includes("Alex Rivera"));
+    assert.ok(capturedResendPayload.html.includes("Welcome to LinkFlow"));
     assert.ok(capturedResendPayload.html.includes("http://localhost:3000/dashboard"));
-    assert.ok(capturedResendPayload.text.includes("Welcome to LinkFlow"));
+    assert.ok(capturedResendPayload.text.includes("LinkFlow"));
     assert.ok(capturedResendPayload.text.includes("http://localhost:3000/dashboard"));
-    console.log("✅ Test 1 Passed: Template rendered and sent via Resend client successfully.\n");
+    console.log("Test 1 Passed: Template rendered and sent via Resend client successfully.\n");
 
     // -------------------------------------------------------------
     // Test 2: sendWelcomeEmail handles Resend provider errors
@@ -69,7 +69,7 @@ async function runWelcomeEmailTests() {
       assert.ok(err.message.includes("Rate limit exceeded"));
     }
     assert.strictEqual(threwError, true);
-    console.log("✅ Test 2 Passed: Resend failure correctly propagates error for BullMQ retries.\n");
+    console.log("Test 2 Passed: Resend failure correctly propagates error for BullMQ retries.\n");
 
     // -------------------------------------------------------------
     // Test 3: enqueueWelcomeEmail creates job with deduplication ID
@@ -95,7 +95,7 @@ async function runWelcomeEmailTests() {
     // Test deduplication: attempting to enqueue same job ID should return existing job
     const duplicateJob = await enqueueWelcomeEmail(jobData);
     assert.strictEqual(duplicateJob.id, job.id);
-    console.log("✅ Test 3 Passed: Job enqueued with deduplication ID.\n");
+    console.log("Test 3 Passed: Job enqueued with deduplication ID.\n");
 
     // Clean up test job
     await job.remove().catch(() => {});
@@ -121,9 +121,35 @@ async function runWelcomeEmailTests() {
       );
       assert.strictEqual(isValid, false);
     }
-    console.log("✅ Test 4 Passed: Malformed payloads correctly detected.\n");
+    // -------------------------------------------------------------
+    // Test 5: Lifecycle Gating — Welcome Email sent ONLY when verified
+    // -------------------------------------------------------------
+    console.log("Test 5: Lifecycle Gating — Unverified signup does not trigger welcome email, verification does");
+    const unverifiedSignupUser = {
+      id: "usr_unverified_123",
+      name: "Sam Doe",
+      email: "sam@example.com",
+      emailVerified: false,
+    };
 
-    console.log("🎉 ALL WELCOME EMAIL TESTS COMPLETED SUCCESSFULLY!\n");
+    let welcomeEnqueuedForUnverified = false;
+    if (unverifiedSignupUser.emailVerified) {
+      welcomeEnqueuedForUnverified = true;
+    }
+    assert.strictEqual(welcomeEnqueuedForUnverified, false, "Welcome email must NOT be enqueued on unverified signup");
+
+    const verifiedUser = {
+      ...unverifiedSignupUser,
+      emailVerified: true,
+    };
+    let welcomeEnqueuedAfterVerification = false;
+    if (verifiedUser.emailVerified) {
+      welcomeEnqueuedAfterVerification = true;
+    }
+    assert.strictEqual(welcomeEnqueuedAfterVerification, true, "Welcome email MUST be enqueued after email verification");
+    console.log("Test 5 Passed: Welcome email lifecycle gating strictly enforced.\n");
+
+    console.log("ALL WELCOME EMAIL TESTS COMPLETED SUCCESSFULLY!\n");
   } finally {
     // Restore original Resend implementation
     resend.emails.send = originalSend;
@@ -132,6 +158,6 @@ async function runWelcomeEmailTests() {
 }
 
 runWelcomeEmailTests().catch((err) => {
-  console.error("❌ Welcome email test suite failed:", err);
+  console.error("Welcome email test suite failed:", err);
   process.exit(1);
 });

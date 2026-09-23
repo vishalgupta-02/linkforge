@@ -12,6 +12,8 @@ import emailRoutes from "./email.routes.ts";
 import authRoutes from "./auth.routes.ts";
 import socialRoutes from "./social.routes.ts";
 import feedbackRoutes from "./feedback.routes.ts";
+import waitlistRoutes from "./waitlist.routes.ts";
+import integrationsRoutes from "./integrations.routes.ts";
 
 const router: Router = Router();
 
@@ -28,5 +30,7 @@ router.use("/billing", billingRoutes);
 router.use("/email", emailRoutes);
 router.use("/auth", authRoutes);
 router.use("/feedback", feedbackRoutes);
+router.use("/waitlist", waitlistRoutes);
+router.use("/integrations", integrationsRoutes);
 
 export default router;

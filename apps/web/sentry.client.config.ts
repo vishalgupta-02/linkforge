@@ -30,7 +30,7 @@ Sentry.init({
   enableLogs: true,
 
   beforeSend(event) {
-    // 🛡️ Privacy filter: Strip sensitive headers, cookies, and tokens
+    // Privacy filter: Strip sensitive headers, cookies, and tokens
     if (event.request) {
       if (event.request.headers) {
         const sensitiveHeaders = [

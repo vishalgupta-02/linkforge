@@ -3,7 +3,7 @@ import { prisma } from "../src/db/client.ts";
 import { getBillingStatus } from "../src/services/billing.service.ts";
 
 async function runBillingStatusTests() {
-  console.log("🚀 Starting Billing Status Test Suite...");
+  console.log("Starting Billing Status Test Suite...");
 
   const testFreeUserId = `test-user-status-free-${Date.now()}`;
   const testProUserId = `test-user-status-pro-${Date.now()}`;
@@ -32,7 +32,7 @@ async function runBillingStatusTests() {
     assert.strictEqual(freeStatus.nextBillingDate, null);
     assert.strictEqual(freeStatus.hasBillingAccount, false);
     assert.strictEqual((freeStatus as any).stripeSecretKey, undefined);
-    console.log("✅ FREE user status correctly returned without fake dates");
+    console.log("FREE user status correctly returned without fake dates");
 
     // 3. Create test PRO user
     console.log("3. Creating test PRO user...");
@@ -56,16 +56,16 @@ async function runBillingStatusTests() {
     assert.strictEqual(proStatus.plan, "PRO");
     assert.strictEqual(proStatus.hasBillingAccount, true);
     assert.strictEqual((proStatus as any).stripeSecretKey, undefined);
-    console.log("✅ PRO user status correctly returned:", proStatus);
+    console.log("PRO user status correctly returned:", proStatus);
 
-    console.log("\n🎉 ALL BILLING STATUS TESTS COMPLETED SUCCESSFULLY!\n");
+    console.log("\nALL BILLING STATUS TESTS COMPLETED SUCCESSFULLY!\n");
   } finally {
     // Cleanup
     try {
       await prisma.user.deleteMany({
         where: { id: { in: [testFreeUserId, testProUserId] } },
       });
-      console.log("🧹 Test users cleaned up successfully");
+      console.log("Test users cleaned up successfully");
     } catch {
       // ignore cleanup errors
     }
@@ -73,6 +73,6 @@ async function runBillingStatusTests() {
 }
 
 runBillingStatusTests().catch((err) => {
-  console.error("❌ Test suite failed:", err);
+  console.error("Test suite failed:", err);
   process.exit(1);
 });

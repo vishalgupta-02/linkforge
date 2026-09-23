@@ -3,7 +3,7 @@ import { prisma } from "../db/client.ts";
 
 export const startCleanupJob = () => {
   cron.schedule("0 0 * * *", async () => {
-    console.log("🧹 Running cleanup job...");
+    console.log("[Cleanup] Running cleanup job...");
 
     const THIRTY_DAYS_AGO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const SEVEN_DAYS_AGO = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -25,6 +25,6 @@ export const startCleanupJob = () => {
       },
     });
 
-    console.log("✅ Old deleted links and expired reset tokens removed");
+    console.log("[Cleanup] Old deleted links and expired reset tokens removed");
   });
 };

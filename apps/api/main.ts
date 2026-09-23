@@ -24,22 +24,22 @@ import * as Sentry from "@sentry/node";
 
 const app: Express = express();
 
-// 🔐 1. trust proxy (MUST be configured before any IP-dependent middleware)
+// 1. trust proxy (MUST be configured before any IP-dependent middleware)
 app.set("trust proxy", 1);
 app.disable("x-powered-by");
 
 startCleanupJob();
 
-// 🆔 Attach and propagate unique Request IDs
+// Attach and propagate unique Request IDs
 app.use(requestIdMiddleware);
 
-// 📊 Prometheus HTTP Metrics Middleware
+// Prometheus HTTP Metrics Middleware
 app.use(metricsMiddleware);
 
-// 🌐 CORS Middleware (MUST run before body parsers and route handlers)
+// CORS Middleware (MUST run before body parsers and route handlers)
 app.use(corsMiddleware);
 
-// ⚡ Stripe Webhook requires raw Buffer body for signature verification
+// Stripe Webhook requires raw Buffer body for signature verification
 app.use("/api/v1/billing/webhook", express.raw({ type: "application/json" }));
 
 app.use(
@@ -51,10 +51,10 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true }));
 
-// 🚦 Global rate limiting
+// Global rate limiting
 app.use(rateLimitMiddleware);
 
-// 🔐 Helmet (with custom CSP)
+// Helmet (with custom CSP)
 app.use(
   helmet({
     // Enable all sensible defaults
@@ -84,7 +84,7 @@ app.use(
       },
     },
 
-    // 🔒 HSTS (force HTTPS)
+    // HSTS (force HTTPS)
     hsts: {
       maxAge: 31536000, // 1 year
       includeSubDomains: true,
@@ -108,7 +108,7 @@ app.use((req, res, next) => {
 // Mount Better Auth handler
 app.use("/api/auth", toNodeHandler(auth));
 
-// 🔐 Direct OAuth Callback Route (e.g. http://localhost:5000/callback/google -> /api/auth/callback/google)
+// Direct OAuth Callback Route (e.g. http://localhost:5000/callback/google -> /api/auth/callback/google)
 app.get("/callback/:provider", (req, res) => {
   const provider = req.params.provider;
   const query = req.url.includes("?")
@@ -118,7 +118,7 @@ app.get("/callback/:provider", (req, res) => {
 });
 
 app.get("/", (request, response) => {
-  response.json({ message: "API running 🚀" });
+  response.json({ message: "API running" });
 });
 
 app.get("/api/me", async (req, res) => {
@@ -135,7 +135,7 @@ app.get("/health", (request, response) => {
   });
 });
 
-// 📈 Prometheus Metrics Scrape Endpoint
+// Prometheus Metrics Scrape Endpoint
 app.get("/metrics", async (req, res) => {
   const metricsToken = process.env.METRICS_TOKEN;
   if (metricsToken) {
@@ -156,10 +156,10 @@ app.get("/metrics", async (req, res) => {
   }
 });
 
-// 🔥 Bull Board UI (Protected by Admin Auth)
+// Bull Board UI (Protected by Admin Auth)
 app.use("/admin/queues", adminAuthMiddleware, serverAdapter.getRouter());
 
-// 🔗 Public Redirect Route (/r/:publicId)
+// Public Redirect Route (/r/:publicId)
 app.use("/r", publicRedirectRoutes);
 
 app.use("/api", apiRoutes);

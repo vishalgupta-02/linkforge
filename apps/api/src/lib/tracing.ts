@@ -107,11 +107,11 @@ export function initTracing(): void {
     isInitialized = true;
     const safeEndpoint = sanitizeOtelEndpoint(otlpEndpoint);
     console.log(
-      `📡 [OpenTelemetry] Tracing initialized (Service: ${serviceName}, Environment: ${environment}, Endpoint: ${safeEndpoint})`,
+      `[OpenTelemetry] Tracing initialized (Service: ${serviceName}, Environment: ${environment}, Endpoint: ${safeEndpoint})`,
     );
   } catch (error) {
     console.error(
-      "⚠️ [OpenTelemetry] Failed to initialize tracing SDK:",
+      "[OpenTelemetry] Failed to initialize tracing SDK:",
       error,
     );
   }
@@ -123,9 +123,9 @@ export async function shutdownTracing(): Promise<void> {
   try {
     await sdk.shutdown();
     isInitialized = false;
-    console.log("🛑 [OpenTelemetry] Tracing SDK shut down gracefully");
+    console.log("[OpenTelemetry] Tracing SDK shut down gracefully");
   } catch (error) {
-    console.error("❌ [OpenTelemetry] Error shutting down tracing SDK:", error);
+    console.error("[OpenTelemetry] Error shutting down tracing SDK:", error);
   }
 }
 

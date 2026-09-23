@@ -41,7 +41,7 @@ function calculateErrorRate(fiveXxRequests: number, totalRequests: number): numb
 }
 
 async function runAlertsTestSuite() {
-  console.log("🚀 Starting Prometheus Alerting Rules & Alertmanager Verification Test Suite...\n");
+  console.log("Starting Prometheus Alerting Rules & Alertmanager Verification Test Suite...\n");
 
   // ===========================================================================
   // 1. Validate infra/prometheus/rules/alerts.yml file existence and contents
@@ -135,7 +135,7 @@ async function runAlertsTestSuite() {
     "HighQueueDepth must have severity 'warning'",
   );
 
-  console.log("✅ All 3 Prometheus alerting rules validated successfully!");
+  console.log("All 3 Prometheus alerting rules validated successfully!");
 
   // ===========================================================================
   // 2. Validate infra/prometheus/prometheus.yml configuration
@@ -168,7 +168,7 @@ async function runAlertsTestSuite() {
     prometheusConfig.includes("alertmanager:9093"),
     "prometheus.yml must target alertmanager:9093 on Docker network",
   );
-  console.log("✅ prometheus.yml rule loading and Alertmanager target validated!");
+  console.log("prometheus.yml rule loading and Alertmanager target validated!");
 
   // ===========================================================================
   // 3. Validate infra/alertmanager/alertmanager.yml configuration
@@ -213,7 +213,7 @@ async function runAlertsTestSuite() {
     alertmanagerConfig.includes("send_resolved: true"),
     "email_configs must enable send_resolved notifications",
   );
-  console.log("✅ alertmanager.yml SMTP, routing, and email receivers validated!");
+  console.log("alertmanager.yml SMTP, routing, and email receivers validated!");
 
   // ===========================================================================
   // 4. Validate docker-compose.prod.yml configuration
@@ -254,7 +254,7 @@ async function runAlertsTestSuite() {
     "prometheus service must mount rules directory",
   );
 
-  console.log("✅ docker-compose.prod.yml Alertmanager service and volumes validated!");
+  console.log("docker-compose.prod.yml Alertmanager service and volumes validated!");
 
   // ===========================================================================
   // 5. Mathematical & PromQL Semantics Simulations
@@ -278,9 +278,9 @@ async function runAlertsTestSuite() {
   const elevatedTraffic = calculateErrorRate(6, 100); // 6%
   assert.strictEqual(elevatedTraffic, 0.06);
   assert.strictEqual(elevatedTraffic > 0.05, true, "6% error rate (> 5%) MUST fire alert");
-  console.log("     ✓ 0% error rate: no fire");
-  console.log("     ✓ 3% error rate: no fire");
-  console.log("     ✓ 6% error rate: FIRES (> 5% threshold)");
+  console.log("     0% error rate: no fire");
+  console.log("     3% error rate: no fire");
+  console.log("     6% error rate: FIRES (> 5% threshold)");
 
   // Scenario B: P99 Latency Histogram Simulation
   console.log("   - Testing P99 Latency Histogram quantile calculation:");
@@ -313,8 +313,8 @@ async function runAlertsTestSuite() {
   const highP99 = calculateP99FromBuckets(highLatencyBuckets);
   assert.ok(highP99 > 2.0, `Degraded P99 (${highP99.toFixed(3)}s) must be > 2.0s`);
   assert.strictEqual(highP99 > 2.0, true, "Degraded P99 (> 2.0s) MUST fire alert");
-  console.log(`     ✓ Normal traffic P99 (${normalP99.toFixed(3)}s): no fire`);
-  console.log(`     ✓ Degraded traffic P99 (${highP99.toFixed(3)}s): FIRES (> 2.0s threshold)`);
+  console.log(`     Normal traffic P99 (${normalP99.toFixed(3)}s): no fire`);
+  console.log(`     Degraded traffic P99 (${highP99.toFixed(3)}s): FIRES (> 2.0s threshold)`);
 
   // Scenario C: Queue Depth Simulation
   console.log("   - Testing Queue Depth threshold logic (> 1000):");
@@ -329,14 +329,14 @@ async function runAlertsTestSuite() {
 
   const burstQueue = 2500;
   assert.strictEqual(burstQueue > 1000, true, "2500 queue depth MUST fire alert");
-  console.log("     ✓ 42 jobs: no fire");
-  console.log("     ✓ 999 jobs: no fire");
-  console.log("     ✓ 1001 jobs: FIRES (> 1000 threshold)");
+  console.log("     42 jobs: no fire");
+  console.log("     999 jobs: no fire");
+  console.log("     1001 jobs: FIRES (> 1000 threshold)");
 
-  console.log("\n🎉 ALL PROMETHEUS ALERTING & ALERTMANAGER TESTS PASSED SUCCESSFULLY! 🚀\n");
+  console.log("\nALL PROMETHEUS ALERTING & ALERTMANAGER TESTS PASSED SUCCESSFULLY! \n");
 }
 
 runAlertsTestSuite().catch((err) => {
-  console.error("❌ Alerts Test Suite Failed:", err);
+  console.error("Alerts Test Suite Failed:", err);
   process.exit(1);
 });

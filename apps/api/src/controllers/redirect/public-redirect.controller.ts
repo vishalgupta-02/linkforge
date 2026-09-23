@@ -5,6 +5,7 @@ import { enqueueClickEvent } from "../../services/click-event.service.ts";
 import { isValidPublicId } from "../../utils/public-id.ts";
 import { isSafeDestinationUrl } from "../../validators/link.validator.ts";
 import { logger } from "../../lib/logger.ts";
+import { resolveDeepLink, generateDeepLinkTrampolineHtml } from "../../utils/deep-link.ts";
 
 export const publicRedirectController = async (req: Request, res: Response) => {
   const { publicId } = req.params;
@@ -14,6 +15,10 @@ export const publicRedirectController = async (req: Request, res: Response) => {
       message: "Invalid redirect identifier",
     });
   }
+
+  const userAgent = req.headers["user-agent"] || "";
+  const acceptsHtml = req.headers.accept?.includes("text/html") ?? true;
+  const disableDeepLink = req.query.no_deep_link === "1" || req.query.no_deep_link === "true";
 
   const link = await getLinkByPublicId(publicId);
 
@@ -33,6 +38,20 @@ export const publicRedirectController = async (req: Request, res: Response) => {
       userId: link.userId,
       req,
     });
+
+    if (!disableDeepLink && acceptsHtml) {
+      const deepLink = resolveDeepLink(link.url, userAgent);
+      if (deepLink.isMobile && deepLink.appScheme && deepLink.platformName) {
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        return res.send(
+          generateDeepLinkTrampolineHtml(
+            deepLink.appScheme,
+            deepLink.fallbackUrl,
+            deepLink.platformName,
+          ),
+        );
+      }
+    }
 
     return res.redirect(302, link.url);
   }
@@ -61,6 +80,20 @@ export const publicRedirectController = async (req: Request, res: Response) => {
       userId: social.userId,
       req,
     });
+
+    if (!disableDeepLink && acceptsHtml && !formattedUrl.startsWith("mailto:")) {
+      const deepLink = resolveDeepLink(formattedUrl, userAgent);
+      if (deepLink.isMobile && deepLink.appScheme && deepLink.platformName) {
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        return res.send(
+          generateDeepLinkTrampolineHtml(
+            deepLink.appScheme,
+            deepLink.fallbackUrl,
+            deepLink.platformName,
+          ),
+        );
+      }
+    }
 
     return res.redirect(302, formattedUrl);
   }

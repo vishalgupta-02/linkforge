@@ -40,7 +40,7 @@ export const ProUpgradeEmail = ({
 
           <Section style={contentSection}>
             <Heading as="h1" style={heading}>
-              You&apos;re now on LinkFlow Pro, {userName}! 🎉
+              You&apos;re now on LinkFlow Pro, {userName}!
             </Heading>
 
             <Text style={paragraph}>

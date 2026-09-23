@@ -12,7 +12,7 @@ import {
 } from "../src/queues/email.queue.ts";
 
 async function runEmailVerificationTests() {
-  console.log("🚀 Starting Email Verification Test Suite...\n");
+  console.log("Starting Email Verification Test Suite...\n");
 
   const originalSend = resend.emails.send;
 
@@ -42,12 +42,12 @@ async function runEmailVerificationTests() {
     assert.strictEqual(sendResult.id, "verify_msg_test_1122");
     assert.strictEqual(capturedResendPayload.to, "newuser@example.com");
     assert.strictEqual(capturedResendPayload.from, "LinkFlow <onboarding@resend.dev>");
-    assert.strictEqual(capturedResendPayload.subject, "Verify your LinkForge email address 🔒");
+    assert.strictEqual(capturedResendPayload.subject, "Verify your LinkForge email address ");
     assert.ok(capturedResendPayload.html.includes("Taylor Swift"));
     assert.ok(capturedResendPayload.html.includes("sec_tok_12345"));
     assert.ok(capturedResendPayload.text.includes("Taylor Swift"));
     assert.ok(capturedResendPayload.text.includes("sec_tok_12345"));
-    console.log("✅ Test 1 Passed: Verification email rendered and sent via Resend successfully.\n");
+    console.log("Test 1 Passed: Verification email rendered and sent via Resend successfully.\n");
 
     // -------------------------------------------------------------
     // Test 2: enqueueVerificationEmail creates job in BullMQ queue
@@ -86,7 +86,7 @@ async function runEmailVerificationTests() {
     assert.ok(capturedOpts.jobId);
     assert.ok(capturedOpts.jobId.startsWith(VERIFICATION_EMAIL_JOB_NAME));
 
-    console.log("✅ Test 2 Passed: Verification job enqueued with unique jobId.\n");
+    console.log("Test 2 Passed: Verification job enqueued with unique jobId.\n");
 
     // -------------------------------------------------------------
     // Test 3: OAuth Exemption and Welcome Email logic
@@ -105,9 +105,9 @@ async function runEmailVerificationTests() {
     // OAuth user does NOT require email verification
     const requiresVerification = !oauthUser.emailVerified;
     assert.strictEqual(requiresVerification, false);
-    console.log("✅ Test 3 Passed: OAuth users bypass verification check correctly.\n");
+    console.log("Test 3 Passed: OAuth users bypass verification check correctly.\n");
 
-    console.log("🎉 ALL EMAIL VERIFICATION TESTS COMPLETED SUCCESSFULLY!\n");
+    console.log("ALL EMAIL VERIFICATION TESTS COMPLETED SUCCESSFULLY!\n");
     process.exit(0);
   } finally {
     resend.emails.send = originalSend;
@@ -115,6 +115,6 @@ async function runEmailVerificationTests() {
 }
 
 runEmailVerificationTests().catch((err) => {
-  console.error("❌ Email verification test suite failed:", err);
+  console.error("Email verification test suite failed:", err);
   process.exit(1);
 });

@@ -9,7 +9,7 @@ import { stopBusinessMetricsRefresher } from "../src/lib/metrics.ts";
 import app from "../main.ts";
 
 async function runLoggerTestSuite() {
-  console.log("🚀 Starting Pino Structured Logging & Async Request Correlation Test Suite...\n");
+  console.log("Starting Pino Structured Logging & Async Request Correlation Test Suite...\n");
 
   const capturedLogs: Array<Record<string, unknown>> = [];
   const originalWrite = process.stdout.write;
@@ -63,7 +63,7 @@ async function runLoggerTestSuite() {
       assert.ok(typeof log.message === "string", "'message' must be string");
     }
 
-    console.log("✅ All log lines strictly emit valid structured JSON with required schema fields");
+    console.log("All log lines strictly emit valid structured JSON with required schema fields");
 
     // -------------------------------------------------------------------------
     // 2. Non-HTTP Context (Null Defaults)
@@ -79,7 +79,7 @@ async function runLoggerTestSuite() {
     assert.strictEqual(nonHttpLog.userId, null, "userId must be null when outside user context");
     assert.strictEqual(nonHttpLog.queue, "click-tracking");
 
-    console.log("✅ Non-HTTP logs safely default requestId and userId to null without fabricating identifiers");
+    console.log("Non-HTTP logs safely default requestId and userId to null without fabricating identifiers");
 
     // -------------------------------------------------------------------------
     // 3. AsyncLocalStorage Request Context Propagation Across Async Boundaries
@@ -111,7 +111,7 @@ async function runLoggerTestSuite() {
       assert.strictEqual(log.userId, testUserId, "userId must propagate across all async boundaries");
     }
 
-    console.log("✅ AsyncLocalStorage seamlessly propagates requestId and userId through asynchronous service layers");
+    console.log("AsyncLocalStorage seamlessly propagates requestId and userId through asynchronous service layers");
 
     // -------------------------------------------------------------------------
     // 4. Dynamic User ID Context Enrichment (Authentication)
@@ -138,7 +138,7 @@ async function runLoggerTestSuite() {
     assert.strictEqual(authLogs[1].requestId, "req_auth_flow_456");
     assert.strictEqual(authLogs[1].userId, "usr_authenticated_777", "Subsequent log should contain enriched userId");
 
-    console.log("✅ updateUserContext() safely updates active request context with authenticated user ID");
+    console.log("updateUserContext() safely updates active request context with authenticated user ID");
 
     // -------------------------------------------------------------------------
     // 5. Concurrent Request Isolation (No Context Leakage)
@@ -179,7 +179,7 @@ async function runLoggerTestSuite() {
       }
     }
 
-    console.log("✅ Zero context leakage between concurrent asynchronous requests");
+    console.log("Zero context leakage between concurrent asynchronous requests");
 
     // -------------------------------------------------------------------------
     // 6. Request ID Sanitization & Response Header Echoing
@@ -213,7 +213,7 @@ async function runLoggerTestSuite() {
       assert.strictEqual(resC.headers["X-Request-ID"], reqC.id);
     });
 
-    console.log("✅ Request ID middleware sanitizes dangerous headers and echoes safe X-Request-ID");
+    console.log("Request ID middleware sanitizes dangerous headers and echoes safe X-Request-ID");
 
     // -------------------------------------------------------------------------
     // 7. Sensitive Data Redaction
@@ -243,7 +243,7 @@ async function runLoggerTestSuite() {
     assert.strictEqual(redactedLog.creditCard, "[REDACTED]");
     assert.strictEqual(redactedLog.safePublicField, "allowed_value");
 
-    console.log("✅ All sensitive keys (passwords, tokens, cookies, auth headers) are automatically redacted");
+    console.log("All sensitive keys (passwords, tokens, cookies, auth headers) are automatically redacted");
 
     // -------------------------------------------------------------------------
     // 8. Structured Error Logging
@@ -266,7 +266,7 @@ async function runLoggerTestSuite() {
     assert.strictEqual((errorLog.error as any).message, "Database timeout on user lookup");
     assert.ok((errorLog.error as any).stack, "Error stack should be recorded");
 
-    console.log("✅ Errors are cleanly serialized with name, message, stack, and context");
+    console.log("Errors are cleanly serialized with name, message, stack, and context");
 
     // -------------------------------------------------------------------------
     // 9. OpenTelemetry Trace Correlation (traceId & spanId)
@@ -286,7 +286,7 @@ async function runLoggerTestSuite() {
     assert.strictEqual(typeof tracedLog.traceId, "string");
     assert.strictEqual((tracedLog.traceId as string).length, 32);
 
-    console.log("✅ OpenTelemetry traceId and spanId are automatically injected into Pino log JSON");
+    console.log("OpenTelemetry traceId and spanId are automatically injected into Pino log JSON");
 
     // -------------------------------------------------------------------------
     // 10. End-to-End Express HTTP Request Lifecycle & Header Validation
@@ -317,12 +317,12 @@ async function runLoggerTestSuite() {
       assert.strictEqual(httpCompletionLog.statusCode, 200);
       assert.ok(typeof httpCompletionLog.durationMs === "number");
 
-      console.log("✅ End-to-end HTTP request completes with X-Request-ID and structured completion log");
+      console.log("End-to-end HTTP request completes with X-Request-ID and structured completion log");
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
     }
 
-    console.log("\n🎉 ALL 10 PINO LOGGING & REQUEST CONTEXT TESTS PASSED SUCCESSFULLY! 🚀\n");
+    console.log("\nALL 10 PINO LOGGING & REQUEST CONTEXT TESTS PASSED SUCCESSFULLY! \n");
   } finally {
     stopLogCapture();
     stopBusinessMetricsRefresher();
@@ -330,6 +330,6 @@ async function runLoggerTestSuite() {
 }
 
 runLoggerTestSuite().catch((err) => {
-  console.error("❌ Logger Test Suite Failed:", err);
+  console.error("Logger Test Suite Failed:", err);
   process.exit(1);
 });

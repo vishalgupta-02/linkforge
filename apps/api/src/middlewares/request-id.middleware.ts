@@ -44,7 +44,8 @@ export function requestIdMiddleware(
 
   const startTime = process.hrtime.bigint();
 
-  res.on("finish", () => {
+  const attachFinish = (res.once || res.on).bind(res);
+  attachFinish("finish", () => {
     const durationNs = process.hrtime.bigint() - startTime;
     const durationMs = Math.round(Number(durationNs) / 1e4) / 100; 
 

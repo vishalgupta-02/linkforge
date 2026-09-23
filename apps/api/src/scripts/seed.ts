@@ -2,7 +2,7 @@ import { prisma } from "../db/client.ts";
 import bcrypt from "bcrypt";
 
 async function seed() {
-  console.log("🌱 Starting LinkFlow Database Seeding (10 users, 5 links each)...");
+  console.log("[Seed] Starting LinkFlow Database Seeding (10 users, 5 links each)...");
 
   const hashedPassword = await bcrypt.hash("Password123!", 10);
 
@@ -24,45 +24,34 @@ async function seed() {
         userName_lower: username.toLowerCase(),
         name,
         password: hashedPassword,
-        bio: `Hi, I am test user #${i} exploring LinkFlow! 🚀`,
+        bio: `Hi, I am test user #${i} exploring LinkFlow!`,
         plan: i <= 2 ? "PRO" : "FREE",
       },
     });
 
-    console.log(`👤 User #${i} ready: ${user.email} (@${user.userName})`);
+    console.log(`User #${i} ready: ${user.email} (@${user.userName})`);
 
     for (let j = 1; j <= 5; j++) {
       const linkTitle = `Resource ${j} for ${name}`;
-      const linkUrl = `https://example.com/resources/${i}/${j}`;
-
-      const existingLink = await prisma.link.findFirst({
-        where: {
+      await prisma.link.create({
+        data: {
+          title: linkTitle,
+          url: `https://example.com/${username}/resource-${j}`,
           userId: user.id,
-          url: linkUrl,
+          public: true,
+          position: j - 1,
+          counts: Math.floor(Math.random() * 500) + 10,
         },
       });
-
-      if (!existingLink) {
-        await prisma.link.create({
-          data: {
-            userId: user.id,
-            title: linkTitle,
-            url: linkUrl,
-            position: j - 1,
-            public: true,
-            isActive: true,
-          },
-        });
-      }
     }
   }
 
-  console.log("✅ Seeding completed: 10 fake users with 5 links each successfully seeded!");
+  console.log("Seeding completed: 10 fake users with 5 links each successfully seeded!");
 }
 
-seed()
+main()
   .catch((e) => {
-    console.error("❌ Seeding failed:", e);
+    console.error("Seeding failed:", e);
     process.exit(1);
   })
   .finally(async () => {

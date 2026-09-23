@@ -5,7 +5,7 @@ import { getTraceContext, createTraceSpan } from "../src/utils/tracing-utils.ts"
 import { logger } from "../src/lib/logger.ts";
 
 async function runTracingTestSuite() {
-  console.log("🚀 Starting OpenTelemetry Distributed Tracing Test Suite...\n");
+  console.log("Starting OpenTelemetry Distributed Tracing Test Suite...\n");
 
   // ---------------------------------------------------------------------------
   // 1. OpenTelemetry SDK Initialization
@@ -14,7 +14,7 @@ async function runTracingTestSuite() {
   initTracing();
   // Multiple calls should be idempotent and not throw
   initTracing();
-  console.log("✅ OpenTelemetry NodeSDK initializes cleanly and idempotently");
+  console.log("OpenTelemetry NodeSDK initializes cleanly and idempotently");
 
   // ---------------------------------------------------------------------------
   // 2. getTraceContext() outside of active span
@@ -26,7 +26,7 @@ async function runTracingTestSuite() {
     {},
     "getTraceContext() should return empty object when no active span exists",
   );
-  console.log("✅ getTraceContext() safely returns empty context outside active spans");
+  console.log("getTraceContext() safely returns empty context outside active spans");
 
   // ---------------------------------------------------------------------------
   // 3. createTraceSpan() - Success Execution and Span Context Extraction
@@ -53,7 +53,7 @@ async function runTracingTestSuite() {
   }, { "test.attribute": "sample_value", "operation.type": "unit-test" });
 
   assert.strictEqual(result, "test-result-value");
-  console.log("✅ createTraceSpan() creates span, exposes traceId/spanId, and returns execution result");
+  console.log("createTraceSpan() creates span, exposes traceId/spanId, and returns execution result");
 
   // ---------------------------------------------------------------------------
   // 4. createTraceSpan() - Error Recording & Propagation
@@ -71,7 +71,7 @@ async function runTracingTestSuite() {
   }
 
   assert.strictEqual(errorCaught, true, "createTraceSpan must rethrow errors to caller");
-  console.log("✅ createTraceSpan() properly catches, marks span error, and re-throws exception");
+  console.log("createTraceSpan() properly catches, marks span error, and re-throws exception");
 
   // ---------------------------------------------------------------------------
   // 5. Nested Spans (Parent-Child Span Propagation)
@@ -105,7 +105,7 @@ async function runTracingTestSuite() {
       });
     });
   });
-  console.log("✅ Distributed trace tree correctly maintains traceId across nested DB/Redis spans");
+  console.log("Distributed trace tree correctly maintains traceId across nested DB/Redis spans");
 
   // ---------------------------------------------------------------------------
   // 6. Structured Logger Trace Correlation
@@ -149,7 +149,7 @@ async function runTracingTestSuite() {
     process.stdout.write = originalWrite;
   }
 
-  console.log("✅ Structured logger automatically injects active trace_id and span_id into log JSON");
+  console.log("Structured logger automatically injects active trace_id and span_id into log JSON");
 
   // ---------------------------------------------------------------------------
   // 7. Structured Logger outside Span Context
@@ -176,19 +176,19 @@ async function runTracingTestSuite() {
   } finally {
     process.stdout.write = originalWrite;
   }
-  console.log("✅ Structured logger safely omits trace fields when no active span exists");
+  console.log("Structured logger safely omits trace fields when no active span exists");
 
   // ---------------------------------------------------------------------------
   // 8. OpenTelemetry SDK Graceful Shutdown
   // ---------------------------------------------------------------------------
   console.log("\n8. Testing OpenTelemetry SDK Graceful Shutdown...");
   await shutdownTracing();
-  console.log("✅ shutdownTracing() successfully flushes and shuts down tracing subsystem");
+  console.log("shutdownTracing() successfully flushes and shuts down tracing subsystem");
 
-  console.log("\n🎉 ALL 8 OPENTELEMETRY TRACING TESTS PASSED SUCCESSFULLY! 🚀\n");
+  console.log("\nALL 8 OPENTELEMETRY TRACING TESTS PASSED SUCCESSFULLY! \n");
 }
 
 runTracingTestSuite().catch((err) => {
-  console.error("❌ Tracing Test Suite Failed:", err);
+  console.error("Tracing Test Suite Failed:", err);
   process.exit(1);
 });

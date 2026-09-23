@@ -88,7 +88,7 @@ const Hero = () => {
                 <BadgeCheck size={16} className="text-violet-500" />
               </div>
               <p className="mb-6 text-center text-[13px] leading-relaxed font-medium text-zinc-600 dark:text-zinc-400">
-                Digital artist & designer. ✨
+                Digital artist & designer.
               </p>
               <div className="w-full space-y-3">
                 {[

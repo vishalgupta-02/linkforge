@@ -10,5 +10,5 @@ export function getNextMilestone(currentMilestone: number): number | null {
 }
 
 export function getMilestoneEmailSubject(milestone: number): string {
-  return `Your links just hit ${milestone.toLocaleString()} clicks! 🚀`;
+  return `Your links just hit ${milestone.toLocaleString()} clicks!`;
 }

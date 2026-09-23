@@ -25,12 +25,12 @@ export interface FeedbackEmailProps {
 }
 
 const categoryLabels: Record<string, string> = {
-  general: "💬 General Feedback",
-  bug: "🐛 Bug Report",
-  feature: "✨ Feature Request",
-  billing: "💳 Billing / Subscription",
-  question: "❓ Question / Support",
-  other: "📝 Other Feedback",
+  general: "General Feedback",
+  bug: "Bug Report",
+  feature: "Feature Request",
+  billing: "Billing / Subscription",
+  question: "Question / Support",
+  other: "Other Feedback",
 };
 
 export const FeedbackEmail: React.FC<FeedbackEmailProps> = ({
@@ -42,7 +42,7 @@ export const FeedbackEmail: React.FC<FeedbackEmailProps> = ({
   userId,
   submittedAt = new Date().toUTCString(),
 }) => {
-  const stars = "★".repeat(Math.max(1, Math.min(5, rating || 5))) + "☆".repeat(Math.max(0, 5 - (rating || 5)));
+  const ratingDisplay = `${rating}/5`;
 
   return (
     <Html>
@@ -63,7 +63,7 @@ export const FeedbackEmail: React.FC<FeedbackEmailProps> = ({
             </Text>
             <Text style={metaRow}>
               <strong style={label}>Rating:</strong>{" "}
-              <span style={ratingText}>{stars} ({rating}/5)</span>
+              <span style={ratingText}>{ratingDisplay}</span>
             </Text>
             <Text style={metaRow}>
               <strong style={label}>From:</strong> {name} (
