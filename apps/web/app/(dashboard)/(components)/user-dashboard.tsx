@@ -250,9 +250,9 @@ export default function UserDashboard() {
                           )}
                         </button>
                         {link.isActive ? (
-                          <span className="text-emerald-600">✓ Active</span>
+                          <span className="text-emerald-600">Active</span>
                         ) : (
-                          <span className="text-zinc-500">○ Inactive</span>
+                          <span className="text-zinc-500">Inactive</span>
                         )}
                       </div>
                     </div>

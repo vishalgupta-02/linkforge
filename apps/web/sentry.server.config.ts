@@ -25,6 +25,20 @@ Sentry.init({
 
   sendDefaultPii: false,
 
+  integrations: [
+    Sentry.httpIntegration({
+      trackIncomingRequestsAsSessions: false,
+      ignoreIncomingRequests: (url: string) => {
+        return (
+          typeof url === "string" &&
+          (url.startsWith("/monitoring") ||
+            url.startsWith("/r/") ||
+            url.startsWith("/_next/"))
+        );
+      },
+    }),
+  ],
+
   beforeSend(event) {
     if (event.request) {
       if (event.request.headers) {

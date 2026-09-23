@@ -59,6 +59,12 @@ export function PublicProfileDisplay({ username }: PublicProfilePageProps) {
   const socialLinks: PublicProfileSocial[] =
     profile.data?.socialLinks || profile.socialLinks || [];
 
+  const isProOrBusiness =
+    profile.data?.plan === "PRO" ||
+    profile.data?.plan === "BUSINESS" ||
+    (profile as any).plan === "PRO" ||
+    (profile as any).plan === "BUSINESS";
+
   return (
     <>
       <div
@@ -153,19 +159,21 @@ export function PublicProfileDisplay({ username }: PublicProfilePageProps) {
             )}
           </div>
 
-          <div className="animate-fade-in-up mt-16 mb-8 delay-200">
-            <a
-              href="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 opacity-40 transition-opacity hover:opacity-100"
-            >
-              <LinkIcon size={12} strokeWidth={3} />
-              <span className="text-[11px] font-bold tracking-widest uppercase">
-                Linkforge
-              </span>
-            </a>
-          </div>
+          {!isProOrBusiness && (
+            <div className="animate-fade-in-up mt-16 mb-8 delay-200">
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 opacity-40 transition-opacity hover:opacity-100"
+              >
+                <LinkIcon size={12} strokeWidth={3} />
+                <span className="text-[11px] font-bold tracking-widest uppercase">
+                  Linkforge
+                </span>
+              </a>
+            </div>
+          )}
         </main>
       </div>
     </>

@@ -15,7 +15,7 @@ import { publicRedirectController } from "../src/controllers/redirect/public-red
 import { getDashboardAnalytics } from "../src/services/analytics.service.ts";
 
 async function runSocialLinksTestSuite() {
-  console.log("🚀 Starting Social Media Links & Analytics Test Suite...\n");
+  console.log("Starting Social Media Links & Analytics Test Suite...\n");
 
   const timestamp = Date.now();
   const freeUserId = `test-social-free-${timestamp}`;
@@ -49,7 +49,7 @@ async function runSocialLinksTestSuite() {
         },
       ],
     });
-    console.log("✅ Free and Pro test users created successfully");
+    console.log("Free and Pro test users created successfully");
 
     // 2. Test Social Link Creation with Public ID Generation
     console.log("2. Testing social link creation and publicId generation...");
@@ -79,7 +79,7 @@ async function runSocialLinksTestSuite() {
 
     assert.strictEqual(twitterLink.position, 1);
     assert.strictEqual(ytLink.position, 2);
-    console.log("✅ Social links created with auto-formatted URLs and sequential positions");
+    console.log("Social links created with auto-formatted URLs and sequential positions");
 
     // 3. Test Drag-and-Drop Reordering
     console.log("3. Testing drag-and-drop position reordering...");
@@ -94,7 +94,7 @@ async function runSocialLinksTestSuite() {
     assert.strictEqual(reordered[1].position, 1);
     assert.strictEqual(reordered[2].id, igLink.id, "Instagram should be at position 2");
     assert.strictEqual(reordered[2].position, 2);
-    console.log("✅ Drag-and-drop reordering updated positions atomically");
+    console.log("Drag-and-drop reordering updated positions atomically");
 
     // 4. Test Updating and Soft Deleting
     console.log("4. Testing social link updates and soft deletion...");
@@ -118,7 +118,7 @@ async function runSocialLinksTestSuite() {
       false,
       "Deleted social link must not be in active list",
     );
-    console.log("✅ Update and soft delete functioning as expected");
+    console.log("Update and soft delete functioning as expected");
 
     // 5. Test Public Profile DTO includes ordered Social Links
     console.log("5. Testing public profile includes dynamic social links in order...");
@@ -129,7 +129,7 @@ async function runSocialLinksTestSuite() {
     assert.strictEqual(publicProfile.socialLinks[0].platform, "youtube");
     assert.strictEqual(publicProfile.socialLinks[0].publicId, ytLink.publicId);
     assert.strictEqual((publicProfile.socialLinks[0] as any).userId, undefined, "userId must not leak");
-    console.log("✅ Public profile DTO includes sanitized social links in custom order");
+    console.log("Public profile DTO includes sanitized social links in custom order");
 
     // 6. Test Public Redirect for Social Links
     console.log("6. Testing public redirect controller with social link publicId...");
@@ -154,7 +154,7 @@ async function runSocialLinksTestSuite() {
     await publicRedirectController(mockReq, mockRes);
     assert.strictEqual(redirectStatus, 302, "Social redirect must return HTTP 302");
     assert.strictEqual(redirectedUrl, "https://youtube.com/@freecreator");
-    console.log("✅ Public redirect controller resolved social link and redirected 302");
+    console.log("Public redirect controller resolved social link and redirected 302");
 
     // 7. Test Social Media Click Analytics Aggregation
     console.log("7. Testing click event tracking and tiered analytics (Free vs Pro)...");
@@ -211,9 +211,9 @@ async function runSocialLinksTestSuite() {
     assert.strictEqual(freeAnalytics.socialAnalytics.clicksBySocial.length, 2);
     assert.strictEqual(freeAnalytics.socialAnalytics.clicksBySocial[0].platform, "youtube");
     assert.strictEqual(freeAnalytics.socialAnalytics.clicksBySocial[1].platform, "instagram");
-    console.log("✅ Social analytics successfully computed totalSocialClicks, topSocial (#1 performer), and clicksBySocial breakdown");
+    console.log("Social analytics successfully computed totalSocialClicks, topSocial (#1 performer), and clicksBySocial breakdown");
 
-    console.log("\n🎉 ALL SOCIAL MEDIA LINKS & ANALYTICS TESTS PASSED SUCCESSFULLY! 🚀\n");
+    console.log("\nALL SOCIAL MEDIA LINKS & ANALYTICS TESTS PASSED SUCCESSFULLY! \n");
   } finally {
     // Cleanup
     try {
@@ -242,6 +242,6 @@ runSocialLinksTestSuite()
     process.exit(0);
   })
   .catch((err) => {
-    console.error("❌ Social Links Test Suite Failed:", err);
+    console.error("Social Links Test Suite Failed:", err);
     process.exit(1);
   });

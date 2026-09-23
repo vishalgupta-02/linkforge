@@ -10,7 +10,7 @@ import {
 import { errorMiddleware } from "../src/middlewares/error-handler.middleware.ts";
 
 async function runSentryContextTests() {
-  console.log("🚀 Starting Sentry Rich Context, Privacy & Performance Test Suite...\n");
+  console.log("Starting Sentry Rich Context, Privacy & Performance Test Suite...\n");
 
   // Mock Sentry scope and capture
   let capturedScopes: Array<{
@@ -92,7 +92,7 @@ async function runSentryContextTests() {
       originalUrl: "/api/v1/items/987654",
     } as unknown as Request;
     assert.strictEqual(getRoutePattern(dynamicNumericReq), "/api/v1/items/:id");
-    console.log("✅ Endpoint pattern extraction passed");
+    console.log("Endpoint pattern extraction passed");
 
     // -------------------------------------------------------------------------
     // 2. Plan Normalization Tests
@@ -102,7 +102,7 @@ async function runSentryContextTests() {
     assert.strictEqual(formatPlan("PRO"), "pro");
     assert.strictEqual(formatPlan("BUSINESS"), "business");
     assert.strictEqual(formatPlan(undefined), "free");
-    console.log("✅ Plan normalization passed");
+    console.log("Plan normalization passed");
 
     // -------------------------------------------------------------------------
     // 3. Authenticated Error Capture & Low-Cardinality Tags
@@ -148,7 +148,7 @@ async function runSentryContextTests() {
     // Structured Context (request_details)
     assert.strictEqual(authEvent.context.request_details.method, "POST");
     assert.strictEqual(authEvent.context.request_details.endpoint, "/api/v1/links/create");
-    console.log("✅ Authenticated Sentry context and tag separation verified");
+    console.log("Authenticated Sentry context and tag separation verified");
 
     // -------------------------------------------------------------------------
     // 4. Unauthenticated Error Capture Test
@@ -178,7 +178,7 @@ async function runSentryContextTests() {
     assert.strictEqual(unauthEvent.tags.plan, undefined);
     assert.strictEqual(unauthEvent.tags.endpoint, "/api/v1/sentry-test");
     assert.strictEqual(unauthEvent.tags.method, "GET");
-    console.log("✅ Unauthenticated Sentry context verified (no user leakage)");
+    console.log("Unauthenticated Sentry context verified (no user leakage)");
 
     // -------------------------------------------------------------------------
     // 5. Context Isolation Test Between Concurrent/Different Users
@@ -234,7 +234,7 @@ async function runSentryContextTests() {
     assert.strictEqual(eventBob.tags.plan, "business");
     assert.strictEqual(eventBob.tags.username, undefined);
 
-    console.log("✅ Context isolation between multiple concurrent users verified");
+    console.log("Context isolation between multiple concurrent users verified");
 
     // -------------------------------------------------------------------------
     // 6. Performance Tracing & Span Wrapper Tests
@@ -259,7 +259,7 @@ async function runSentryContextTests() {
     assert.strictEqual(spanCreated, true);
     assert.strictEqual(spanName, "custom-db-operation");
     assert.strictEqual(spanResult, "query-completed");
-    console.log("✅ Performance span tracking verified");
+    console.log("Performance span tracking verified");
 
     // -------------------------------------------------------------------------
     // 7. Error Middleware Preservation & HTTP Contract Integrity Test
@@ -294,7 +294,7 @@ async function runSentryContextTests() {
     assert.strictEqual(responseJson.message, "Database connection failure");
     assert.strictEqual(capturedScopes.length, 1);
     assert.strictEqual(capturedScopes[0].user.id, "usr_alice_123");
-    console.log("✅ Error middleware contract and Sentry trigger verified");
+    console.log("Error middleware contract and Sentry trigger verified");
 
 
     // -------------------------------------------------------------------------
@@ -336,7 +336,7 @@ async function runSentryContextTests() {
     requestIdMiddleware(testReqWithId, testRes, () => {});
     assert.strictEqual(testReqWithId.id, "custom-trace-id-12345");
     assert.strictEqual(headerValue, "custom-trace-id-12345");
-    console.log("✅ Request ID middleware tests passed");
+    console.log("Request ID middleware tests passed");
 
     // -------------------------------------------------------------------------
     // 9. Structured Logging & Sensitive Data Scrubbing Tests
@@ -362,9 +362,9 @@ async function runSentryContextTests() {
     assert.strictEqual(scrubbed.stripeSignature, "[REDACTED]");
     assert.strictEqual(scrubbed.nested.authorization, "[REDACTED]");
     assert.strictEqual(scrubbed.nested.safeMeta, "safe-value");
-    console.log("✅ Structured logging & sensitive data scrubbing passed");
+    console.log("Structured logging & sensitive data scrubbing passed");
 
-    console.log("\n🎉 All Sentry Rich Context & Performance Tests PASSED successfully!");
+    console.log("\nAll Sentry Rich Context & Performance Tests PASSED successfully!");
   } finally {
     // Restore originals
     (Sentry as any).withScope = originalWithScope;
@@ -379,7 +379,7 @@ runSentryContextTests()
     process.exit(0);
   })
   .catch((err) => {
-    console.error("❌ Sentry Rich Context & Performance Test Suite FAILED:", err);
+    console.error("Sentry Rich Context & Performance Test Suite FAILED:", err);
     process.exit(1);
   });
 

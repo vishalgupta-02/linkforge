@@ -6,13 +6,13 @@ This document outlines the guidelines and workflow for contributing to the proje
 
 ---
 
-## 📜 Code of Conduct
+## Code of Conduct
 
 All contributors and participants are expected to adhere to our [Code of Conduct](CODE_OF_CONDUCT.md). Please treat all members with respect and empathy.
 
 ---
 
-## 🛠️ Development Setup
+## ️ Development Setup
 
 ### Prerequisites
 
@@ -54,7 +54,7 @@ All contributors and participants are expected to adhere to our [Code of Conduct
 
 ---
 
-## 🌿 Branching Strategy
+## Branching Strategy
 
 - Create a feature branch from `main`:
   ```bash
@@ -65,7 +65,7 @@ All contributors and participants are expected to adhere to our [Code of Conduct
 
 ---
 
-## ✍️ Commit Conventions
+## ️ Commit Conventions
 
 We strictly enforce the **Conventional Commits** specification using `commitlint` and `husky`.
 
@@ -94,7 +94,7 @@ We strictly enforce the **Conventional Commits** specification using `commitlint
 
 ---
 
-## 🧪 Quality & Verification Checks
+## Quality & Verification Checks
 
 Before pushing your branch and opening a pull request, ensure all local checks pass:
 
@@ -117,7 +117,7 @@ pnpm build
 
 ---
 
-## 🚀 Submitting a Pull Request (PR)
+## Submitting a Pull Request (PR)
 
 1. Push your branch to your fork:
    ```bash

@@ -28,12 +28,12 @@ const LINKS = [
   {
     title: "Product",
     items: [
-      { label: "Features", href: "#features" },
-      { label: "Pricing", href: "#pricing" },
-      { label: "Live Demo", href: "#demo" },
+      { label: "Features", href: "/features" },
+      { label: "Pricing", href: "/pricing" },
+      { label: "FAQ", href: "/faq" },
+      { label: "Feedback", href: "/feedback" },
       { label: "Changelog", href: "/changelog" },
-      { label: "Roadmap", href: "/roadmap" },
-      { label: "Status", href: "/" },
+      { label: "Status", href: "/status" },
     ],
   },
 
@@ -41,10 +41,10 @@ const LINKS = [
     title: "Resources",
     items: [
       { label: "Documentation", href: "/docs" },
+      { label: "FAQ Hub", href: "/faq" },
       { label: "API Reference", href: "/api" },
       { label: "Blog", href: "/blog" },
       { label: "Help Center", href: "/help" },
-      { label: "Community", href: "/community" },
       { label: "Templates", href: "/templates" },
     ],
   },
@@ -191,34 +191,41 @@ export default function Footer() {
         </div>
 
         <div className="mb-16 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <button className="bg-muted border-border hover:bg-muted/70 flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-3 transition-all duration-200 sm:w-auto">
+          <Link
+            href="/mobile"
+            className="bg-muted border-border hover:bg-muted/70 hover:border-primary/40 group flex w-full items-center justify-center gap-3 rounded-xl border px-5 py-3 transition-all duration-200 active:scale-98 sm:w-auto"
+          >
             <div>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="-20 0 190 225"
                 width="28"
                 height="28"
-                fill="#fff"
+                fill="currentColor"
+                className="text-foreground"
               >
                 <path d="M114.73 34.02c5.84-7.07 9.78-16.91 8.71-26.71-8.38.34-18.61 5.59-24.63 12.62-4.81 5.59-9.15 15.65-7.88 25.26 9.42.77 18.65-4.96 23.8-11.17z" />
-
                 <path d="M121.36 104.53c0-21.73 17.72-32.06 18.52-32.55-10.15-14.8-25.96-16.79-31.6-17.07-13.4-1.36-26.17 7.88-33.02 7.88-6.85 0-17.43-7.55-28.52-7.34-14.43.27-27.76 8.4-35.15 21.26-14.95 25.97-3.83 64.44 10.74 85.5 7.12 10.29 15.34 21.7 26.43 21.29 10.59-.41 14.65-6.85 27.46-6.85 12.79 0 16.59 6.85 27.73 6.58 11.41-.28 18.42-10.42 25.43-20.6 8.12-11.85 11.45-23.36 11.64-23.95-.24-.13-19.64-15-19.64-34.1z" />
               </svg>
             </div>
             <div className="text-left">
               <div className="text-muted-foreground text-[10px] leading-none">
-                Download on the
+                Early Access on the
               </div>
-              <div className="text-foreground mt-1 text-sm leading-none font-medium">
-                App Store
+              <div className="text-foreground mt-1 text-sm font-semibold leading-none">
+                App Store <span className="text-primary text-[10px] ml-1 font-bold">BETA</span>
               </div>
             </div>
-          </button>
-          <button className="bg-muted border-border hover:bg-muted/70 flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-3 transition-all duration-200 sm:w-auto">
+          </Link>
+
+          <Link
+            href="/mobile"
+            className="bg-muted border-border hover:bg-muted/70 hover:border-primary/40 group flex w-full items-center justify-center gap-3 rounded-xl border px-5 py-3 transition-all duration-200 active:scale-98 sm:w-auto"
+          >
             <div>
               <svg
-                width="18"
-                height="18"
+                width="20"
+                height="20"
                 viewBox="0 0 18 18"
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -244,13 +251,13 @@ export default function Footer() {
             </div>
             <div className="text-left">
               <div className="text-muted-foreground text-[10px] leading-none">
-                Get It On
+                Early Access on
               </div>
-              <div className="text-foreground mt-1 text-sm leading-none font-medium">
-                Google Play
+              <div className="text-foreground mt-1 text-sm font-semibold leading-none">
+                Google Play <span className="text-primary text-[10px] ml-1 font-bold">BETA</span>
               </div>
             </div>
-          </button>
+          </Link>
         </div>
 
         <div className="mb-16 flex w-full justify-center overflow-hidden select-none">

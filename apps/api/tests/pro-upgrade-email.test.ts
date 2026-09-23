@@ -12,7 +12,7 @@ import {
 } from "../src/queues/email.queue.ts";
 
 async function runProUpgradeEmailTests() {
-  console.log("🚀 Starting Pro-Upgrade Email Test Suite...\n");
+  console.log("Starting Pro-Upgrade Email Test Suite...\n");
 
   const originalSend = resend.emails.send;
 
@@ -42,7 +42,7 @@ async function runProUpgradeEmailTests() {
     assert.strictEqual(sendResult.id, "resend_test_pro_upgrade_9999");
     assert.strictEqual(capturedResendPayload.to, "pro-creator@example.com");
     assert.strictEqual(capturedResendPayload.from, "LinkFlow <onboarding@resend.dev>");
-    assert.strictEqual(capturedResendPayload.subject, "You're now on LinkFlow Pro! 🎉");
+    assert.strictEqual(capturedResendPayload.subject, "You're now on LinkFlow Pro! ");
 
     // Verify greeting & dashboard URL
     assert.ok(capturedResendPayload.html.includes("You're now on LinkFlow Pro, Taylor Swift!"));
@@ -56,7 +56,7 @@ async function runProUpgradeEmailTests() {
     assert.ok(capturedResendPayload.html.includes("Live real-time visitor presence"));
     assert.ok(capturedResendPayload.html.includes("Deep customization"));
     assert.ok(capturedResendPayload.html.includes("Priority support"));
-    console.log("✅ Test 1 Passed: Template rendered with real Pro features and sent via Resend.\n");
+    console.log("Test 1 Passed: Template rendered with real Pro features and sent via Resend.\n");
 
     // -------------------------------------------------------------
     // Test 2: enqueueProUpgradeEmail creates job with event-based deduplication key
@@ -83,7 +83,7 @@ async function runProUpgradeEmailTests() {
     // Duplicate Stripe event delivery: enqueueing with same eventId returns the existing job
     const duplicateJob = await enqueueProUpgradeEmail(jobData, testStripeEventId);
     assert.strictEqual(duplicateJob.id, job.id);
-    console.log("✅ Test 2 Passed: Webhook event deduplication prevents duplicate job enqueueing.\n");
+    console.log("Test 2 Passed: Webhook event deduplication prevents duplicate job enqueueing.\n");
 
     // Clean up test job
     await job.remove().catch(() => {});
@@ -108,7 +108,7 @@ async function runProUpgradeEmailTests() {
       assert.ok(err.message.includes("Service Unavailable"));
     }
     assert.strictEqual(threwError, true);
-    console.log("✅ Test 3 Passed: Provider error correctly bubbles up for BullMQ retries.\n");
+    console.log("Test 3 Passed: Provider error correctly bubbles up for BullMQ retries.\n");
 
     // -------------------------------------------------------------
     // Test 4: Payload Validation for Pro Upgrade Jobs
@@ -131,9 +131,9 @@ async function runProUpgradeEmailTests() {
       );
       assert.strictEqual(isValid, false);
     }
-    console.log("✅ Test 4 Passed: Malformed Pro-upgrade payloads safely rejected.\n");
+    console.log("Test 4 Passed: Malformed Pro-upgrade payloads safely rejected.\n");
 
-    console.log("🎉 ALL PRO-UPGRADE EMAIL TESTS COMPLETED SUCCESSFULLY!\n");
+    console.log("ALL PRO-UPGRADE EMAIL TESTS COMPLETED SUCCESSFULLY!\n");
   } finally {
     resend.emails.send = originalSend;
     await emailQueue.close().catch(() => {});
@@ -141,6 +141,6 @@ async function runProUpgradeEmailTests() {
 }
 
 runProUpgradeEmailTests().catch((err) => {
-  console.error("❌ Pro-upgrade email test suite failed:", err);
+  console.error("Pro-upgrade email test suite failed:", err);
   process.exit(1);
 });

@@ -13,7 +13,7 @@ import {
 import { feedbackSchema } from "../src/validators/feedback.validator.ts";
 
 async function runFeedbackEmailTests() {
-  console.log("🚀 Starting Feedback Email Test Suite...\n");
+  console.log("Starting Feedback Email Test Suite...\n");
 
   const originalSend = resend.emails.send;
 
@@ -36,7 +36,7 @@ async function runFeedbackEmailTests() {
       message: "hi", // min is 5 chars
     });
     assert.strictEqual(invalidFeedback.success, false);
-    console.log("✅ Test 1 Passed: Zod schema validates input parameters correctly.\n");
+    console.log("Test 1 Passed: Zod schema validates input parameters correctly.\n");
 
     // -------------------------------------------------------------
     // Test 2: sendFeedbackEmail renders template & targets abhimanyug987@gmail.com
@@ -70,11 +70,11 @@ async function runFeedbackEmailTests() {
     assert.strictEqual(capturedResendPayload.to, "abhimanyug987@gmail.com");
     assert.strictEqual(capturedResendPayload.from, "LinkFlow Feedback <onboarding@resend.dev>");
     assert.ok(capturedResendPayload.subject.includes("BUG"));
-    assert.ok(capturedResendPayload.subject.includes("4/5★"));
+    assert.ok(capturedResendPayload.subject.includes("4/5"));
     assert.ok(capturedResendPayload.html.includes("Found a small layout shift"));
     assert.ok(capturedResendPayload.html.includes("Beta Tester"));
     assert.ok(capturedResendPayload.text.includes("Found a small layout shift"));
-    console.log("✅ Test 2 Passed: Feedback rendered and addressed to abhimanyug987@gmail.com.\n");
+    console.log("Test 2 Passed: Feedback rendered and addressed to abhimanyug987@gmail.com.\n");
 
     // -------------------------------------------------------------
     // Test 3: enqueueFeedbackEmail creates job in BullMQ queue
@@ -117,9 +117,9 @@ async function runFeedbackEmailTests() {
     assert.ok(capturedOpts.jobId);
     assert.ok(capturedOpts.jobId.startsWith(FEEDBACK_EMAIL_JOB_NAME));
 
-    console.log("✅ Test 3 Passed: Job enqueued successfully with unique jobId.\n");
+    console.log("Test 3 Passed: Job enqueued successfully with unique jobId.\n");
 
-    console.log("🎉 ALL FEEDBACK EMAIL TESTS COMPLETED SUCCESSFULLY!\n");
+    console.log("ALL FEEDBACK EMAIL TESTS COMPLETED SUCCESSFULLY!\n");
     process.exit(0);
   } finally {
     resend.emails.send = originalSend;
@@ -127,6 +127,6 @@ async function runFeedbackEmailTests() {
 }
 
 runFeedbackEmailTests().catch((err) => {
-  console.error("❌ Feedback email test suite failed:", err);
+  console.error("Feedback email test suite failed:", err);
   process.exit(1);
 });

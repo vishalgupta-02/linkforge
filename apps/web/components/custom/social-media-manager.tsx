@@ -23,6 +23,7 @@ import {
   Sparkles,
   Search,
   CheckCircle2,
+  X,
 } from "lucide-react";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
@@ -398,9 +399,9 @@ export function SocialMediaManager() {
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-muted-foreground hover:text-foreground rounded-lg p-1 text-sm font-bold"
+                className="text-muted-foreground hover:text-foreground rounded-lg p-1 text-sm font-bold flex items-center justify-center"
               >
-                ✕
+                <X size={16} />
               </button>
             </div>
 

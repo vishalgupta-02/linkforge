@@ -144,7 +144,7 @@ function StepProfile({
         <div
           className='w-20 h-20 rounded-full flex items-center justify-center text-3xl cursor-pointer relative group text-white font-semibold'
           style={{ background: 'linear-gradient(135deg, #e8622a, #f0924a)' }}>
-          {state.displayName ? state.displayName[0].toUpperCase() : '✨'}
+          {state.displayName ? state.displayName[0].toUpperCase() : 'LF'}
           <div className='absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center'>
             <svg
               width='18'
@@ -218,12 +218,12 @@ function StepFirstLink({
   onChange: (k: keyof OnboardingState, v: string) => void
 }) {
   const SUGGESTIONS = [
-    { icon: '🎨', label: 'Portfolio', url: 'https://myportfolio.com' },
-    { icon: '📸', label: 'Instagram', url: 'https://instagram.com/' },
-    { icon: '🎵', label: 'Spotify', url: 'https://open.spotify.com/' },
-    { icon: '📝', label: 'Newsletter', url: 'https://substack.com/' },
-    { icon: '🛒', label: 'Shop', url: 'https://myshop.com' },
-    { icon: '📺', label: 'YouTube', url: 'https://youtube.com/@' },
+    { icon: 'WEB', label: 'Portfolio', url: 'https://myportfolio.com' },
+    { icon: 'IG', label: 'Instagram', url: 'https://instagram.com/' },
+    { icon: 'SP', label: 'Spotify', url: 'https://open.spotify.com/' },
+    { icon: 'NL', label: 'Newsletter', url: 'https://substack.com/' },
+    { icon: 'SH', label: 'Shop', url: 'https://myshop.com' },
+    { icon: 'YT', label: 'YouTube', url: 'https://youtube.com/@' },
   ]
 
   return (
@@ -310,17 +310,17 @@ function StepShare({ state }: { state: OnboardingState }) {
   const SHARE_OPTIONS = [
     {
       label: 'Twitter / X',
-      icon: '𝕏',
-      href: `https://twitter.com/intent/tweet?text=Check out my links 👇&url=https://${url}`,
+      icon: 'X',
+      href: `https://twitter.com/intent/tweet?text=Check out my links&url=https://${url}`,
     },
     {
       label: 'Instagram',
-      icon: '📸',
+      icon: 'IG',
       href: '#',
     },
     {
       label: 'WhatsApp',
-      icon: '💬',
+      icon: 'WA',
       href: `https://wa.me/?text=https://${url}`,
     },
   ]
@@ -330,14 +330,16 @@ function StepShare({ state }: { state: OnboardingState }) {
 
       <div className='flex flex-col items-center text-center gap-2 py-2'>
         <div
-          className='text-4xl mb-1 transition-all duration-500'
+          className='w-12 h-12 rounded-full border border-green-500/20 bg-green-500/10 text-green-500 flex items-center justify-center font-bold text-lg mb-1 transition-all duration-500'
           style={{
             transform: celebrating
               ? 'scale(1) rotate(0deg)'
               : 'scale(0.5) rotate(-20deg)',
             opacity: celebrating ? 1 : 0,
           }}>
-          🎉
+          <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
         </div>
         <h3
           className='text-[18px] font-semibold text-zinc-900 dark:text-white transition-all duration-500'
@@ -359,7 +361,7 @@ function StepShare({ state }: { state: OnboardingState }) {
           <div
             className='w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 text-white'
             style={{ background: 'linear-gradient(135deg, #e8622a, #f0924a)' }}>
-            {state.displayName ? state.displayName[0].toUpperCase() : '✨'}
+            {state.displayName ? state.displayName[0].toUpperCase() : 'LF'}
           </div>
           <div className='min-w-0'>
             <p className='text-[13px] font-semibold text-zinc-900 dark:text-white truncate'>

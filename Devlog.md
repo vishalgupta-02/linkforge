@@ -407,19 +407,19 @@ Stack traces are dangerous in production — they expose file structure and libr
 
 ## Month 1 Review
 
-✅ Monorepo structure (pnpm workspaces)
-✅ Express + TypeScript backend
-✅ PostgreSQL + Prisma + Docker
-✅ Complete database schema with relations, indexes, cascades
-✅ Better-auth with email/password + Google + GitHub OAuth
-✅ Next.js frontend with login + signup pages
-✅ Auth middleware protecting routes
-✅ Shared types package (@linkflow/types)
-✅ Global error handler with AppError
-✅ Zod validation middleware
-✅ API versioning structure
-✅ Husky + lint-staged + Commitlint
-✅ DEVLOG with 28 days of entries
+Monorepo structure (pnpm workspaces)
+Express + TypeScript backend
+PostgreSQL + Prisma + Docker
+Complete database schema with relations, indexes, cascades
+Better-auth with email/password + Google + GitHub OAuth
+Next.js frontend with login + signup pages
+Auth middleware protecting routes
+Shared types package (@linkflow/types)
+Global error handler with AppError
+Zod validation middleware
+API versioning structure
+Husky + lint-staged + Commitlint
+DEVLOG with 28 days of entries
 
 ## Day 24 — March 24, 2026
 
@@ -686,7 +686,7 @@ You need to practice so much in the ground, so that the real battle or fight loo
 - `express.json()` was after auth handler → moved above it
 - Select had `username` → schema field is `userName`
 - Select had `displayName` → schema field is `name`
-- Empty body now returns 200 ✅
+- Empty body now returns 200 
 - Added `avatarUrl` to select
 
 **Decisions:**

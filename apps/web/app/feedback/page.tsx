@@ -201,16 +201,6 @@ function FeedbackPageContent() {
       </div>
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
-        <FadeIn direction="down" className="mb-8">
-          <Link
-            href="/dashboard"
-            className="border-border bg-card/70 text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-medium shadow-xs backdrop-blur-md transition-all"
-          >
-            <ArrowLeft size={14} />
-            Back to Dashboard
-          </Link>
-        </FadeIn>
-
         <div className="mb-12 text-center">
           <FadeIn direction="up">
             <div className="border-primary/20 bg-primary/10 text-primary mb-3 inline-flex items-center gap-2 rounded-full border px-3.5 py-1 text-xs font-semibold">
@@ -492,7 +482,7 @@ function FeedbackPageContent() {
                         ) : (
                           <>
                             <Send size={16} />
-                            Submit Feedback Directly to Team
+                            Submit Feedback
                           </>
                         )}
                       </motion.button>

@@ -30,7 +30,7 @@ import {
 import { getNormalizedRoute } from "../src/middlewares/metrics.middleware.ts";
 
 async function runMetricsTestSuite() {
-  console.log("🚀 Starting Prometheus Metrics Production & Business Metrics Test Suite...\n");
+  console.log("Starting Prometheus Metrics Production & Business Metrics Test Suite...\n");
 
   const server = http.createServer(app);
 
@@ -40,7 +40,7 @@ async function runMetricsTestSuite() {
 
   const address = server.address() as { port: number };
   const baseUrl = `http://127.0.0.1:${address.port}`;
-  console.log(`📡 Ephemeral Test API Server listening at ${baseUrl}`);
+  console.log(`Ephemeral Test API Server listening at ${baseUrl}`);
 
   try {
     // -------------------------------------------------------------------------
@@ -60,7 +60,7 @@ async function runMetricsTestSuite() {
 
     const metricsBody = await metricsRes.text();
     assert.ok(metricsBody.length > 0, "/metrics response body should not be empty");
-    console.log("✅ /metrics returns HTTP 200 with standard Prometheus Content-Type");
+    console.log("/metrics returns HTTP 200 with standard Prometheus Content-Type");
 
     // -------------------------------------------------------------------------
     // 2. Default Process and Node.js Runtime Metrics
@@ -86,7 +86,7 @@ async function runMetricsTestSuite() {
       metricsBody.includes("process_start_time_seconds"),
       "Should include process start time / uptime metrics",
     );
-    console.log("✅ Default CPU, Memory, Event Loop, and Process metrics are collected");
+    console.log("Default CPU, Memory, Event Loop, and Process metrics are collected");
 
     // -------------------------------------------------------------------------
     // 3. HTTP Request Counter (http_requests_total) & Labels
@@ -99,11 +99,10 @@ async function runMetricsTestSuite() {
 
     const scrapedMetrics1 = await getMetrics();
     assert.ok(
-      scrapedMetrics1.includes('http_requests_total{app="linkforge-api",method="GET",route="/health",status_code="200"} 1') ||
-        scrapedMetrics1.includes('http_requests_total{method="GET",route="/health",status_code="200"} 1'),
+      /http_requests_total\{[^}]*method="GET"[^}]*route="\/health"[^}]*status_code="200"[^}]*\}\s+1/.test(scrapedMetrics1),
       "http_requests_total must record GET /health status 200",
     );
-    console.log("✅ http_requests_total counter incremented with correct method, route, and status_code");
+    console.log("http_requests_total counter incremented with correct method, route, and status_code");
 
     // -------------------------------------------------------------------------
     // 4. HTTP Request Duration Histogram (http_request_duration_seconds)
@@ -121,7 +120,7 @@ async function runMetricsTestSuite() {
       scrapedMetrics1.includes("http_request_duration_seconds_sum"),
       "Histogram sum should be present",
     );
-    console.log("✅ http_request_duration_seconds histogram accurately observes request latencies");
+    console.log("http_request_duration_seconds histogram accurately observes request latencies");
 
     // -------------------------------------------------------------------------
     // 5. Error Responses Metrics Recording (4xx, 5xx)
@@ -138,7 +137,7 @@ async function runMetricsTestSuite() {
       scrapedMetrics2.includes(`status_code="${errRes400.status}"`),
       `Metrics must capture status_code="${errRes400.status}"`,
     );
-    console.log(`✅ ${errRes400.status} error response properly recorded in metrics`);
+    console.log(`${errRes400.status} error response properly recorded in metrics`);
 
     // -------------------------------------------------------------------------
     // 6. Cardinality Safety & 404 Unmatched Route Normalization
@@ -169,7 +168,7 @@ async function runMetricsTestSuite() {
       scrapedMetrics3.includes('route="unknown",status_code="404"'),
       '404 responses must be safely grouped under route="unknown"',
     );
-    console.log("✅ Arbitrary 404 paths are normalized to bounded 'unknown' label");
+    console.log("Arbitrary 404 paths are normalized to bounded 'unknown' label");
 
     // -------------------------------------------------------------------------
     // 7. Parameterized Route Normalization (/api/v1/links/update/:id)
@@ -190,7 +189,7 @@ async function runMetricsTestSuite() {
       "/api/v1/links/update/:id",
       "Dynamic path segments in router must normalize to route pattern",
     );
-    console.log("✅ Parameterized routes preserve pattern (:id) preventing high cardinality");
+    console.log("Parameterized routes preserve pattern (:id) preventing high cardinality");
 
     // -------------------------------------------------------------------------
     // 8. Self-Referential Scrape Exclusion (/metrics)
@@ -208,7 +207,7 @@ async function runMetricsTestSuite() {
       false,
       "GET /metrics should be excluded from http_requests_total application traffic metrics",
     );
-    console.log("✅ Scraping /metrics does not inflate application request counters");
+    console.log("Scraping /metrics does not inflate application request counters");
 
     // -------------------------------------------------------------------------
     // 9. Custom Business Metric: links_created_total (Counter)
@@ -232,7 +231,7 @@ async function runMetricsTestSuite() {
       scrapedBusiness1.includes("links_created_total"),
       "links_created_total must appear in /metrics output",
     );
-    console.log("✅ links_created_total increments accurately and appears in /metrics output");
+    console.log("links_created_total increments accurately and appears in /metrics output");
 
     // -------------------------------------------------------------------------
     // 10. Custom Business Metric: clicks_processed_total (Counter)
@@ -256,7 +255,7 @@ async function runMetricsTestSuite() {
       scrapedBusiness2.includes("clicks_processed_total"),
       "clicks_processed_total must appear in /metrics output",
     );
-    console.log("✅ clicks_processed_total increments accurately on worker processing");
+    console.log("clicks_processed_total increments accurately on worker processing");
 
     // -------------------------------------------------------------------------
     // 11. Custom Business Metric: user_signups_total (Counter)
@@ -280,7 +279,7 @@ async function runMetricsTestSuite() {
       scrapedBusinessSignup.includes("user_signups_total"),
       "user_signups_total must appear in /metrics output",
     );
-    console.log("✅ user_signups_total increments accurately and appears in /metrics output");
+    console.log("user_signups_total increments accurately and appears in /metrics output");
 
     // -------------------------------------------------------------------------
     // 12. Custom Business Metric: subscription_upgrades_total (Counter with plan label)
@@ -309,10 +308,10 @@ async function runMetricsTestSuite() {
       "subscription_upgrades_total must appear in /metrics output",
     );
     assert.ok(
-      scrapedBusinessUpgrade.includes('subscription_upgrades_total{plan="PRO"} 3'),
+      /subscription_upgrades_total\{[^}]*plan="PRO"[^}]*\}\s+3/.test(scrapedBusinessUpgrade),
       "subscription_upgrades_total must include bounded plan label",
     );
-    console.log("✅ subscription_upgrades_total increments accurately with bounded plan label");
+    console.log("subscription_upgrades_total increments accurately with bounded plan label");
 
     // -------------------------------------------------------------------------
     // 13. Custom Business Metric: active_users_total (Gauge)
@@ -347,7 +346,7 @@ async function runMetricsTestSuite() {
       scrapedBusiness3.includes("active_users_total"),
       "active_users_total must appear in /metrics output",
     );
-    console.log("✅ active_users_total gauge reflects active session count");
+    console.log("active_users_total gauge reflects active session count");
 
     // -------------------------------------------------------------------------
     // 14. Custom Business Metric: queue_depth (Gauge)
@@ -382,7 +381,7 @@ async function runMetricsTestSuite() {
       scrapedBusiness4.includes("queue_depth"),
       "queue_depth must appear in /metrics output",
     );
-    console.log("✅ queue_depth gauge calculates pending workload (waiting+delayed+prioritized)");
+    console.log("queue_depth gauge calculates pending workload (waiting+delayed+prioritized)");
 
     // -------------------------------------------------------------------------
     // 15. Combined Scrape Verification: All Metrics Present
@@ -408,7 +407,7 @@ async function runMetricsTestSuite() {
     assert.ok(fullMetrics.includes("process_cpu_seconds_total") || fullMetrics.includes("process_cpu_user_seconds_total"), "Missing CPU metrics");
     assert.ok(fullMetrics.includes("nodejs_heap_size_total_bytes"), "Missing Heap metrics");
 
-    console.log("✅ Complete metrics payload contains all default, HTTP, and business metrics");
+    console.log("Complete metrics payload contains all default, HTTP, and business metrics");
 
     // -------------------------------------------------------------------------
     // 16. Metric Registry Reset Isolation
@@ -421,9 +420,9 @@ async function runMetricsTestSuite() {
       false,
       "resetMetrics() must reset custom HTTP counters to zero",
     );
-    console.log("✅ resetMetrics() successfully clears metric registries for test isolation");
+    console.log("resetMetrics() successfully clears metric registries for test isolation");
 
-    console.log("\n🎉 ALL 16 PROMETHEUS & BUSINESS METRICS TESTS PASSED SUCCESSFULLY! 🚀\n");
+    console.log("\nALL 16 PROMETHEUS & BUSINESS METRICS TESTS PASSED SUCCESSFULLY! \n");
   } finally {
     stopBusinessMetricsRefresher();
     server.close();
@@ -432,6 +431,6 @@ async function runMetricsTestSuite() {
 
 runMetricsTestSuite().catch((err) => {
   stopBusinessMetricsRefresher();
-  console.error("❌ Metrics Test Suite Failed:", err);
+  console.error("Metrics Test Suite Failed:", err);
   process.exit(1);
 });

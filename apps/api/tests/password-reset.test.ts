@@ -27,7 +27,7 @@ import { verifyPassword } from "better-auth/crypto";
 import { prisma } from "../src/db/client.ts";
 
 async function runPasswordResetTestSuite() {
-  console.log("🚀 Starting Complete Password Reset Test Suite...\n");
+  console.log("Starting Complete Password Reset Test Suite...\n");
 
   const originalSend = resend.emails.send;
 
@@ -51,7 +51,7 @@ async function runPasswordResetTestSuite() {
     assert.strictEqual(hash1, hash2); // Deterministic hash
     assert.notStrictEqual(hash1, hash3); // Distinct hashes for distinct tokens
     assert.notStrictEqual(hash1, token1); // Hash is different from raw token
-    console.log("✅ Test 1 Passed: Secure random token generator and SHA-256 hasher verified.\n");
+    console.log("Test 1 Passed: Secure random token generator and SHA-256 hasher verified.\n");
 
     // -------------------------------------------------------------
     // Test 2: Zod Validator Validation
@@ -95,7 +95,7 @@ async function runPasswordResetTestSuite() {
       }).success,
       false,
     );
-    console.log("✅ Test 2 Passed: Zod schemas enforce valid inputs and password requirements.\n");
+    console.log("Test 2 Passed: Zod schemas enforce valid inputs and password requirements.\n");
 
     // -------------------------------------------------------------
     // Test 3: React Email Template Rendering & Resend Dispatch
@@ -130,7 +130,7 @@ async function runPasswordResetTestSuite() {
     assert.ok(capturedResendPayload.html.includes("60 minutes (1 hour)"));
     assert.ok(capturedResendPayload.html.includes("http://localhost:3000/reset-password?token=secret-token-12345"));
     assert.ok(capturedResendPayload.text.includes("Reset your LinkFlow password"));
-    console.log("✅ Test 3 Passed: PasswordResetEmail template rendered with accurate security notices and CTA.\n");
+    console.log("Test 3 Passed: PasswordResetEmail template rendered with accurate security notices and CTA.\n");
 
     // -------------------------------------------------------------
     // Test 4: Asynchronous BullMQ Email Queue
@@ -150,7 +150,7 @@ async function runPasswordResetTestSuite() {
     assert.strictEqual(job.name, PASSWORD_RESET_EMAIL_JOB_NAME);
     assert.strictEqual(job.data.email, "alex@example.com");
     await job.remove().catch(() => {});
-    console.log("✅ Test 4 Passed: Email queueing correctly dispatches password-reset-email job.\n");
+    console.log("Test 4 Passed: Email queueing correctly dispatches password-reset-email job.\n");
 
     // -------------------------------------------------------------
     // Test 5: End-to-End Forgot Password & User Enumeration Protection
@@ -191,7 +191,7 @@ async function runPasswordResetTestSuite() {
         unknownUserResult.message,
         "If an account exists for this email, a password reset link has been sent.",
       );
-      console.log("✅ Test 5 Passed: Identical generic responses returned, preventing user enumeration.\n");
+      console.log("Test 5 Passed: Identical generic responses returned, preventing user enumeration.\n");
 
       // -------------------------------------------------------------
       // Test 6: Invalidation of Previous Active Tokens on New Request
@@ -205,7 +205,7 @@ async function runPasswordResetTestSuite() {
       assert.strictEqual(allTokens.length, 2);
       assert.notStrictEqual(allTokens[0].usedAt, null); // Previous token invalidated
       assert.strictEqual(allTokens[1].usedAt, null); // New token active
-      console.log("✅ Test 6 Passed: Prior active tokens automatically invalidated.\n");
+      console.log("Test 6 Passed: Prior active tokens automatically invalidated.\n");
 
       // -------------------------------------------------------------
       // Test 7: Token Verification (Valid, Expired, Used)
@@ -275,7 +275,7 @@ async function runPasswordResetTestSuite() {
         assert.strictEqual(err.code, "INVALID_OR_EXPIRED_TOKEN");
       }
       assert.strictEqual(nonExistentCaught, true);
-      console.log("✅ Test 7 Passed: Verification strictly accepts valid tokens and rejects expired/used/missing ones.\n");
+      console.log("Test 7 Passed: Verification strictly accepts valid tokens and rejects expired/used/missing ones.\n");
 
       // -------------------------------------------------------------
       // Test 8: Successful Password Reset, Session Revocation & Better-Auth Verification
@@ -329,7 +329,7 @@ async function runPasswordResetTestSuite() {
         where: { tokenHash: activeHash },
       });
       assert.notStrictEqual(consumedToken?.usedAt, null);
-      console.log("✅ Test 8 Passed: Password reset updated credentials, revoked active sessions, and marked token used.\n");
+      console.log("Test 8 Passed: Password reset updated credentials, revoked active sessions, and marked token used.\n");
 
       // -------------------------------------------------------------
       // Test 9: Token Reuse Prevention
@@ -347,7 +347,7 @@ async function runPasswordResetTestSuite() {
         assert.strictEqual(err.code, "INVALID_OR_EXPIRED_TOKEN");
       }
       assert.strictEqual(reuseCaught, true);
-      console.log("✅ Test 9 Passed: Reusing a consumed token is strictly rejected.\n");
+      console.log("Test 9 Passed: Reusing a consumed token is strictly rejected.\n");
 
       // -------------------------------------------------------------
       // Test 10: Atomic Concurrency & Race Condition Test
@@ -378,13 +378,13 @@ async function runPasswordResetTestSuite() {
 
       assert.strictEqual(successCount, 1);
       assert.strictEqual(failureCount, 1);
-      console.log("✅ Test 10 Passed: Under concurrent load, exactly one request succeeds and the other is rejected.\n");
+      console.log("Test 10 Passed: Under concurrent load, exactly one request succeeds and the other is rejected.\n");
     } finally {
       // Cleanup created user & relations
       await prisma.user.delete({ where: { id: createdUser.id } }).catch(() => {});
     }
 
-    console.log("🎉 ALL PASSWORD RESET TESTS PASSED SUCCESSFULLY!\n");
+    console.log("ALL PASSWORD RESET TESTS PASSED SUCCESSFULLY!\n");
   } finally {
     resend.emails.send = originalSend;
     await emailQueue.close().catch(() => {});
@@ -392,6 +392,6 @@ async function runPasswordResetTestSuite() {
 }
 
 runPasswordResetTestSuite().catch((err) => {
-  console.error("❌ Password reset test suite failed:", err);
+  console.error("Password reset test suite failed:", err);
   process.exit(1);
 });

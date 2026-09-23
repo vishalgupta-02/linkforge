@@ -39,10 +39,6 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/api/auth/:path*",
-        destination: `${backendUrl.replace(/\/$/, "")}/api/auth/:path*`,
-      },
-      {
         source: "/r/:path*",
         destination: `${backendUrl.replace(/\/$/, "")}/r/:path*`,
       },
@@ -55,7 +51,7 @@ export default withSentryConfig(nextConfig, {
   project: "linkforge-web",
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  tunnelRoute: "/monitoring",
+  tunnelRoute: process.env.NODE_ENV === "production" ? "/monitoring" : undefined,
 
   webpack: {
     automaticVercelMonitors: true,

@@ -78,11 +78,11 @@ export async function backfillPublicIds(): Promise<{ total: number; updated: num
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith("backfill-public-ids.ts")) {
   backfillPublicIds()
     .then((result) => {
-      console.log(`✅ Backfill complete: ${result.updated} of ${result.total} links updated.`);
+      console.log(`Backfill complete: ${result.updated} of ${result.total} links updated.`);
       process.exit(0);
     })
     .catch((err) => {
-      console.error("❌ Backfill failed:", err);
+      console.error("Backfill failed:", err);
       process.exit(1);
     });
 }

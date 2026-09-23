@@ -68,26 +68,26 @@ export default function Navbar() {
           <div className="border-border flex h-7 w-7 items-center justify-center rounded-full border bg-neutral-900 text-neutral-900 dark:bg-neutral-100 dark:text-gray-900">
             <Pentagon size={18} strokeWidth={2.5} className="text-background" />
           </div>
-          <span className="text-foreground text-md font-semibold tracking-tight">
+          <span className="text-foreground text-md font-custom-sans font-semibold tracking-wide">
             linkforge
           </span>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
           <Link
-            href="#features"
+            href="/features"
             className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200"
           >
             Features
           </Link>
           <Link
-            href="#pricing"
+            href="/pricing"
             className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200"
           >
             Pricing
           </Link>
           <Link
-            href="#faq"
+            href="/faq"
             className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200"
           >
             FAQ
@@ -166,21 +166,21 @@ export default function Navbar() {
             </div>
             <nav className="mt-12 flex flex-col gap-4">
               <Link
-                href="#features"
+                href="/features"
                 className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Features
               </Link>
               <Link
-                href="#pricing"
+                href="/pricing"
                 className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Pricing
               </Link>
               <Link
-                href="#faq"
+                href="/faq"
                 className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >

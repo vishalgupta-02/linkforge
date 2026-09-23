@@ -14,7 +14,7 @@ import {
 } from "../src/validators/live.validator.ts";
 
 async function runTests() {
-  console.log("🚀 Starting Live Presence Test Suite...");
+  console.log("Starting Live Presence Test Suite...");
 
   const userId1 = "test-user-1";
   const userId2 = "test-user-2";
@@ -49,7 +49,7 @@ async function runTests() {
   assert.strictEqual(key1, "live:user:user123:visitor:sess456");
   const pattern1 = CACHE_KEYS.liveVisitorPattern("user123");
   assert.strictEqual(pattern1, "live:user:user123:visitor:*");
-  console.log("✅ Key formatting passed");
+  console.log("Key formatting passed");
 
   // Test 2: Create Live Visitor
   console.log("Checking createLiveVisitor...");
@@ -59,7 +59,7 @@ async function runTests() {
   assert.strictEqual(exists, 1);
   const ttl = await redis.ttl(createdKey);
   assert(ttl > 0 && ttl <= LIVE_VISITOR_TTL, `Expected TTL <= 90, got ${ttl}`);
-  console.log("✅ createLiveVisitor passed");
+  console.log("createLiveVisitor passed");
 
   // Test 3: Refresh Live Visitor
   console.log("Checking refreshLiveVisitor...");
@@ -73,7 +73,7 @@ async function runTests() {
   await refreshLiveVisitor(userId1, session2);
   const key2 = CACHE_KEYS.liveVisitor(userId1, session2);
   assert.strictEqual(await redis.exists(key2), 1);
-  console.log("✅ refreshLiveVisitor passed");
+  console.log("refreshLiveVisitor passed");
 
   // Test 4: Remove Live Visitor
   console.log("Checking removeLiveVisitor...");
@@ -81,7 +81,7 @@ async function runTests() {
   assert.strictEqual(await redis.exists(createdKey), 0);
   // Idempotent delete
   await removeLiveVisitor(userId1, session1);
-  console.log("✅ removeLiveVisitor passed");
+  console.log("removeLiveVisitor passed");
 
   // Test 5: SCAN Count
   console.log("Checking getLiveVisitorCount with SCAN...");
@@ -94,7 +94,7 @@ async function runTests() {
   assert.strictEqual(await getLiveVisitorCount(userId2), 1);
   await removeLiveVisitor(userId1, session1);
   assert.strictEqual(await getLiveVisitorCount(userId1), 1);
-  console.log("✅ getLiveVisitorCount passed");
+  console.log("getLiveVisitorCount passed");
 
   // Test 6: Zod validation
   console.log("Checking Zod validation...");
@@ -114,7 +114,7 @@ async function runTests() {
     liveVisitorParamsSchema.safeParse({ username: "" }).success,
     false,
   );
-  console.log("✅ Zod validation passed");
+  console.log("Zod validation passed");
 
   // Test 7: Pro Plan gating helper
   console.log("Checking Pro plan helper...");
@@ -124,15 +124,15 @@ async function runTests() {
   assert.strictEqual(isProPlan("FREE"), false);
   assert.strictEqual(isProPlan(null), false);
   assert.strictEqual(isProPlan(undefined), false);
-  console.log("✅ Pro plan helper passed");
+  console.log("Pro plan helper passed");
 
   await cleanup();
   await redis.quit();
 
-  console.log("🎉 All Live Presence tests passed successfully!");
+  console.log("All Live Presence tests passed successfully!");
 }
 
 runTests().catch((err) => {
-  console.error("❌ Test failed:", err);
+  console.error("Test failed:", err);
   process.exit(1);
 });

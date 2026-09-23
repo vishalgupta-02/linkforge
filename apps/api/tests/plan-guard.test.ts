@@ -4,7 +4,7 @@ import { prisma } from "../src/db/client.ts";
 import { requirePro, requirePlan } from "../src/middlewares/plan-guard.middleware.ts";
 
 async function runPlanGuardTests() {
-  console.log("🚀 Starting Centralized Plan Guard Test Suite...");
+  console.log("Starting Centralized Plan Guard Test Suite...");
 
   const testFreeUserId = `test-user-free-${Date.now()}`;
   const testProUserId = `test-user-pro-${Date.now()}`;
@@ -40,7 +40,7 @@ async function runPlanGuardTests() {
         },
       ],
     });
-    console.log("✅ Test users created");
+    console.log("Test users created");
 
     // 2. Test Unauthenticated Request (No req.user) -> 401
     console.log("2. Testing unauthenticated request...");
@@ -53,7 +53,7 @@ async function runPlanGuardTests() {
       unauthErrorCaught = true;
     }
     assert.strictEqual(unauthErrorCaught, true);
-    console.log("✅ Unauthenticated request rejected with 401");
+    console.log("Unauthenticated request rejected with 401");
 
     // 3. Test Authenticated FREE User -> 403 PRO_PLAN_REQUIRED
     console.log("3. Testing authenticated FREE user...");
@@ -71,7 +71,7 @@ async function runPlanGuardTests() {
       freeErrorCaught = true;
     }
     assert.strictEqual(freeErrorCaught, true);
-    console.log("✅ FREE user correctly rejected with 403 PRO_PLAN_REQUIRED");
+    console.log("FREE user correctly rejected with 403 PRO_PLAN_REQUIRED");
 
     // 4. Test Client Attempting to Spoof Plan in Request Object -> Still 403 (DB Truth)
     console.log("4. Testing client attempt to spoof plan in request...");
@@ -88,7 +88,7 @@ async function runPlanGuardTests() {
       spoofErrorCaught = true;
     }
     assert.strictEqual(spoofErrorCaught, true);
-    console.log("✅ Spoofed plan in request rejected; database plan was enforced");
+    console.log("Spoofed plan in request rejected; database plan was enforced");
 
     // 5. Test Authenticated PRO User -> Authorized (next called)
     console.log("5. Testing authenticated PRO user...");
@@ -102,7 +102,7 @@ async function runPlanGuardTests() {
     });
     assert.strictEqual(nextCalled, true);
     assert.strictEqual(proReq.user.plan, "PRO");
-    console.log("✅ PRO user authorized and request.user.plan updated to PRO");
+    console.log("PRO user authorized and request.user.plan updated to PRO");
 
     // 6. Test Authenticated BUSINESS User -> Authorized (hierarchical access)
     console.log("6. Testing authenticated BUSINESS user on Pro feature...");
@@ -115,7 +115,7 @@ async function runPlanGuardTests() {
       bizNextCalled = true;
     });
     assert.strictEqual(bizNextCalled, true);
-    console.log("✅ BUSINESS user granted access to Pro-level feature");
+    console.log("BUSINESS user granted access to Pro-level feature");
 
     // 7. Test Immediate Effect of Plan Mutation (FREE -> PRO in DB)
     console.log("7. Testing immediate authorization after DB upgrade...");
@@ -134,7 +134,7 @@ async function runPlanGuardTests() {
     });
     assert.strictEqual(upgradedNextCalled, true);
     assert.strictEqual(newlyProReq.user.plan, "PRO");
-    console.log("✅ Database plan upgrade immediately takes effect on next request");
+    console.log("Database plan upgrade immediately takes effect on next request");
 
     // 8. Test Immediate Effect of Plan Downgrade (PRO -> FREE in DB)
     console.log("8. Testing immediate revocation after DB downgrade...");
@@ -152,16 +152,16 @@ async function runPlanGuardTests() {
       downgradedErrorCaught = true;
     }
     assert.strictEqual(downgradedErrorCaught, true);
-    console.log("✅ Database plan downgrade immediately revokes access with 403");
+    console.log("Database plan downgrade immediately revokes access with 403");
 
-    console.log("\n🎉 ALL PLAN GUARD TESTS COMPLETED SUCCESSFULLY!\n");
+    console.log("\nALL PLAN GUARD TESTS COMPLETED SUCCESSFULLY!\n");
   } finally {
     // Cleanup
     try {
       await prisma.user.deleteMany({
         where: { id: { in: [testFreeUserId, testProUserId, testBusinessUserId] } },
       });
-      console.log("🧹 Test users cleaned up successfully");
+      console.log("Test users cleaned up successfully");
     } catch {
       // ignore cleanup errors
     }
@@ -169,6 +169,6 @@ async function runPlanGuardTests() {
 }
 
 runPlanGuardTests().catch((err) => {
-  console.error("❌ Test suite failed:", err);
+  console.error("Test suite failed:", err);
   process.exit(1);
 });

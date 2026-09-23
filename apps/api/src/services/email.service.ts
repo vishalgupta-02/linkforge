@@ -6,6 +6,7 @@ import { ClickMilestoneEmail } from "../emails/templates/ClickMilestoneEmail.tsx
 import { PasswordResetEmail } from "../emails/templates/PasswordResetEmail.tsx";
 import { VerifyEmail } from "../emails/templates/VerifyEmail.tsx";
 import { FeedbackEmail } from "../emails/templates/FeedbackEmail.tsx";
+import { MobileWaitlistEmail } from "../emails/templates/MobileWaitlistEmail.tsx";
 import { getMilestoneEmailSubject } from "../utils/milestone.ts";
 import { resend } from "../lib/resend.ts";
 
@@ -150,13 +151,13 @@ export async function sendWelcomeEmail(
   const { data, error } = await resend.emails.send({
     from: "LinkFlow <onboarding@resend.dev>",
     to,
-    subject: "Welcome to LinkFlow! 🚀",
+    subject: "Welcome to LinkFlow!",
     html,
     text,
   });
 
   if (error) {
-    console.error("❌ Resend error while sending welcome email:", error);
+    console.error("Resend error while sending welcome email:", error);
     throw new Error(
       `Failed to send welcome email: ${error.message || "Unknown provider error"}`,
     );
@@ -206,13 +207,13 @@ export async function sendProUpgradeEmail(
   const { data, error } = await resend.emails.send({
     from: "LinkFlow <onboarding@resend.dev>",
     to,
-    subject: "You're now on LinkFlow Pro! 🎉",
+    subject: "You're now on LinkFlow Pro!",
     html,
     text,
   });
 
   if (error) {
-    console.error("❌ Resend error while sending Pro upgrade email:", error);
+    console.error("Resend error while sending Pro upgrade email:", error);
     throw new Error(
       `Failed to send Pro upgrade email: ${error.message || "Unknown provider error"}`,
     );
@@ -275,7 +276,7 @@ export async function sendClickMilestoneEmail(
   });
 
   if (error) {
-    console.error("❌ Resend error while sending click milestone email:", error);
+    console.error("Resend error while sending click milestone email:", error);
     throw new Error(
       `Failed to send click milestone email: ${error.message || "Unknown provider error"}`,
     );
@@ -334,7 +335,7 @@ export async function sendPasswordResetEmail(
   });
 
   if (error) {
-    console.error("❌ Resend error while sending password reset email:", error);
+    console.error("Resend error while sending password reset email:", error);
     throw new Error(
       `Failed to send password reset email: ${error.message || "Unknown provider error"}`,
     );
@@ -384,13 +385,13 @@ export async function sendVerificationEmail(
   const { data, error } = await resend.emails.send({
     from: "LinkFlow <onboarding@resend.dev>",
     to,
-    subject: "Verify your LinkForge email address 🔒",
+    subject: "Verify your LinkForge email address",
     html,
     text,
   });
 
   if (error) {
-    console.error("❌ Resend error while sending verification email:", error);
+    console.error("Resend error while sending verification email:", error);
     throw new Error(
       `Failed to send verification email: ${error.message || "Unknown provider error"}`,
     );
@@ -465,13 +466,13 @@ export async function sendFeedbackEmail(
     from: "LinkFlow Feedback <onboarding@resend.dev>",
     to: targetEmail,
     ...(fromEmail ? { replyTo: fromEmail } : {}),
-    subject: `[LinkForge Feedback] ${category.toUpperCase()} (${rating}/5★): from ${name || fromEmail || "Anonymous"}`,
+    subject: `[LinkForge Feedback] ${category.toUpperCase()} (${rating}/5): from ${name || fromEmail || "Anonymous"}`,
     html,
     text,
   });
 
   if (error) {
-    console.error("❌ Resend error while sending feedback email:", error);
+    console.error("Resend error while sending feedback email:", error);
     throw new Error(
       `Failed to send feedback email: ${error.message || "Unknown provider error"}`,
     );
@@ -484,4 +485,60 @@ export async function sendFeedbackEmail(
   return {
     id: data.id,
   };
+}
+
+export interface SendMobileWaitlistEmailInput {
+  email: string;
+  waitlistNumber: number;
+  platform?: string;
+}
+
+export interface SendMobileWaitlistEmailOutput {
+  id?: string;
+}
+
+export async function sendMobileWaitlistEmail(
+  input: SendMobileWaitlistEmailInput,
+): Promise<SendMobileWaitlistEmailOutput> {
+  const { email, waitlistNumber, platform = "all" } = input;
+
+  const html = await render(
+    React.createElement(MobileWaitlistEmail, {
+      email,
+      waitlistNumber,
+      platform,
+    }),
+  );
+
+  const text = await render(
+    React.createElement(MobileWaitlistEmail, {
+      email,
+      waitlistNumber,
+      platform,
+    }),
+    {
+      plainText: true,
+    },
+  );
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "LinkForge Mobile <onboarding@resend.dev>",
+      to: email,
+      subject: `You're #${waitlistNumber} on the LinkForge Mobile App waitlist`,
+      html,
+      text,
+    });
+
+    if (error) {
+      console.warn("Resend notice when sending mobile waitlist email:", error.message);
+      return {};
+    }
+
+    return { id: data?.id };
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.warn("Resend error sending mobile waitlist email:", errorMessage);
+    return {};
+  }
 }

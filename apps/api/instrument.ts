@@ -1,8 +1,5 @@
-import { EventEmitter } from "node:events";
 import "dotenv/config";
 import { initTracing } from "./src/lib/tracing.ts";
-
-EventEmitter.defaultMaxListeners = 30;
 
 // 1. Initialize OpenTelemetry NodeSDK before importing instrumented dependencies
 initTracing();

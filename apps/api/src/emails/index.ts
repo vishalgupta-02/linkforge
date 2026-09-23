@@ -17,3 +17,8 @@ export {
   PasswordResetEmail,
   type PasswordResetEmailProps,
 } from "./templates/PasswordResetEmail.tsx";
+
+export {
+  MobileWaitlistEmail,
+  type MobileWaitlistEmailProps,
+} from "./templates/MobileWaitlistEmail.tsx";

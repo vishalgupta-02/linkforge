@@ -2,16 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { ArrowRight } from "lucide-react";
 import Hero from "./home/hero";
 import FeatureStrip from "./home/feature-strip";
 import Trusts from "./home/trusts";
-import Usecases from "./home/usecases";
 import FeatureExplained from "./home/feature-explained";
 import FeatureGrid from "./home/feature-grid";
 import Integrations from "./home/integrations";
 import Comparison from "./home/comparison";
-import Pricing from "./home/pricing";
 import FAQ from "./home/faq";
 import CallToAction from "./home/call-to-action";
 
@@ -52,12 +49,10 @@ export default function UltimateCreatorLanding() {
           <Hero />
           <FeatureStrip />
           <Trusts />
-          <Usecases />
           <FeatureExplained />
           <FeatureGrid />
           <Integrations />
           <Comparison />
-          <Pricing />
           <FAQ />
           <CallToAction />
         </main>
