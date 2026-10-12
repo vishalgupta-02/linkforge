@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MenuIcon, Pentagon, X } from "lucide-react";
+import { Home, LayoutDashboard, MenuIcon, Pentagon, X } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
 import { AnimatedThemeToggler } from "../ui/animated-theme-toggler";
@@ -63,7 +63,7 @@ export default function Navbar() {
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-6 md:px-16">
         <Link
           href="/"
-          className="flex items-center gap-2.5 transition-opacity duration-200 hover:opacity-90"
+          className="flex cursor-pointer items-center gap-2.5 transition-opacity duration-200 hover:opacity-90"
         >
           <div className="border-border flex h-7 w-7 items-center justify-center rounded-full border bg-neutral-900 text-neutral-900 dark:bg-neutral-100 dark:text-gray-900">
             <Pentagon size={18} strokeWidth={2.5} className="text-background" />
@@ -75,26 +75,32 @@ export default function Navbar() {
 
         <nav className="hidden items-center gap-8 md:flex">
           <Link
+            href="/"
+            className="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium transition-colors duration-200"
+          >
+            Home
+          </Link>
+          <Link
             href="/features"
-            className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200"
+            className="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium transition-colors duration-200"
           >
             Features
           </Link>
           <Link
             href="/pricing"
-            className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200"
+            className="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium transition-colors duration-200"
           >
             Pricing
           </Link>
           <Link
             href="/faq"
-            className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200"
+            className="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium transition-colors duration-200"
           >
             FAQ
           </Link>
           <Link
             href="/feedback"
-            className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm font-medium transition-colors duration-200"
+            className="text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-1.5 text-sm font-medium transition-colors duration-200"
           >
             Feedback
           </Link>
@@ -104,25 +110,33 @@ export default function Navbar() {
           {loggedIn ? (
             <Link
               href="/dashboard"
-              className="text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors duration-200"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-4 text-sm font-medium shadow-xs transition-all hover:opacity-95"
             >
+              <LayoutDashboard size={15} />
               Dashboard
             </Link>
           ) : (
-            <Link
-              href="/signin"
-              className="text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors duration-200"
-            >
-              Sign In
-            </Link>
-          )}
-          {loggedIn ? null : (
-            <Link
-              href="/signup"
-              className="bg-primary text-primary-foreground inline-flex h-9 items-center justify-center rounded-lg px-4 text-sm font-medium shadow transition-opacity duration-200 hover:opacity-90"
-            >
-              Get Started
-            </Link>
+            <>
+              <Link
+                href="/"
+                className="text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors duration-200"
+              >
+                <Home size={15} />
+                Home
+              </Link>
+              <Link
+                href="/signin"
+                className="text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex h-9 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium transition-colors duration-200"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/signup"
+                className="bg-primary text-primary-foreground inline-flex h-9 cursor-pointer items-center justify-center rounded-lg px-4 text-sm font-medium shadow transition-opacity duration-200 hover:opacity-90"
+              >
+                Get Started
+              </Link>
+            </>
           )}
           <div className="flex items-center justify-center">
             <AnimatedThemeToggler className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 shadow-sm transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-white/10 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-white" />
@@ -132,7 +146,7 @@ export default function Navbar() {
           <MenuIcon
             size={20}
             strokeWidth={2.5}
-            className="text-foreground"
+            className="text-foreground cursor-pointer"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           />
         </div>
@@ -141,7 +155,7 @@ export default function Navbar() {
             <div className="mt-6 flex items-center justify-between">
               <Link
                 href="/"
-                className="flex items-center gap-2.5 transition-opacity duration-200 hover:opacity-90"
+                className="flex cursor-pointer items-center gap-2.5 transition-opacity duration-200 hover:opacity-90"
                 onClick={() => setIsMenuOpen(false)}
               >
                 <div className="border-border flex h-7 w-7 items-center justify-center rounded-full border bg-neutral-900 text-neutral-900 dark:bg-neutral-100 dark:text-gray-900">
@@ -158,7 +172,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setIsMenuOpen(false)}
-                className="text-muted-foreground hover:text-foreground border-border bg-background flex h-9 w-9 items-center justify-center rounded-lg border transition-colors"
+                className="text-muted-foreground hover:text-foreground border-border bg-background flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border transition-colors"
                 aria-label="Close menu"
               >
                 <X size={18} />
@@ -166,29 +180,36 @@ export default function Navbar() {
             </div>
             <nav className="mt-12 flex flex-col gap-4">
               <Link
+                href="/"
+                className="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Home
+              </Link>
+              <Link
                 href="/features"
-                className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200"
+                className="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Features
               </Link>
               <Link
                 href="/pricing"
-                className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200"
+                className="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Pricing
               </Link>
               <Link
                 href="/faq"
-                className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors duration-200"
+                className="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 FAQ
               </Link>
               <Link
                 href="/feedback"
-                className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm font-medium transition-colors duration-200"
+                className="text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-2 text-sm font-medium transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Feedback & Suggestions
@@ -196,32 +217,39 @@ export default function Navbar() {
             </nav>
             <div className="mt-auto flex flex-col gap-3">
               {loggedIn ? (
+                <Link
+                  href="/dashboard"
+                  className="bg-primary text-primary-foreground inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold shadow transition-opacity duration-200 hover:opacity-90"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <LayoutDashboard size={16} />
+                  Dashboard
+                </Link>
+              ) : (
                 <>
                   <Link
-                    href="/dashboard"
-                    className="text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors duration-200"
+                    href="/"
+                    className="text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-border px-4 text-sm font-medium transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Dashboard
+                    <Home size={16} />
+                    Home
+                  </Link>
+                  <Link
+                    href="/signin"
+                    className="text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex h-10 cursor-pointer items-center justify-center rounded-md px-4 text-sm font-medium transition-colors duration-200"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="bg-primary text-primary-foreground inline-flex h-10 cursor-pointer items-center justify-center rounded-lg px-4 text-sm font-medium shadow transition-opacity duration-200 hover:opacity-90"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Get Started
                   </Link>
                 </>
-              ) : (
-                <Link
-                  href="/signin"
-                  className="text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors duration-200"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Sign In
-                </Link>
-              )}
-              {loggedIn ? null : (
-                <Link
-                  href="/signup"
-                  className="bg-primary text-primary-foreground inline-flex h-9 items-center justify-center rounded-lg px-4 text-sm font-medium shadow transition-opacity duration-200 hover:opacity-90"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Get Started
-                </Link>
               )}
               <div className="flex items-center justify-center">
                 <AnimatedThemeToggler className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 shadow-sm transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-white/10 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-white" />

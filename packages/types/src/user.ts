@@ -10,6 +10,7 @@ export interface User {
   userName: string;
   email: string;
   image: string | null;
+  theme?: string;
   plan: Plan | "FREE" | "PRO" | "BUSINESS";
   createdAt: string;
   updatedAt: string;
@@ -22,6 +23,7 @@ export interface UserProfileData {
   bio?: string | null;
   image?: string | null;
   email?: string | null;
+  theme?: string;
   plan: "FREE" | "PRO" | "BUSINESS";
 }
 

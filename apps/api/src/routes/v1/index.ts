@@ -1,4 +1,3 @@
-
 import { Router } from "express";
 import userRoutes from "./user.routes.ts";
 import uploadRoutes from "./upload.routes.ts";
@@ -14,6 +13,7 @@ import socialRoutes from "./social.routes.ts";
 import feedbackRoutes from "./feedback.routes.ts";
 import waitlistRoutes from "./waitlist.routes.ts";
 import integrationsRoutes from "./integrations.routes.ts";
+import domainsRoutes from "./domains.routes.ts";
 
 const router: Router = Router();
 
@@ -32,5 +32,6 @@ router.use("/auth", authRoutes);
 router.use("/feedback", feedbackRoutes);
 router.use("/waitlist", waitlistRoutes);
 router.use("/integrations", integrationsRoutes);
+router.use("/domains", domainsRoutes);
 
 export default router;

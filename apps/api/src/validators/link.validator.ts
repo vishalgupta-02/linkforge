@@ -28,11 +28,23 @@ const safeUrlSchema = z.string().url().refine(
   { message: "URL must use http:// or https:// protocol and be a valid web address" },
 );
 
+const optionalDateSchema = z
+  .union([z.string(), z.null(), z.date()])
+  .optional()
+  .transform((val) => {
+    if (!val || val === "") return null;
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? null : d;
+  });
+
 export const createLinkSchema = z.object({
   url: safeUrlSchema,
   title: z.string().max(100).optional(),
   position: z.number().int().nonnegative().optional(),
   public: z.boolean().default(true),
+  scheduledStart: optionalDateSchema,
+  scheduledEnd: optionalDateSchema,
+  sectionId: z.string().nullable().optional(),
 });
 
 export const updateLinkSchema = z.object({
@@ -41,8 +53,25 @@ export const updateLinkSchema = z.object({
   position: z.number().int().nonnegative().optional(),
   public: z.boolean().optional(),
   isActive: z.boolean().optional(),
+  scheduledStart: optionalDateSchema,
+  scheduledEnd: optionalDateSchema,
+  sectionId: z.string().nullable().optional(),
 });
 
 export const reorderLinksSchema = z.object({
   linkIds: z.array(z.string().uuid()).min(1),
+});
+
+export const createSectionSchema = z.object({
+  title: z.string().min(1).max(80),
+  position: z.number().int().nonnegative().optional(),
+});
+
+export const updateSectionSchema = z.object({
+  title: z.string().min(1).max(80).optional(),
+  position: z.number().int().nonnegative().optional(),
+});
+
+export const reorderSectionsSchema = z.object({
+  sectionIds: z.array(z.string().uuid()).min(1),
 });

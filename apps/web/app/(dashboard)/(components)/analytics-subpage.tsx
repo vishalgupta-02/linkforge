@@ -16,6 +16,10 @@ import {
   Lock,
   Crown,
   TrendingUp,
+  Download,
+  FileText,
+  FileSpreadsheet,
+  MapPin,
 } from "lucide-react";
 import type { AnalyticsRange } from "@/apis/get-analytics";
 import { useAnalytics } from "@/hooks/use-analytics";
@@ -23,6 +27,8 @@ import { useUserProfile } from "@/hooks/use-user-profile";
 import { useRouter } from "next/navigation";
 import { LiveVisitors } from "@/components/custom/live-visitors";
 import { getPlatformConfig } from "@/components/custom/social-media-manager";
+import { exportAnalyticsData } from "@/apis/export-analytics";
+import { toast } from "sonner";
 
 const calculateChartHeights = (
   dailyData?: Array<{ date: string; clicks: number }>,
@@ -38,6 +44,8 @@ const calculateChartHeights = (
 export default function AnalyticsDashboard() {
   const [timeRange, setTimeRange] = useState<AnalyticsRange>("7d");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const router = useRouter();
 
   const { data: userProfile } = useUserProfile();
@@ -46,6 +54,30 @@ export default function AnalyticsDashboard() {
   const isPro = Boolean(
     plan && (plan.toUpperCase() === "PRO" || plan.toUpperCase() === "BUSINESS"),
   );
+
+  const handleExport = async (
+    type: "clicks" | "links",
+    format: "csv" | "json",
+  ) => {
+    if (!isPro) {
+      toast.error(
+        "Data export in CSV/JSON format requires a Pro or Business subscription. Upgrade to export your logs.",
+      );
+      return;
+    }
+    try {
+      setIsExporting(true);
+      await exportAnalyticsData(type, format);
+      toast.success(
+        `Exported ${type === "clicks" ? "click events" : "links"} as ${format.toUpperCase()}!`,
+      );
+      setIsExportOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to export data");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const { data: analytics, isPending, isError } = useAnalytics(timeRange);
 
@@ -76,34 +108,104 @@ export default function AnalyticsDashboard() {
               </p>
             </div>
 
-            <div className="relative">
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="border-border bg-background text-foreground hover:bg-muted/50 inline-flex h-9 w-full items-center justify-between gap-2 rounded-lg border px-3 text-sm font-medium shadow-sm transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Calendar size={14} className="text-muted-foreground" />
-                  Last {timeRange}
-                </div>
-                <ChevronDown size={14} className="text-muted-foreground" />
-              </button>
+            <div className="flex items-center gap-3">
+              {/* Export Data Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsExportOpen(!isExportOpen)}
+                  disabled={isExporting}
+                  className="border-border bg-background text-foreground hover:bg-muted/50 inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-medium shadow-sm transition-colors"
+                >
+                  <Download size={14} className="text-muted-foreground" />
+                  <span>{isExporting ? "Exporting..." : "Export"}</span>
+                  <ChevronDown size={14} className="text-muted-foreground" />
+                </button>
 
-              {isDropdownOpen && (
-                <div className="border-border bg-background animate-in fade-in slide-in-from-top-2 absolute top-full right-0 z-10 mt-1 w-full overflow-hidden rounded-lg border shadow-md duration-200">
-                  {ranges.map((range) => (
+                {isExportOpen && (
+                  <div className="border-border bg-background animate-in fade-in slide-in-from-top-2 absolute top-full right-0 z-20 mt-1 w-56 overflow-hidden rounded-xl border p-1 shadow-lg duration-200">
+                    <div className="text-muted-foreground px-3 py-1.5 text-[11px] font-semibold tracking-wider uppercase">
+                      Click Logs {!isPro && "(Pro)"}
+                    </div>
                     <button
-                      key={range.value}
-                      onClick={() => {
-                        setTimeRange(range.value);
-                        setIsDropdownOpen(false);
-                      }}
-                      className="text-foreground hover:bg-muted flex w-full items-center px-3 py-2 text-sm transition-colors"
+                      onClick={() => handleExport("clicks", "csv")}
+                      className="text-foreground hover:bg-muted flex w-full items-center justify-between rounded-md px-3 py-2 text-xs transition-colors"
                     >
-                      {range.label}
+                      <div className="flex items-center gap-2">
+                        <FileSpreadsheet size={14} className="text-emerald-500" />
+                        <span>Click Events (CSV)</span>
+                      </div>
+                      {!isPro && <Lock size={12} className="text-muted-foreground" />}
                     </button>
-                  ))}
-                </div>
-              )}
+                    <button
+                      onClick={() => handleExport("clicks", "json")}
+                      className="text-foreground hover:bg-muted flex w-full items-center justify-between rounded-md px-3 py-2 text-xs transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <FileText size={14} className="text-amber-500" />
+                        <span>Click Events (JSON)</span>
+                      </div>
+                      {!isPro && <Lock size={12} className="text-muted-foreground" />}
+                    </button>
+
+                    <div className="border-border my-1 border-t" />
+
+                    <div className="text-muted-foreground px-3 py-1.5 text-[11px] font-semibold tracking-wider uppercase">
+                      Links Summary {!isPro && "(Pro)"}
+                    </div>
+                    <button
+                      onClick={() => handleExport("links", "csv")}
+                      className="text-foreground hover:bg-muted flex w-full items-center justify-between rounded-md px-3 py-2 text-xs transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <FileSpreadsheet size={14} className="text-blue-500" />
+                        <span>Links & Socials (CSV)</span>
+                      </div>
+                      {!isPro && <Lock size={12} className="text-muted-foreground" />}
+                    </button>
+                    <button
+                      onClick={() => handleExport("links", "json")}
+                      className="text-foreground hover:bg-muted flex w-full items-center justify-between rounded-md px-3 py-2 text-xs transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <FileText size={14} className="text-purple-500" />
+                        <span>Links & Socials (JSON)</span>
+                      </div>
+                      {!isPro && <Lock size={12} className="text-muted-foreground" />}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Time Range Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="border-border bg-background text-foreground hover:bg-muted/50 inline-flex h-9 w-full items-center justify-between gap-2 rounded-lg border px-3 text-sm font-medium shadow-sm transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Calendar size={14} className="text-muted-foreground" />
+                    Last {timeRange}
+                  </div>
+                  <ChevronDown size={14} className="text-muted-foreground" />
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="border-border bg-background animate-in fade-in slide-in-from-top-2 absolute top-full right-0 z-10 mt-1 w-full overflow-hidden rounded-lg border shadow-md duration-200">
+                    {ranges.map((range) => (
+                      <button
+                        key={range.value}
+                        onClick={() => {
+                          setTimeRange(range.value);
+                          setIsDropdownOpen(false);
+                        }}
+                        className="text-foreground hover:bg-muted flex w-full items-center px-3 py-2 text-sm transition-colors"
+                      >
+                        {range.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </header>
 
@@ -491,7 +593,7 @@ export default function AnalyticsDashboard() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                 <div className="space-y-4">
                   <h3 className="text-foreground px-1 text-sm font-medium">
                     Top Countries
@@ -539,6 +641,108 @@ export default function AnalyticsDashboard() {
                     ) : (
                       <div className="text-muted-foreground p-4 text-center text-sm">
                         No country data yet
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between px-1">
+                    <h3 className="text-foreground flex items-center gap-1.5 text-sm font-medium">
+                      <MapPin size={14} className="text-violet-500" />
+                      Top Cities & Regions
+                    </h3>
+                    {!isPro && (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-violet-600 dark:text-violet-400">
+                        <Lock size={10} /> Pro
+                      </span>
+                    )}
+                  </div>
+                  <div className="border-border bg-background divide-border relative h-80 divide-y overflow-y-auto rounded-xl border shadow-sm">
+                    {!isPro ? (
+                      <div className="relative flex h-full w-full flex-col items-center justify-center p-4 text-center">
+                        <div className="pointer-events-none absolute inset-0 select-none divide-y divide-border p-3 opacity-25 blur-[1.5px]">
+                          <div className="flex items-center justify-between py-2 text-xs">
+                            <span>🇺🇸 San Francisco, CA</span>
+                            <span className="font-semibold">324 clicks</span>
+                          </div>
+                          <div className="flex items-center justify-between py-2 text-xs">
+                            <span>🇬🇧 London, England</span>
+                            <span className="font-semibold">218 clicks</span>
+                          </div>
+                          <div className="flex items-center justify-between py-2 text-xs">
+                            <span>🇯🇵 Tokyo, Kanto</span>
+                            <span className="font-semibold">145 clicks</span>
+                          </div>
+                          <div className="flex items-center justify-between py-2 text-xs">
+                            <span>🇮🇳 Bengaluru, KA</span>
+                            <span className="font-semibold">86 clicks</span>
+                          </div>
+                        </div>
+                        <div className="relative z-10 flex flex-col items-center max-w-[210px]">
+                          <div className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-violet-500/15 text-violet-600 dark:text-violet-400">
+                            <Lock size={16} />
+                          </div>
+                          <h4 className="text-foreground text-xs font-semibold mb-1">
+                            City & Region Geolocation
+                          </h4>
+                          <p className="text-muted-foreground text-[11px] leading-tight mb-3">
+                            Track the exact cities and regional states driving engagement.
+                          </p>
+                          <button
+                            onClick={() => router.push("/pricing")}
+                            className="inline-flex items-center gap-1 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-violet-700 transition-colors"
+                          >
+                            <Crown size={12} />
+                            Upgrade to Pro
+                          </button>
+                        </div>
+                      </div>
+                    ) : loading ? (
+                      <div className="text-muted-foreground p-4 text-center text-sm">
+                        Loading...
+                      </div>
+                    ) : analytics?.clicksByCity &&
+                      analytics.clicksByCity.length > 0 ? (
+                      analytics.clicksByCity.slice(0, 5).map((city, i) => (
+                        <div
+                          key={`${city.city}-${city.region}-${i}`}
+                          className="flex min-h-10 flex-col justify-between space-y-2 p-3"
+                        >
+                          <div className="flex w-full items-center justify-between">
+                            <div className="flex items-center gap-2 truncate">
+                              <span className="text-base">{city.flag}</span>
+                              <span className="font-medium truncate text-sm" title={`${city.city}${city.region ? `, ${city.region}` : ""}`}>
+                                {city.city}
+                                {city.region ? `, ${city.region}` : ""}
+                              </span>
+                            </div>
+
+                            <div className="text-right shrink-0 ml-2">
+                              <p className="font-semibold">{city.clicks}</p>
+                              <p className="text-muted-foreground text-xs">
+                                {city.percentage}%
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+                            <div
+                              className="bg-violet-500 h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${Math.min(city.percentage, 100)}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-muted-foreground flex h-full flex-col items-center justify-center p-4 text-center text-sm">
+                        <MapPin size={22} className="text-muted-foreground/40 mb-1.5" />
+                        <p className="font-medium text-xs text-foreground">No city data yet</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 max-w-[170px]">
+                          Clicks will automatically capture visitor cities and regions.
+                        </p>
                       </div>
                     )}
                   </div>

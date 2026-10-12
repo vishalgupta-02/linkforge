@@ -1,12 +1,12 @@
 "use client";
 
 import { useSortable } from "@dnd-kit/react/sortable";
-import { Copy, Globe, GripVertical, Trash2, Share2 } from "lucide-react";
+import { Copy, Globe, GripVertical, Trash2, Share2, Calendar, Clock, Folder } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { Link } from "@/apis/get-links";
+import type { Link, LinkSection } from "@vyrex/types";
 import { toast } from "sonner";
 
-interface LinkItem extends Link {
+export interface LinkItem extends Link {
   isNew?: boolean;
 }
 
@@ -20,6 +20,7 @@ interface DraggableLinksProps {
   onAutoSave: (linkId: string) => Promise<void>;
   savingId: string | null;
   setDeleteConfirmId: (id: string | null) => void;
+  onOpenEdit?: (link: LinkItem) => void;
 }
 
 const DraggableLinks = ({
@@ -32,6 +33,7 @@ const DraggableLinks = ({
   onAutoSave,
   savingId,
   setDeleteConfirmId,
+  onOpenEdit,
 }: DraggableLinksProps) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const { ref, handleRef, isDragging } = useSortable({
@@ -79,7 +81,7 @@ const DraggableLinks = ({
       data-shadow={isDragging || undefined}
     >
       <div
-        className={`group flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-zinc-50/50 hover:shadow-md sm:flex-row sm:items-start sm:gap-4 dark:border-white/5 dark:bg-[#111] dark:hover:bg-white/3 ${!index.isActive ? "opacity-60 grayscale-[20%]" : ""}`}
+        className={`group flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-zinc-50/50 hover:shadow-md sm:flex-row sm:items-start sm:gap-4 dark:border-white/5 dark:bg-[#111] dark:hover:bg-white/3 ${!index.isActive ? "opacity-60 grayscale-[20%]" : ""}`}
       >
         <div className="flex flex-1 items-start gap-3 sm:gap-4">
           <button
@@ -111,16 +113,53 @@ const DraggableLinks = ({
               className="mt-0.5 text-[13px] font-medium text-zinc-500 dark:text-zinc-400"
               placeholder="https://example.com"
             />
+
+            {/* Schedule & Section Indicators */}
+            {(index.scheduledStart || index.scheduledEnd || index.section) && (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+                {index.section && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-zinc-100 px-2 py-0.5 font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
+                    <Folder size={11} className="text-zinc-400" />
+                    {index.section.title}
+                  </span>
+                )}
+                {index.scheduledStart && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-violet-100 px-2 py-0.5 font-medium text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">
+                    <Clock size={11} />
+                    Starts: {new Date(index.scheduledStart).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
+                {index.scheduledEnd && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                    <Clock size={11} />
+                    Expires: {new Date(index.scheduledEnd).toLocaleDateString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
           <div className="flex items-center justify-between gap-2 opacity-100 transition-opacity sm:gap-3 sm:opacity-0 sm:group-hover:opacity-100">
             <div className="flex items-center gap-1">
+              {onOpenEdit && (
+                <button
+                  onClick={() => onOpenEdit(index)}
+                  className={`cursor-pointer rounded-lg p-2 transition-colors ${
+                    index.scheduledStart || index.scheduledEnd || index.sectionId
+                      ? "bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400"
+                      : "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-white/10 dark:hover:text-white"
+                  }`}
+                  title="Schedule & Group Settings"
+                >
+                  <Calendar size={16} />
+                </button>
+              )}
               {index.public && (
                 <button
                   onClick={handleShare}
-                  className={`rounded-lg p-2 transition-colors ${
+                  className={`cursor-pointer rounded-lg p-2 transition-colors ${
                     copiedId === index.id
                       ? "bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
                       : "text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-white/10 dark:hover:text-white"
@@ -132,14 +171,14 @@ const DraggableLinks = ({
               )}
               <button
                 onClick={() => onDuplicate(index.id || "")}
-                className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-white/10 dark:hover:text-white"
+                className="cursor-pointer rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-white/10 dark:hover:text-white"
                 title="Duplicate"
               >
                 <Copy size={16} />
               </button>
               <button
                 onClick={() => setDeleteConfirmId(index.id)}
-                className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+                className="cursor-pointer rounded-lg p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400"
                 title="Delete"
               >
                 <Trash2 size={16} />
@@ -156,7 +195,7 @@ const DraggableLinks = ({
                   });
                   await onAutoSave(index.id);
                 }}
-                className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
                   index.isActive
                     ? "bg-violet-500 hover:bg-violet-600"
                     : "bg-zinc-300 hover:bg-zinc-400 dark:bg-zinc-600 dark:hover:bg-zinc-500"
@@ -206,7 +245,7 @@ const DraggableLinks = ({
             <button
               onClick={() => onSave(index.id)}
               disabled={savingId === index.id}
-              className="inline-flex h-6 items-center gap-2 rounded-lg bg-violet-500 px-3 text-xs font-semibold whitespace-nowrap text-white shadow-sm transition-all hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-6 cursor-pointer items-center gap-2 rounded-lg bg-violet-500 px-3 text-xs font-semibold whitespace-nowrap text-white shadow-xs transition-all hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {savingId === index.id ? (
                 <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />

@@ -1,4 +1,3 @@
-
 import crypto from "crypto";
 import { Worker } from "bullmq";
 import geoip from "geoip-lite";
@@ -31,13 +30,15 @@ export const clickWorker = new Worker(
       },
       async () => {
         try {
-          const { linkId, socialLinkId, userId, rawReferrer, userAgent, ipAddress } = job.data;
+          const { linkId, socialLinkId, userId, rawReferrer, userAgent, ipAddress, city: jobCity, region: jobRegion } = job.data;
 
           const source = parseReferrerSource(rawReferrer);
           const referrer = rawReferrer || "direct";
           const { device, browser } = parseUserAgent(userAgent);
           const geo = geoip.lookup(ipAddress);
           const country = geo?.country || "unknown";
+          const city = jobCity ?? geo?.city ?? null;
+          const region = jobRegion ?? geo?.region ?? null;
 
           const anonymizedIp = ipAddress
             ? crypto
@@ -57,6 +58,8 @@ export const clickWorker = new Worker(
               device,
               browser,
               country,
+              city,
+              region,
               ipAddress: anonymizedIp,
               userAgent,
             },
@@ -70,6 +73,8 @@ export const clickWorker = new Worker(
             jobId: String(job.id),
             linkId,
             socialLinkId,
+            city,
+            region,
           });
 
           try {

@@ -12,6 +12,7 @@ type UpdateProfileInput = {
   name?: string | undefined;
   bio?: string | undefined;
   image?: string | undefined;
+  theme?: string | undefined;
 };
 
 const CACHE_TTL = 60 * 5;
@@ -20,11 +21,9 @@ export const getPublicProfile = async (username: string) => {
   const normalized = username.toLowerCase();
 
   const cacheKey = CACHE_KEYS.publicProfile(normalized);
-
   const lockKey = CACHE_KEYS.profileLock(normalized);
 
   const cached = await redis.get(cacheKey);
-
   if (cached) {
     return JSON.parse(cached);
   }
@@ -39,6 +38,7 @@ export const getPublicProfile = async (username: string) => {
 
   if (lock) {
     try {
+      const now = new Date();
 
       const profile = await prisma.user.findUnique({
         where: {
@@ -50,12 +50,39 @@ export const getPublicProfile = async (username: string) => {
           userName: true,
           bio: true,
           image: true,
+          theme: true,
+          plan: true,
+
+          linkSection: {
+            orderBy: {
+              position: "asc",
+            },
+            select: {
+              id: true,
+              title: true,
+              position: true,
+            },
+          },
 
           links: {
             where: {
               isActive: true,
               deletedAt: null,
               public: true,
+              AND: [
+                {
+                  OR: [
+                    { scheduledStart: null },
+                    { scheduledStart: { lte: now } },
+                  ],
+                },
+                {
+                  OR: [
+                    { scheduledEnd: null },
+                    { scheduledEnd: { gte: now } },
+                  ],
+                },
+              ],
             },
 
             orderBy: {
@@ -67,6 +94,7 @@ export const getPublicProfile = async (username: string) => {
               title: true,
               url: true,
               position: true,
+              sectionId: true,
             },
           },
 
@@ -98,7 +126,6 @@ export const getPublicProfile = async (username: string) => {
 
       return profile;
     } finally {
-
       await redis.del(lockKey);
     }
   }
@@ -106,7 +133,6 @@ export const getPublicProfile = async (username: string) => {
   await sleep(100);
 
   const retry = await redis.get(cacheKey);
-
   if (retry) {
     return JSON.parse(retry);
   }
@@ -119,13 +145,25 @@ export const updateProfile = async ({
   name,
   bio,
   image,
+  theme,
 }: UpdateProfileInput) => {
+  if (theme && !["default", "dark", "light"].includes(theme)) {
+    const existing = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true },
+    });
+    if (existing?.plan !== "PRO" && existing?.plan !== "BUSINESS") {
+      throw new AppError("Designer themes require a Pro or Business subscription", 403);
+    }
+  }
+
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: {
       ...(name !== undefined && { name }),
       ...(bio !== undefined && { bio }),
       ...(image !== undefined && { image }),
+      ...(theme !== undefined && { theme }),
     },
     select: {
       id: true,
@@ -133,11 +171,18 @@ export const updateProfile = async ({
       userName: true,
       bio: true,
       image: true,
+      theme: true,
+      plan: true,
     },
   });
 
   if (updatedUser.userName) {
-    await redis.del(CACHE_KEYS.publicProfile(updatedUser.userName));
+    try {
+      await redis.del(CACHE_KEYS.publicProfile(updatedUser.userName));
+      await redis.del(CACHE_KEYS.publicProfile(updatedUser.userName.toLowerCase()));
+    } catch (err) {
+      console.warn("Failed to invalidate profile cache in Redis:", err);
+    }
   }
 
   return updatedUser;
@@ -176,6 +221,7 @@ export const updateProfileImage = async (
 
     if (updatedUser.userName) {
       await redis.del(CACHE_KEYS.publicProfile(updatedUser.userName));
+      await redis.del(CACHE_KEYS.publicProfile(updatedUser.userName.toLowerCase()));
     }
 
     return updatedUser;
@@ -196,6 +242,7 @@ export const getPublicProfileByUserId = async (userId: string) => {
         name: true,
         userName: true,
         plan: true,
+        theme: true,
         bio: true,
         image: true,
         email: true,

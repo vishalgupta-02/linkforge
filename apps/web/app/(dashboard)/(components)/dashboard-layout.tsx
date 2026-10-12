@@ -6,7 +6,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
-import { Loader2 } from "lucide-react";
+import { Loader2, Home } from "lucide-react";
+import Link from "next/link";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
@@ -44,6 +45,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           <div className="flex items-center justify-between gap-4 px-4">
             <SidebarTrigger className="bg-primary text-primary-foreground m-4 h-8 w-8 cursor-pointer" />
             <div className="flex items-center gap-2">
+              <Link
+                href="/"
+                className="flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-600 shadow-xs transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:border-white/10 dark:bg-white/5 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
+                title="Go to Home"
+              >
+                <Home size={14} />
+                <span>Home</span>
+              </Link>
               <AnimatedThemeToggler className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 shadow-sm transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:border-white/10 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-white" />
 
               {pathname === "/dashboard" && (

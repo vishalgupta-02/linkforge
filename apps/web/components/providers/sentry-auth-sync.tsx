@@ -10,11 +10,14 @@ export function SentryAuthSync() {
   useEffect(() => {
     if (isPending) return;
 
-    if (session?.user) {
-      setSentryUser(session.user);
-    } else {
-      clearSentryUser();
+    const user = session?.user;
+
+    if (user?.id) {
+      setSentryUser(user);
+      return;
     }
+
+    clearSentryUser();
   }, [session, isPending]);
 
   return null;

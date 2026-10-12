@@ -10,10 +10,21 @@ export interface Link {
   deletedAt: string | null;
   userId: string;
   sectionId: string | null;
+  section?: LinkSection | null;
   scheduledStart: string | null;
   scheduledEnd: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface LinkSection {
+  id: string;
+  title: string;
+  position: number;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+  link?: Link[];
 }
 
 export interface PublicProfileLink {
@@ -21,12 +32,16 @@ export interface PublicProfileLink {
   title: string;
   url: string;
   position: number;
+  sectionId?: string | null;
 }
 
 export interface CreateLinkPayload {
   title: string;
   url: string;
   public?: boolean;
+  scheduledStart?: string | null;
+  scheduledEnd?: string | null;
+  sectionId?: string | null;
 }
 
 export interface UpdateLinkPayload {
@@ -36,6 +51,9 @@ export interface UpdateLinkPayload {
   isActive?: boolean;
   public?: boolean;
   position?: number;
+  scheduledStart?: string | null;
+  scheduledEnd?: string | null;
+  sectionId?: string | null;
 }
 
 export interface ReorderLinksPayload {

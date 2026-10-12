@@ -1,6 +1,5 @@
-
 import type { Request } from "express";
-
+import geoip from "geoip-lite";
 import { clickQueue } from "../queues/click.queue.ts";
 
 type TrackClickInput = {
@@ -29,31 +28,29 @@ export const enqueueClickEvent = async ({
     req.ip ||
     "127.0.0.1";
 
+  const geo = geoip.lookup(ipAddress);
+  const city = geo?.city || null;
+  const region = geo?.region || null;
+
   await clickQueue.add(
     "track-click",
-
     {
       linkId: linkId || null,
       socialLinkId: socialLinkId || null,
       userId,
-
       rawReferrer,
       userAgent,
       ipAddress,
+      city,
+      region,
     },
-
     {
-
       attempts: 3,
-
       backoff: {
         type: "exponential",
-
         delay: 1000,
       },
-
       removeOnComplete: 1000,
-
       removeOnFail: 5000,
     },
   );

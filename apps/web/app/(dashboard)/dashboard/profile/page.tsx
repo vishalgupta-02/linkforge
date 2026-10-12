@@ -17,6 +17,9 @@ import {
   Lock,
   Sparkles,
   CheckCircle2,
+  QrCode,
+  Crown,
+  Check,
 } from "lucide-react";
 import DashboardLayout from "@/app/(dashboard)/(components)/dashboard-layout";
 import { useUserProfile, userProfileKeys } from "@/hooks/use-user-profile";
@@ -32,6 +35,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { SocialMediaManager } from "@/components/custom/social-media-manager";
+import { THEME_LIST, ThemeKey } from "@/lib/themes";
+import { QrCodeModal } from "@/components/custom/qr-code-modal";
 
 export default function CreatorDashboardProfile() {
   const router = useRouter();
@@ -50,6 +55,9 @@ export default function CreatorDashboardProfile() {
   const [userName, setUserName] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [selectedTheme, setSelectedTheme] = useState<string>("default");
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [isApplyingTheme, setIsApplyingTheme] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -61,6 +69,9 @@ export default function CreatorDashboardProfile() {
       setUserName(userProfile.data.userName || "");
       setBio(userProfile.data.bio || "");
       setAvatarUrl(userProfile.data.image || session?.user?.image || null);
+      if (userProfile.data.theme) {
+        setSelectedTheme(userProfile.data.theme);
+      }
     } else if (session?.user) {
       setName(session.user.name || "");
       setAvatarUrl(session.user.image || null);
@@ -71,6 +82,27 @@ export default function CreatorDashboardProfile() {
   const isPro =
     userProfile?.data?.plan === "PRO" ||
     userProfile?.data?.plan === "BUSINESS";
+
+  const handleSelectTheme = async (themeKey: string, isThemePro: boolean) => {
+    if (isThemePro && !isPro) {
+      toast.error(
+        "This designer theme requires a Pro or Business subscription. Upgrade to unlock all bespoke themes.",
+      );
+      return;
+    }
+
+    try {
+      setIsApplyingTheme(true);
+      setSelectedTheme(themeKey);
+      await updateUserProfile({ theme: themeKey });
+      await queryClient.invalidateQueries({ queryKey: userProfileKeys.all });
+      toast.success("Theme applied successfully!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update theme");
+    } finally {
+      setIsApplyingTheme(false);
+    }
+  };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -299,6 +331,13 @@ export default function CreatorDashboardProfile() {
                         </button>
                         <button
                           type="button"
+                          onClick={() => setIsQrModalOpen(true)}
+                          className="border-border bg-background text-foreground hover:bg-muted inline-flex h-9 items-center justify-center rounded-lg border px-4 text-sm font-medium shadow-sm transition-colors"
+                        >
+                          <QrCode size={14} className="mr-2" /> QR Code
+                        </button>
+                        <button
+                          type="button"
                           onClick={() =>
                             window.open(
                               userName
@@ -500,25 +539,27 @@ export default function CreatorDashboardProfile() {
                 )}
               </div>
             ) : (
-              <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6 duration-300">
+              <div className="animate-in fade-in slide-in-from-bottom-2 space-y-8 duration-300">
+                {/* Live Preview & QR Code Quick Actions */}
                 <div className="border-border bg-background rounded-2xl border p-6 shadow-sm">
-                  <h3 className="text-foreground text-base font-semibold">
-                    Public Page Appearance
-                  </h3>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    Customize your public profile page theme, colors, and layout.
-                  </p>
+                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                    <div>
+                      <h3 className="text-foreground text-base font-semibold">
+                        Public Page Appearance & Distribution
+                      </h3>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        Preview your public page or generate print-ready vector QR codes.
+                      </p>
+                    </div>
 
-                  <div className="mt-6 flex flex-col gap-4">
-                    <div className="border-border bg-muted/40 flex items-center justify-between rounded-xl border p-4">
-                      <div>
-                        <h4 className="text-foreground text-sm font-medium">
-                          Live Public Profile Preview
-                        </h4>
-                        <p className="text-muted-foreground text-xs">
-                          Check how your public profile looks to your audience.
-                        </p>
-                      </div>
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <button
+                        onClick={() => setIsQrModalOpen(true)}
+                        className="border-border bg-card hover:bg-accent text-foreground inline-flex h-9 items-center justify-center gap-2 rounded-xl border px-3.5 text-xs font-semibold shadow-sm transition-all"
+                      >
+                        <QrCode size={14} className="text-primary" /> Get QR Code
+                      </button>
+
                       <button
                         onClick={() =>
                           window.open(
@@ -528,11 +569,119 @@ export default function CreatorDashboardProfile() {
                             "_blank",
                           )
                         }
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center justify-center rounded-lg px-4 text-sm font-medium shadow-sm"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center justify-center gap-2 rounded-xl px-4 text-xs font-semibold shadow-sm transition-all"
                       >
-                        <ExternalLink size={14} className="mr-2" /> View Page
+                        <ExternalLink size={14} /> View Live Page
                       </button>
                     </div>
+                  </div>
+                </div>
+
+                {/* Theme Studio */}
+                <div className="border-border bg-background rounded-2xl border p-6 shadow-sm">
+                  <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Palette size={18} className="text-primary" />
+                        <h3 className="text-foreground text-base font-semibold">
+                          Designer Theme Studio
+                        </h3>
+                      </div>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        Select a bespoke visual palette. Themes apply instantly to your public profile and link cards.
+                      </p>
+                    </div>
+
+                    {!isPro && (
+                      <div className="border-border bg-muted/40 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium text-amber-500">
+                        <Crown size={13} />
+                        <span>Upgrade to Pro for all 8 themes</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Themes Grid */}
+                  <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {THEME_LIST.map((theme) => {
+                      const isCurrent = selectedTheme === theme.key;
+                      const isLocked = theme.isPro && !isPro;
+
+                      return (
+                        <div
+                          key={theme.key}
+                          onClick={() => handleSelectTheme(theme.key, theme.isPro)}
+                          className={`relative flex flex-col justify-between overflow-hidden rounded-2xl border p-4 transition-all duration-200 cursor-pointer ${
+                            isCurrent
+                              ? "border-primary ring-2 ring-primary/20 shadow-md scale-[1.02]"
+                              : "border-border hover:border-border/80 hover:shadow-sm"
+                          } ${isLocked ? "opacity-75 hover:opacity-100" : ""}`}
+                        >
+                          {/* Mini Mockup Window */}
+                          <div
+                            className="relative mb-3 flex h-32 w-full flex-col items-center justify-center rounded-xl p-3 shadow-inner"
+                            style={{ backgroundColor: theme.bgHex }}
+                          >
+                            {/* Mock Avatar */}
+                            <div
+                              className="mb-2 h-7 w-7 rounded-full border border-black/10 shadow-sm"
+                              style={{ backgroundColor: theme.accentHex }}
+                            />
+                            {/* Mock Link Button 1 */}
+                            <div
+                              className="mb-1.5 flex h-6 w-full max-w-[130px] items-center justify-center rounded-lg text-[9px] font-bold shadow-sm"
+                              style={{
+                                backgroundColor: theme.cardHex,
+                                color: theme.textColor,
+                              }}
+                            >
+                              My Portfolio
+                            </div>
+                            {/* Mock Link Button 2 */}
+                            <div
+                              className="flex h-5 w-full max-w-[110px] items-center justify-center rounded-md opacity-80 text-[8px] font-medium"
+                              style={{
+                                backgroundColor: theme.cardHex,
+                                color: theme.textColor,
+                              }}
+                            >
+                              Latest Video
+                            </div>
+                          </div>
+
+                          {/* Theme Info */}
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-foreground text-sm font-semibold">
+                                  {theme.name}
+                                </span>
+                                {theme.isPro && (
+                                  <span className="bg-primary/10 text-primary rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                                    Pro
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-muted-foreground mt-0.5 text-[11px] leading-tight line-clamp-1">
+                                {theme.tagline}
+                              </p>
+                            </div>
+
+                            {/* Active or Locked Badge */}
+                            <div>
+                              {isCurrent ? (
+                                <div className="bg-primary text-primary-foreground flex h-5 w-5 items-center justify-center rounded-full shadow-sm">
+                                  <Check size={12} strokeWidth={3} />
+                                </div>
+                              ) : isLocked ? (
+                                <div className="text-muted-foreground flex h-5 w-5 items-center justify-center rounded-full">
+                                  <Lock size={12} />
+                                </div>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -540,6 +689,19 @@ export default function CreatorDashboardProfile() {
           </div>
         </main>
       </div>
+
+      {/* Profile QR Code Modal */}
+      <QrCodeModal
+        isOpen={isQrModalOpen}
+        onClose={() => setIsQrModalOpen(false)}
+        url={
+          typeof window !== "undefined"
+            ? `${window.location.origin}/username/${userName || ""}`
+            : `/username/${userName}`
+        }
+        title={`${name || userName || "Creator"}'s QR Code`}
+        subtitle="Download as crisp vector SVG for print or high-res PNG for digital media."
+      />
     </DashboardLayout>
   );
 }

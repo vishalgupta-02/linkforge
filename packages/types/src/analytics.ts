@@ -41,6 +41,15 @@ export interface LinkData {
   relativeWidth: number;
 }
 
+export interface CityData {
+  city: string;
+  region: string;
+  countryCode: string;
+  flag: string;
+  clicks: number;
+  percentage: number;
+}
+
 export interface AnalyticsResponse {
   totalClicks: number;
   clicksByDay: ClicksByDay;
@@ -49,6 +58,7 @@ export interface AnalyticsResponse {
     clicks: number;
   }>;
   clicksByCountry: CountryData[];
+  clicksByCity?: CityData[];
   clicksByDevice: DeviceData[];
   clicksByLink: LinkData[];
   clicksBySource: SourceData[];

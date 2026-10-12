@@ -134,6 +134,7 @@ export const getDashboardAnalytics = async (
     clicksByLink,
     clicksBySocial,
     clicksBySource,
+    clicksByCityRaw,
     clicksByDayArray7d,
     clicksByDayArray30d,
     clicksByDayArray90d,
@@ -208,6 +209,23 @@ export const getDashboardAnalytics = async (
           source: "desc",
         },
       },
+    }),
+
+    prisma.clickEvent.groupBy({
+      by: ["city", "region", "countryCode"],
+      where: {
+        userId,
+        city: { not: null },
+      },
+      _count: {
+        city: true,
+      },
+      orderBy: {
+        _count: {
+          city: "desc",
+        },
+      },
+      take: 20,
     }),
 
     shouldFetch7d
@@ -365,11 +383,31 @@ export const getDashboardAnalytics = async (
     })
     .sort((a, b) => b.clicks - a.clicks);
 
+  const enrichedCities = clicksByCityRaw
+    .filter((item) => item.city && item.city !== "unknown" && item.city !== "null")
+    .map((item) => {
+      const clicks = item._count.city;
+      return {
+        city: item.city!,
+        region: item.region || "",
+        countryCode: item.countryCode || "unknown",
+        flag: countryCodeToFlag(item.countryCode || "unknown"),
+        clicks,
+        percentage:
+          totalClicks > 0
+            ? Number(((clicks / totalClicks) * 100).toFixed(1))
+            : 0,
+      };
+    })
+    .sort((a, b) => b.clicks - a.clicks)
+    .slice(0, 12);
+
   const analytics = {
     totalClicks,
     clicksByDay,
     clicksByDayArray,
     clicksByCountry: enrichedCountries,
+    clicksByCity: enrichedCities,
     clicksByDevice,
     clicksByLink: enrichedClicksByLink,
     clicksBySource: enrichedSources,
