@@ -23,6 +23,19 @@ export const publicRedirectController = async (req: Request, res: Response) => {
   const link = await getLinkByPublicId(publicId);
 
   if (link && link.isActive && link.deletedAt === null) {
+    // Enforce active schedule check
+    const now = new Date();
+    if (link.scheduledStart && now < new Date(link.scheduledStart)) {
+      return res.status(404).json({
+        message: "This link is scheduled to go live at a later date",
+      });
+    }
+    if (link.scheduledEnd && now > new Date(link.scheduledEnd)) {
+      return res.status(404).json({
+        message: "This link schedule has expired",
+      });
+    }
+
     if (!isSafeDestinationUrl(link.url)) {
       logger.warn("Unsafe destination URL blocked in redirect flow", {
         event: "redirect.unsafe_url_blocked",

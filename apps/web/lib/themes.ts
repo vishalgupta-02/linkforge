@@ -30,3 +30,98 @@ export const THEME_BUTTONS: Record<ThemeKey, string> = {
   midnight:
     "bg-zinc-900 border border-zinc-800 text-white hover:bg-zinc-800 hover:border-zinc-700 hover:-translate-y-0.5 shadow-sm",
 };
+
+export interface ThemeMeta {
+  key: ThemeKey;
+  name: string;
+  tagline: string;
+  isPro: boolean;
+  bgHex: string;
+  accentHex: string;
+  cardHex: string;
+  textColor: string;
+}
+
+export const THEME_LIST: ThemeMeta[] = [
+  {
+    key: "default",
+    name: "Classic Slate",
+    tagline: "Clean, neutral zinc balance",
+    isPro: false,
+    bgHex: "#fafafa",
+    accentHex: "#18181b",
+    cardHex: "#ffffff",
+    textColor: "#18181b",
+  },
+  {
+    key: "dark",
+    name: "Obsidian Dark",
+    tagline: "Sleek contrast with soft borders",
+    isPro: false,
+    bgHex: "#0a0a0a",
+    accentHex: "#ffffff",
+    cardHex: "#111111",
+    textColor: "#fafafa",
+  },
+  {
+    key: "light",
+    name: "Alabaster Clean",
+    tagline: "Pure editorial white minimal",
+    isPro: false,
+    bgHex: "#ffffff",
+    accentHex: "#09090b",
+    cardHex: "#f4f4f5",
+    textColor: "#09090b",
+  },
+  {
+    key: "violet",
+    name: "Tokyo Neon",
+    tagline: "Electric purple glowing aesthetics",
+    isPro: true,
+    bgHex: "#09090b",
+    accentHex: "#8b5cf6",
+    cardHex: "#7c3aed",
+    textColor: "#f5f3ff",
+  },
+  {
+    key: "ocean",
+    name: "Cyberpunk Cyan",
+    tagline: "Deep maritime dark with vivid cyan",
+    isPro: true,
+    bgHex: "#020617",
+    accentHex: "#06b6d4",
+    cardHex: "#0891b2",
+    textColor: "#ecfeff",
+  },
+  {
+    key: "sunset",
+    name: "Sunset Horizon",
+    tagline: "Warm amber dusk and rich coral",
+    isPro: true,
+    bgHex: "#fff7ed",
+    accentHex: "#f97316",
+    cardHex: "#ea580c",
+    textColor: "#7c2d12",
+  },
+  {
+    key: "forest",
+    name: "Emerald Garden",
+    tagline: "Lush botanical green accents",
+    isPro: true,
+    bgHex: "#f0fdf4",
+    accentHex: "#16a34a",
+    cardHex: "#15803d",
+    textColor: "#14532d",
+  },
+  {
+    key: "midnight",
+    name: "Deep Void",
+    tagline: "Ultra-dark high-contrast monochrome",
+    isPro: true,
+    bgHex: "#050505",
+    accentHex: "#e4e4e7",
+    cardHex: "#18181b",
+    textColor: "#d4d4d8",
+  },
+];
+

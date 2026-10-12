@@ -6,4 +6,16 @@ export const updateProfileSchema = z.object({
   bio: z.string().max(160).optional(),
   userName: z.string().optional(),
   image: z.string().url().optional(),
+  theme: z
+    .enum([
+      "default",
+      "dark",
+      "light",
+      "violet",
+      "ocean",
+      "sunset",
+      "forest",
+      "midnight",
+    ])
+    .optional(),
 });

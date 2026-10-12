@@ -20,6 +20,8 @@ model User {
   plan                 Plan     @default(FREE)
   planExpiry           DateTime @default(now())
 
+  theme                String   @default("default")
+
   stripeCustomerId     String?
   stripeSubscriptionId String?
 
@@ -35,6 +37,8 @@ model User {
   linkSection   LinkSection[]
   milestones    ClickMilestone[]
   passwordResetTokens PasswordResetToken[]
+  apiKeys       ApiKey[]
+  webhookSubscriptions WebhookSubscription[]
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -114,6 +118,8 @@ model ClickEvent {
   country    String   
   countryCode String @default("unknown")
   countryName String @default("Unknown")
+  city       String?
+  region     String?
   referrer   String
 
   ipAddress  String
@@ -203,7 +209,7 @@ enum Action {
 
 model CustomDomain {
   id         String @id @default(uuid())
-  domainName String
+  domainName String @unique
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -213,6 +219,11 @@ model CustomDomain {
 
   verifiedAt       DateTime?
   sslProvisionedAt DateTime?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
+
+  @@index([userId])
 }
 
 model Session {
@@ -298,6 +309,41 @@ model PasswordResetToken {
   @@index([tokenHash])
   @@index([userId, expiresAt])
   @@map("password_reset_token")
+}
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  name       String
+  keyPrefix  String
+  keyHash    String    @unique
+  fullKey    String?
+  lastUsedAt DateTime?
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("api_key")
+}
+
+model WebhookSubscription {
+  id                 String    @id @default(uuid())
+  url                String
+  events             String[]
+  secret             String
+  isActive           Boolean   @default(true)
+  lastDeliveryStatus Int?
+  lastDeliveryAt     DateTime?
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("webhook_subscription")
 }
 
 

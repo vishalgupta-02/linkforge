@@ -17,4 +17,6 @@ export const CACHE_KEYS = {
   liveVisitorPattern: (userId: string) => `live:user:${userId}:visitor:*`,
 
   liveVisitorZSet: (userId: string) => `live:zset:${userId}`,
+
+  customDomain: (domain: string) => `domain:${domain.toLowerCase()}`,
 };

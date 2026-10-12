@@ -8,6 +8,11 @@ import {
   reorderLinks,
   toggleLink,
   updateLink,
+  getSections,
+  createSection,
+  updateSection,
+  deleteSection,
+  reorderSections,
 } from "../../services/link.service.ts";
 import { AppError } from "../../utils/api-error.ts";
 import { ApiResponse } from "../../utils/api-response.ts";
@@ -15,6 +20,9 @@ import {
   createLinkSchema,
   reorderLinksSchema,
   updateLinkSchema,
+  createSectionSchema,
+  updateSectionSchema,
+  reorderSectionsSchema,
 } from "../../validators/link.validator.ts";
 import { prisma } from "../../db/client.ts";
 
@@ -26,7 +34,7 @@ export const createLinkController = async (req: Request, res: Response) => {
   const parsed = createLinkSchema.safeParse(req.body);
 
   if (!parsed.success) {
-    throw new AppError("Invalid input", 400);
+    throw new AppError(parsed.error.issues[0]?.message || "Invalid input", 400);
   }
 
   const link = await createLink(userId, parsed.data);
@@ -54,12 +62,12 @@ export const updateLinkController = async (req: Request, res: Response) => {
   const parsed = updateLinkSchema.safeParse(req.body);
 
   if (!parsed.success) {
-    throw new AppError("Invalid input", 400);
+    throw new AppError(parsed.error.issues[0]?.message || "Invalid input", 400);
   }
 
-  await updateLink(userId, id, parsed.data);
+  const updated = await updateLink(userId, id, parsed.data);
 
-  return res.json(ApiResponse(null, "Link updated", 200));
+  return res.json(ApiResponse(updated, "Link updated", 200));
 };
 
 export const deleteLinkController = async (req: Request, res: Response) => {
@@ -205,4 +213,64 @@ export const deleteLinkPermanently = async (req: Request, res: Response) => {
   }
 
   res.json(ApiResponse(null, "Link permanently deleted", 200));
+};
+
+// Section Controllers
+export const getSectionsController = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new AppError("Unauthorized", 401);
+
+  const sections = await getSections(userId);
+  return res.json(ApiResponse(sections, "Sections fetched successfully", 200));
+};
+
+export const createSectionController = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new AppError("Unauthorized", 401);
+
+  const parsed = createSectionSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new AppError(parsed.error.issues[0]?.message || "Invalid input", 400);
+  }
+
+  const section = await createSection(userId, parsed.data.title, parsed.data.position);
+  return res.status(201).json(ApiResponse(section, "Section created successfully", 201));
+};
+
+export const updateSectionController = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  const id = req.params.id as string;
+  if (!userId) throw new AppError("Unauthorized", 401);
+  if (!id) throw new AppError("Section ID is required", 400);
+
+  const parsed = updateSectionSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new AppError("Invalid input", 400);
+  }
+
+  const updated = await updateSection(userId, id, parsed.data);
+  return res.json(ApiResponse(updated, "Section updated successfully", 200));
+};
+
+export const deleteSectionController = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  const id = req.params.id as string;
+  if (!userId) throw new AppError("Unauthorized", 401);
+  if (!id) throw new AppError("Section ID is required", 400);
+
+  await deleteSection(userId, id);
+  return res.json(ApiResponse(null, "Section deleted successfully", 200));
+};
+
+export const reorderSectionsController = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new AppError("Unauthorized", 401);
+
+  const parsed = reorderSectionsSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new AppError("Invalid section IDs", 400);
+  }
+
+  await reorderSections(userId, parsed.data.sectionIds);
+  return res.json(ApiResponse(null, "Sections reordered successfully", 200));
 };

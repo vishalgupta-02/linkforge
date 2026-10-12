@@ -26,6 +26,6 @@ export const prisma = new PrismaClient({
   ],
 });
 
-prisma.$on("query", (e) => {
-  console.log(`[DB QUERY] ${e.duration}ms`);
-});
+// prisma.$on("query", (e) => {
+//   console.log(`[DB QUERY] ${e.duration}ms`);
+// });
