@@ -2,6 +2,8 @@ import pino from "pino";
 import * as Sentry from "@sentry/node";
 import { getRequestId, getUserId } from "./request-context.ts";
 import { getTraceContext } from "../utils/tracing-utils.ts";
+import { recordMongoLog } from "./mongo-logger.ts";
+import type { LogCategoryType } from "../models/log.model.ts";
 
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
 
@@ -165,6 +167,38 @@ function emitPinoLog(
     });
   } catch {
 
+  }
+
+  // Store logs in MongoDB for production only, not for development
+  if (process.env.NODE_ENV !== "production" && process.env.FORCE_MONGO_LOGS !== "true") {
+    return;
+  }
+
+  try {
+    const event = String(context?.event || "").toLowerCase();
+    let category: LogCategoryType = (context?.category as LogCategoryType) || "general";
+    if (event.startsWith("worker.") || event.startsWith("queue.")) category = "worker";
+    else if (event.startsWith("auth.") || event.includes("session")) category = "auth";
+    else if (event.startsWith("billing.") || event.startsWith("stripe.")) category = "billing";
+    else if (event.startsWith("email.") || event.startsWith("resend.")) category = "email";
+    else if (event.startsWith("db.") || event.startsWith("prisma.")) category = "database";
+    else if (event.startsWith("security.") || event.startsWith("ratelimit") || event.includes("blocked")) category = "security";
+    else if (event.startsWith("system.") || event.startsWith("cron.") || event.startsWith("mongo.")) category = "system";
+    else if ((level === "error" || level === "fatal") && category === "general") category = "system";
+
+    recordMongoLog({
+      level,
+      category,
+      message,
+      requestId: (enriched.requestId as string) || null,
+      userId: (enriched.userId as string) || null,
+      traceId: (enriched.traceId as string) || (enriched.trace_id as string) || null,
+      spanId: (enriched.spanId as string) || (enriched.span_id as string) || null,
+      metadata: enriched,
+      error: enriched.error as any,
+    });
+  } catch {
+    // Non-blocking fallback
   }
 }
 

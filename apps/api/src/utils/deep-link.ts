@@ -61,7 +61,7 @@ export function resolveDeepLink(url: string, userAgent: string): DeepLinkResult 
     if (host.includes("spotify.com")) {
       const parts = pathname.split("/").filter(Boolean);
       // /track/:id, /album/:id, /playlist/:id, /artist/:id
-      if (parts.length >= 2 && ["track", "album", "artist", "playlist", "episode", "show"].includes(parts[0])) {
+      if (parts.length >= 2 && parts[0] && parts[1] && ["track", "album", "artist", "playlist", "episode", "show"].includes(parts[0])) {
         const type = parts[0];
         const id = parts[1];
         return {
@@ -76,7 +76,7 @@ export function resolveDeepLink(url: string, userAgent: string): DeepLinkResult 
     // 3. Instagram
     if (host.includes("instagram.com")) {
       const parts = pathname.split("/").filter(Boolean);
-      if (parts.length === 1 && !["explore", "reels", "direct", "stories"].includes(parts[0])) {
+      if (parts.length === 1 && parts[0] && !["explore", "reels", "direct", "stories"].includes(parts[0])) {
         const username = parts[0];
         return {
           isMobile: true,
@@ -90,7 +90,7 @@ export function resolveDeepLink(url: string, userAgent: string): DeepLinkResult 
     // 4. Twitter / X
     if (host.includes("twitter.com") || host.includes("x.com")) {
       const parts = pathname.split("/").filter(Boolean);
-      if (parts.length === 1 && !["home", "explore", "notifications", "messages"].includes(parts[0])) {
+      if (parts.length === 1 && parts[0] && !["home", "explore", "notifications", "messages"].includes(parts[0])) {
         const screenName = parts[0];
         return {
           isMobile: true,
@@ -104,7 +104,7 @@ export function resolveDeepLink(url: string, userAgent: string): DeepLinkResult 
     // 5. Twitch
     if (host.includes("twitch.tv")) {
       const parts = pathname.split("/").filter(Boolean);
-      if (parts.length === 1 && !["directory", "videos", "settings"].includes(parts[0])) {
+      if (parts.length === 1 && parts[0] && !["directory", "videos", "settings"].includes(parts[0])) {
         const channel = parts[0];
         return {
           isMobile: true,

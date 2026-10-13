@@ -16,6 +16,7 @@ import {
   Layers,
   Copy,
   Check,
+  Phone,
 } from "lucide-react";
 import axios from "axios";
 
@@ -132,7 +133,7 @@ export default function MobileWaitlistPage() {
         {/* Hero Section */}
         <div className="mx-auto max-w-3xl text-center">
           <div className="border-primary/20 bg-primary/10 text-primary mb-6 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-bold tracking-wide uppercase">
-            <Sparkles size={13} />
+            <Phone size={14}/>
             <span>Native iOS & Android Apps</span>
           </div>
 

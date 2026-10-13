@@ -136,14 +136,13 @@ export default function Footer() {
                   className="text-background"
                 />
               </div>
-              <span className="text-foreground text-sm font-semibold tracking-tight">
-                Linkforge
+              <span className="text-foreground text-lg font-semibold tracking-tight">
+                linkforge
               </span>
             </Link>
 
             <p className="text-muted-foreground max-w-xs text-sm">
-              The link-in-bio platform built for serious creators. One link for
-              everything — with analytics that actually matter.
+              One link for everything — with analytics that actually matter.
             </p>
 
             <div className="flex gap-3">

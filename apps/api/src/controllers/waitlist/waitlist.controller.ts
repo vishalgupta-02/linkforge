@@ -53,7 +53,7 @@ export const subscribeMobileWaitlist = async (req: Request, res: Response) => {
         normalizedEmail,
       );
 
-    if (existing && existing.length > 0) {
+    if (existing && existing.length > 0 && existing[0]) {
       const current = existing[0];
       const countResult: Array<{ count: string | number }> = await prisma.$queryRawUnsafe(
         `SELECT COUNT(*) as count FROM mobile_waitlist`,

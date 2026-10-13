@@ -33,7 +33,7 @@ export const MobileWaitlistEmail: React.FC<MobileWaitlistEmailProps> = ({
   return (
     <Html>
       <Head />
-      <Preview>You're #{waitlistNumber} on the LinkForge Mobile App waitlist</Preview>
+      <Preview>{`You're #${waitlistNumber} on the LinkForge Mobile App waitlist`}</Preview>
       <Body style={main}>
         <Container style={container}>
           {/* Header */}

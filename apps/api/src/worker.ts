@@ -2,6 +2,11 @@ import "dotenv/config";
 import { clickWorker } from "./workers/click.worker.ts";
 import { emailWorker } from "./workers/email.worker.ts";
 import { logger } from "./lib/logger.ts";
+import { connectMongoose } from "./lib/mongoose.ts";
+
+if (process.env.NODE_ENV === "production" || process.env.FORCE_MONGO_LOGS === "true") {
+  connectMongoose().catch(() => {});
+}
 
 const environment = process.env.NODE_ENV || "development";
 

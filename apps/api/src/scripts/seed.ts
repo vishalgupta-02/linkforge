@@ -49,8 +49,8 @@ async function seed() {
   console.log("Seeding completed: 10 fake users with 5 links each successfully seeded!");
 }
 
-main()
-  .catch((e) => {
+seed()
+  .catch((e: unknown) => {
     console.error("Seeding failed:", e);
     process.exit(1);
   })

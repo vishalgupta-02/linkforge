@@ -6,12 +6,11 @@ import { AvatarCircles } from "@/components/ui/avatar-circles";
 const Trusts = () => {
   return (
     <section className="py-16">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-8 px-6 md:flex-row md:justify-between">
-        <p className="text-md text-center font-semibold text-zinc-500 md:text-left">
-          Trusted by 1M+ creators worldwide
-        </p>
-        <AvatarCircles
-
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-8 px-6">
+        {/* <p className="text-md text-center font-semibold text-zinc-500 md:text-left">
+          Trusted by Creators worldwide
+        </p> */}
+        {/* <AvatarCircles
           avatarUrls={[
             {
               imageUrl: "https://avatars.githubusercontent.com/u/101015515",
@@ -33,7 +32,7 @@ const Trusts = () => {
               profileUrl: "https://github.com/vishalgupta-02",
             },
           ]}
-        />
+        /> */}
       </div>
     </section>
   );
