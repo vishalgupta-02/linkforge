@@ -21,6 +21,10 @@ import { serverAdapter } from "./src/lib/bull-board.ts";
 import { adminAuthMiddleware } from "./src/middlewares/admin-auth.middleware.ts";
 import publicRedirectRoutes from "./src/routes/public-redirect.routes.ts";
 import * as Sentry from "@sentry/node";
+import { connectMongoose } from "./src/lib/mongoose.ts";
+import { mongoHttpLoggerMiddleware } from "./src/middlewares/mongo-http-logger.middleware.ts";
+import { logsAuthMiddleware } from "./src/middlewares/logs-auth.middleware.ts";
+import { renderLogsViewerUiController } from "./src/controllers/admin-logs/admin-logs.controller.ts";
 
 const app: Express = express();
 
@@ -30,8 +34,18 @@ app.disable("x-powered-by");
 
 startCleanupJob();
 
+// Initialize Mongoose connection in background for production logging
+if (process.env.NODE_ENV === "production" || process.env.FORCE_MONGO_LOGS === "true") {
+  connectMongoose().catch((err) => {
+    console.warn("[MongoDB] Background connection error:", err);
+  });
+}
+
 // Attach and propagate unique Request IDs
 app.use(requestIdMiddleware);
+
+// MongoDB HTTP Request Logging Middleware (classified & diversified)
+app.use(mongoHttpLoggerMiddleware);
 
 // Prometheus HTTP Metrics Middleware
 app.use(metricsMiddleware);
@@ -158,6 +172,9 @@ app.get("/metrics", async (req, res) => {
 
 // Bull Board UI (Protected by Admin Auth)
 app.use("/admin/queues", adminAuthMiddleware, serverAdapter.getRouter());
+
+// MongoDB Logs & Tracing Explorer UI Access Point (Username: codemonkey)
+app.get("/admin/logs", logsAuthMiddleware, renderLogsViewerUiController);
 
 // Public Redirect Route (/r/:publicId)
 app.use("/r", publicRedirectRoutes);

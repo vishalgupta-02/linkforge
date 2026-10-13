@@ -10,7 +10,9 @@ import {
   AlwaysOffSampler,
   TraceIdRatioBasedSampler,
   ParentBasedSampler,
+  BatchSpanProcessor,
 } from "@opentelemetry/sdk-trace-base";
+import { MongoSpanExporter } from "./mongo-span-exporter.ts";
 import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
 import { ExpressInstrumentation } from "@opentelemetry/instrumentation-express";
 import { IORedisInstrumentation } from "@opentelemetry/instrumentation-ioredis";
@@ -71,13 +73,18 @@ const traceExporter = new OTLPTraceExporter({
   url: otlpEndpoint,
 });
 
+const mongoSpanExporter = new MongoSpanExporter();
+
 const sdk = new NodeSDK({
   resource: resourceFromAttributes({
     [ATTR_SERVICE_NAME]: serviceName,
     [ATTR_SERVICE_VERSION]: "1.0.0",
     "deployment.environment": environment,
   }),
-  traceExporter,
+  spanProcessors: [
+    new BatchSpanProcessor(traceExporter),
+    new BatchSpanProcessor(mongoSpanExporter),
+  ],
   sampler: getSampler(),
   instrumentations: [
     new HttpInstrumentation({

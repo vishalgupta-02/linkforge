@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Share2,
   ArrowRight,
+  WandSparklesIcon,
 } from "lucide-react";
 import { GlowCard } from "@/components/animations";
 
@@ -55,7 +56,7 @@ const FeatureExplained = () => {
         {/* Section Heading */}
         <div className="mb-16 text-center">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-3.5 py-1 text-xs font-semibold text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/15 dark:text-violet-300">
-            <Sparkles size={13} className="text-violet-500" />
+            <WandSparklesIcon size={14} className="animate-in"/>
             Platform Capabilities
           </div>
           <h2 className="text-foreground text-3xl font-extrabold tracking-tight sm:text-5xl">

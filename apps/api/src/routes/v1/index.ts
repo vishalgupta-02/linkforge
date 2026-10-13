@@ -14,6 +14,7 @@ import feedbackRoutes from "./feedback.routes.ts";
 import waitlistRoutes from "./waitlist.routes.ts";
 import integrationsRoutes from "./integrations.routes.ts";
 import domainsRoutes from "./domains.routes.ts";
+import logsRoutes from "./logs.routes.ts";
 
 const router: Router = Router();
 
@@ -24,6 +25,7 @@ router.use("/socials", socialRoutes);
 router.use("/redirect", redirectRoutes);
 router.use("/r", redirectRoutes);
 router.use("/analytics", analyticsRoutes);
+router.use("/admin/logs", logsRoutes);
 router.use("/admin", adminRoutes);
 router.use("/live", liveRoutes);
 router.use("/billing", billingRoutes);

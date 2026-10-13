@@ -75,12 +75,6 @@ export default function Navbar() {
 
         <nav className="hidden items-center gap-8 md:flex">
           <Link
-            href="/"
-            className="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium transition-colors duration-200"
-          >
-            Home
-          </Link>
-          <Link
             href="/features"
             className="text-muted-foreground hover:text-foreground cursor-pointer text-sm font-medium transition-colors duration-200"
           >
@@ -117,13 +111,6 @@ export default function Navbar() {
             </Link>
           ) : (
             <>
-              <Link
-                href="/"
-                className="text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors duration-200"
-              >
-                <Home size={15} />
-                Home
-              </Link>
               <Link
                 href="/signin"
                 className="text-muted-foreground hover:bg-accent hover:text-accent-foreground inline-flex h-9 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium transition-colors duration-200"
